@@ -81,7 +81,13 @@ export default function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<'dashboard' | 'subjects' | 'ai' | 'profile'>('dashboard');
-  const [isOfflineMode, setIsOfflineMode] = useState(false);
+  const [isOfflineMode, setIsOfflineMode] = useState<boolean>(() => {
+    const currentToken = localStorage.getItem('token');
+    return !currentToken || 
+           currentToken === 'google-oauth-mock-token' || 
+           currentToken.startsWith('fake-jwt-') || 
+           window.location.search.includes('mock=true');
+  });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   // Data states
@@ -320,6 +326,7 @@ export default function App() {
         // Login simulation
         const fakeToken = `fake-jwt-${Date.now()}`;
         localStorage.setItem('token', fakeToken);
+        setIsOfflineMode(true);
         setToken(fakeToken);
         setErrorMessage('Logado com sucesso!');
       }
@@ -332,7 +339,7 @@ export default function App() {
     localStorage.removeItem('token');
     setToken(null);
     setCurrentUser(null);
-    setIsOfflineMode(false);
+    setIsOfflineMode(window.location.search.includes('mock=true'));
   };
 
   // Subjects CRUD
@@ -750,6 +757,7 @@ export default function App() {
             onClick={() => {
               // Simulated OAuth Google Login
               localStorage.setItem('token', 'google-oauth-mock-token');
+              setIsOfflineMode(true);
               setToken('google-oauth-mock-token');
               setErrorMessage('Entrada com conta Google autorizada!');
             }}
