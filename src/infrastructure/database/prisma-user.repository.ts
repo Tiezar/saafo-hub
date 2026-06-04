@@ -16,7 +16,7 @@ export class PrismaUserRepository implements IUserRepository {
       prismaUser.nickname,
       prismaUser.googleId,
       prismaUser.passwordHash,
-      prismaUser.institution,
+      prismaUser.institutionId,
       prismaUser.createdAt,
       prismaUser.updatedAt,
     );
@@ -44,7 +44,7 @@ export class PrismaUserRepository implements IUserRepository {
         name: user.name!,
         googleId: user.googleId,
         passwordHash: user.passwordHash,
-        institution: user.institution,
+        institutionId: user.institutionId,
       },
     });
     return this.toDomain(created);
@@ -58,7 +58,7 @@ export class PrismaUserRepository implements IUserRepository {
         nickname: user.nickname,
         googleId: user.googleId,
         passwordHash: user.passwordHash,
-        institution: user.institution,
+        institutionId: user.institutionId,
       },
     });
     return this.toDomain(updated);

@@ -28,7 +28,7 @@ class UpdateProfileDto {
 
   @IsString()
   @IsOptional()
-  institution?: string;
+  institutionId?: string;
 }
 
 @Controller('profile')
@@ -51,7 +51,7 @@ export class ProfileController {
         email: user.email,
         name: user.name,
         nickname: user.nickname,
-        institution: user.institution,
+        institutionId: user.institutionId,
       };
     } catch (err) {
       throw new NotFoundException((err as Error).message);

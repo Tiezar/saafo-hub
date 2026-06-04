@@ -14,7 +14,8 @@ model User {
   nickname      String?
   googleId      String?        @unique
   passwordHash  String?
-  institution   String?
+  institutionId String?
+  institution   Institution?   @relation(fields: [institutionId], references: [id], onDelete: SetNull)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   subjects      Subject[]
@@ -22,6 +23,19 @@ model User {
   studySessions StudySession[]
 
   @@map("users")
+}
+
+model Institution {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  sigla     String?
+  uf        String?
+  domains   String[]
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("institutions")
 }
 
 model Subject {

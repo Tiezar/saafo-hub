@@ -1,46 +1,31 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
-
-interface InstitutionItem {
-  alpha_two_code: string;
-  country: string;
-  name: string;
-  'state-province': string | null;
-  domains: string[];
-  web_pages: string[];
-}
+import { PrismaService } from '../../database/prisma.service';
 
 @Controller('institutions')
 export class InstitutionController {
-  private institutions: InstitutionItem[] = [];
-
-  constructor() {
-    try {
-      // Carregar a lista de instituições a partir do arquivo JSON estático
-      const filePath = path.join(__dirname, '../../database/seeds/institutions.json');
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      this.institutions = JSON.parse(fileContent) as InstitutionItem[];
-    } catch (error) {
-      console.error('Erro ao carregar lista de instituições de ensino:', error);
-      this.institutions = [];
-    }
-  }
+  constructor(private prisma: PrismaService) {}
 
   @Get()
-  getInstitutions(@Query('search') search?: string) {
+  async getInstitutions(@Query('search') search?: string) {
     if (!search) {
       // Retornar as primeiras 30 instituições por padrão se nenhuma busca for informada
-      return this.institutions.slice(0, 30);
+      return this.prisma.institution.findMany({
+        take: 30,
+        orderBy: { name: 'asc' },
+      });
     }
 
-    const query = search.toLowerCase().trim();
+    const query = search.trim();
     
-    // Filtrar por nome da instituição ou por domínios de email vinculados
-    return this.institutions.filter(
-      (inst) =>
-        inst.name.toLowerCase().includes(query) ||
-        inst.domains.some((domain) => domain.toLowerCase().includes(query)),
-    );
+    // Filtrar por nome ou sigla da instituição no banco
+    return this.prisma.institution.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { sigla: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      orderBy: { name: 'asc' },
+    });
   }
 }

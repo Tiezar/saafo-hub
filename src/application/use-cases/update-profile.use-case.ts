@@ -6,7 +6,7 @@ export interface UpdateProfileInput {
   name?: string;
   nickname?: string;
   password?: string;
-  institution?: string;
+  institutionId?: string;
 }
 
 export class UpdateProfileUseCase {
@@ -21,7 +21,7 @@ export class UpdateProfileUseCase {
     const updateData: Partial<User> = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.nickname !== undefined) updateData.nickname = data.nickname;
-    if (data.institution !== undefined) updateData.institution = data.institution;
+    if (data.institutionId !== undefined) updateData.institutionId = data.institutionId;
     if (data.password !== undefined) {
       updateData.passwordHash = await bcrypt.hash(data.password, 12);
     }

@@ -96,7 +96,7 @@ describe('UpdateProfileUseCase', () => {
     expect(result).toEqual(updatedUser);
   });
 
-  it('should update institution when institution is provided', async () => {
+  it('should update institutionId when institutionId is provided', async () => {
     const existingUser = new User(
       '1',
       'test@example.com',
@@ -113,16 +113,16 @@ describe('UpdateProfileUseCase', () => {
       null,
       null,
       'hash',
-      'Universidade de São Paulo',
+      'institution-uuid-123',
     );
     mockUserRepository.findById.mockResolvedValue(existingUser);
     mockUserRepository.update.mockResolvedValue(updatedUser);
 
-    const result = await useCase.execute('1', { institution: 'Universidade de São Paulo' });
+    const result = await useCase.execute('1', { institutionId: 'institution-uuid-123' });
 
     expect(mockUserRepository.findById).toHaveBeenCalledWith('1');
     expect(mockUserRepository.update).toHaveBeenCalledWith('1', {
-      institution: 'Universidade de São Paulo',
+      institutionId: 'institution-uuid-123',
     });
     expect(result).toEqual(updatedUser);
   });
