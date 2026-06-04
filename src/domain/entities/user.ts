@@ -6,6 +6,7 @@ export class User {
     public nickname?: string | null,
     public googleId?: string | null,
     public passwordHash?: string | null,
+    public institution?: string | null,
     public readonly createdAt?: Date,
     public readonly updatedAt?: Date,
   ) {}

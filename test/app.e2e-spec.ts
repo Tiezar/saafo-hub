@@ -82,6 +82,28 @@ describe('SAAFO HUB API (e2e)', () => {
     });
   });
 
+  describe('Atualização de Perfil (Profile)', () => {
+    it('deve permitir atualizar o nome, nickname e instituição do usuário com sucesso (200)', async () => {
+      const res = await request(app.getHttpServer())
+        .patch('/profile')
+        .set('Authorization', `Bearer ${tokenUser1}`)
+        .send({
+          name: 'Novo Nome do User One',
+          nickname: 'novonick1',
+          institution: 'Universidade de São Paulo',
+        })
+        .expect(200);
+
+      expect(res.body.name).toBe('Novo Nome do User One');
+      expect(res.body.nickname).toBe('novonick1');
+      expect(res.body.institution).toBe('Universidade de São Paulo');
+
+      // Verificar persistência no banco
+      const userInDb = await prisma.user.findUnique({ where: { id: userId1 } });
+      expect(userInDb?.institution).toBe('Universidade de São Paulo');
+    });
+  });
+
   describe('CRUD de Matérias (Subjects)', () => {
     it('deve criar uma matéria com sucesso para o User 1 (201)', async () => {
       const res = await request(app.getHttpServer())

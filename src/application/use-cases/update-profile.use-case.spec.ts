@@ -95,4 +95,35 @@ describe('UpdateProfileUseCase', () => {
     });
     expect(result).toEqual(updatedUser);
   });
+
+  it('should update institution when institution is provided', async () => {
+    const existingUser = new User(
+      '1',
+      'test@example.com',
+      'Name',
+      null,
+      null,
+      'hash',
+      null,
+    );
+    const updatedUser = new User(
+      '1',
+      'test@example.com',
+      'Name',
+      null,
+      null,
+      'hash',
+      'Universidade de São Paulo',
+    );
+    mockUserRepository.findById.mockResolvedValue(existingUser);
+    mockUserRepository.update.mockResolvedValue(updatedUser);
+
+    const result = await useCase.execute('1', { institution: 'Universidade de São Paulo' });
+
+    expect(mockUserRepository.findById).toHaveBeenCalledWith('1');
+    expect(mockUserRepository.update).toHaveBeenCalledWith('1', {
+      institution: 'Universidade de São Paulo',
+    });
+    expect(result).toEqual(updatedUser);
+  });
 });
