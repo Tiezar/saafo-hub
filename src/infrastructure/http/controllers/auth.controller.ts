@@ -1,8 +1,14 @@
-import { Controller, Post, Body, Inject, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Inject,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { OAuth2Client } from 'google-auth-library';
 import { LoginGoogleUseCase } from '../../../application/use-cases/login-google.use-case';
-import { IUserRepository } from '../../../domain/repositories/user-repository.interface';
+import type { IUserRepository } from '../../../domain/repositories/user-repository.interface';
 import { IsNotEmpty, IsString } from 'class-validator';
 
 class LoginGoogleDto {
@@ -32,7 +38,9 @@ export class AuthController {
       });
       const payload = ticket.getPayload();
       if (!payload || !payload.email || !payload.sub || !payload.name) {
-        throw new BadRequestException('Token do Google inválido ou sem as informações necessárias');
+        throw new BadRequestException(
+          'Token do Google inválido ou sem as informações necessárias',
+        );
       }
 
       const user = await this.loginGoogleUseCase.execute({
@@ -52,7 +60,9 @@ export class AuthController {
         },
       };
     } catch (err) {
-      throw new BadRequestException('Falha na validação do token do Google: ' + (err as Error).message);
+      throw new BadRequestException(
+        'Falha na validação do token do Google: ' + (err as Error).message,
+      );
     }
   }
 }

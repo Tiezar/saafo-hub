@@ -8,7 +8,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'temp-development-secret-for-saafo-hub-key-32chars',
+      secretOrKey:
+        process.env.JWT_SECRET ||
+        'temp-development-secret-for-saafo-hub-key-32chars',
     });
   }
 

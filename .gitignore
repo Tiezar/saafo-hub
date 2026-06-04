@@ -33,3 +33,5 @@ lerna-debug.log*
 /dist
 /node_modules
 tsconfig.tsbuildinfo
+
+/generated/prisma

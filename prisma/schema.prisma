@@ -4,17 +4,93 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  engineType = "library"
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  name         String
-  nickname     String?
-  googleId     String?  @unique
-  passwordHash String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String
+  nickname      String?
+  googleId      String?        @unique
+  passwordHash  String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  subjects      Subject[]
+  cards         Card[]
+  studySessions StudySession[]
 
   @@map("users")
+}
+
+model Subject {
+  id        String   @id @default(uuid())
+  name      String
+  color     String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topics    Topic[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("subjects")
+}
+
+model Topic {
+  id        String   @id @default(uuid())
+  name      String
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  cards     Card[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("topics")
+}
+
+model Card {
+  id          String       @id @default(uuid())
+  front       String
+  back        String
+  topicId     String
+  topic       Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // SM-2 Spaced Repetition Fields
+  repetitions Int          @default(0)
+  interval    Int          @default(0)
+  easeFactor  Float        @default(2.5)
+  nextReview  DateTime     @default(now())
+  
+  reviews     CardReview[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("cards")
+}
+
+model StudySession {
+  id        String       @id @default(uuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt DateTime     @default(now())
+  endedAt   DateTime?
+  reviews   CardReview[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("study_sessions")
+}
+
+model CardReview {
+  id         String       @id @default(uuid())
+  cardId     String
+  card       Card         @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  sessionId  String
+  session    StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  rating     Int
+  reviewedAt DateTime     @default(now())
+
+  @@map("card_reviews")
 }

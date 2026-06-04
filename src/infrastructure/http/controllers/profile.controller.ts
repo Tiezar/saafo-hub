@@ -1,7 +1,15 @@
-import { Controller, Patch, Body, UseGuards, Request, Inject, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Patch,
+  Body,
+  UseGuards,
+  Request,
+  Inject,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UpdateProfileUseCase } from '../../../application/use-cases/update-profile.use-case';
-import { IUserRepository } from '../../../domain/repositories/user-repository.interface';
+import type { IUserRepository } from '../../../domain/repositories/user-repository.interface';
 import { IsString, IsOptional, MinLength } from 'class-validator';
 
 class UpdateProfileDto {
@@ -23,7 +31,9 @@ class UpdateProfileDto {
 export class ProfileController {
   private updateProfileUseCase: UpdateProfileUseCase;
 
-  constructor(@Inject('IUserRepository') private userRepository: IUserRepository) {
+  constructor(
+    @Inject('IUserRepository') private userRepository: IUserRepository,
+  ) {
     this.updateProfileUseCase = new UpdateProfileUseCase(userRepository);
   }
 

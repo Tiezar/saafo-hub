@@ -10,7 +10,9 @@ import { JwtStrategy } from '../strategies/jwt.strategy';
     DatabaseModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'temp-development-secret-for-saafo-hub-key-32chars',
+      secret:
+        process.env.JWT_SECRET ||
+        'temp-development-secret-for-saafo-hub-key-32chars',
       signOptions: { expiresIn: '1h' },
     }),
   ],
