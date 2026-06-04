@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Patch,
   Body,
   UseGuards,
@@ -42,6 +43,22 @@ export class ProfileController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get()
+  async getProfile(@Request() req: any) {
+    const user = await this.userRepository.findById(req.user.id);
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      nickname: user.nickname,
+      institutionId: user.institutionId,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Patch()
   async updateProfile(@Request() req: any, @Body() body: UpdateProfileDto) {
     try {
@@ -58,3 +75,4 @@ export class ProfileController {
     }
   }
 }
+
