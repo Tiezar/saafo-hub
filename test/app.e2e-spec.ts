@@ -337,6 +337,28 @@ describe('SAAFO HUB API (e2e)', () => {
     });
   });
 
+  describe('Busca de Instituições de Ensino', () => {
+    it('deve retornar lista padrão de instituições sem filtro (200)', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/institutions')
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBeLessThanOrEqual(30);
+      expect(res.body[0]).toHaveProperty('name');
+    });
+
+    it('deve filtrar instituições por termo de busca correto (200)', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/institutions?search=USP')
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBeGreaterThanOrEqual(1);
+      expect(res.body[0].name).toBe('Universidade de São Paulo');
+    });
+  });
+
   describe('Remoção em Cadeia de Matérias (Cascade Delete)', () => {
     it('deve deletar a matéria do User 1 e apagar recursivamente tópicos e cards vinculados (200)', async () => {
       await request(app.getHttpServer())
