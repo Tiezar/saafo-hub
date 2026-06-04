@@ -16,7 +16,9 @@ import {
   ChevronRight,
   AlertCircle,
   HelpCircle,
-  Check
+  Check,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 // API Configuration
@@ -89,6 +91,22 @@ export default function App() {
            window.location.search.includes('mock=true');
   });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Theme Management
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') return saved;
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  });
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light-theme');
+    } else {
+      document.documentElement.classList.remove('light-theme');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
   
   // Data states
   const [institutions, setInstitutions] = useState<Institution[]>([]);
@@ -693,6 +711,13 @@ export default function App() {
   if (!token) {
     return (
       <div className="auth-wrapper">
+        <button 
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="theme-toggle-floating"
+          title={theme === 'dark' ? 'Mudar para Tema Claro' : 'Mudar para Tema Escuro'}
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
         <div className="auth-card">
           <div className="logo-container" style={{ justifyContent: 'center', marginBottom: 24 }}>
             <div className="logo-icon"><Brain size={18} /></div>
@@ -916,13 +941,22 @@ export default function App() {
                 {currentUser.email}
               </div>
             </div>
-            <button 
-              onClick={handleLogout} 
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
-              title="Sair"
-            >
-              <LogOut size={16} />
-            </button>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <button 
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4 }}
+                title={theme === 'dark' ? 'Mudar para Tema Claro' : 'Mudar para Tema Escuro'}
+              >
+                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+              <button 
+                onClick={handleLogout} 
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4 }}
+                title="Sair"
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
           </div>
         )}
       </aside>
