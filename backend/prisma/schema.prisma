@@ -207,15 +207,18 @@ model CardReview {
 }
 
 model ExamRecord {
-  id        String        @id @default(uuid())
-  userId    String
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topicId   String?
-  topicName String
-  mode      String        // 'multiple' | 'essay'
-  questions Json
-  createdAt DateTime      @default(now())
-  attempts  ExamAttempt[]
+  id         String        @id @default(uuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicId    String?
+  topicIds   String[]      @default([])
+  topicName  String
+  scopeLabel String?
+  profileId  String?
+  mode       String
+  questions  Json
+  createdAt  DateTime      @default(now())
+  attempts   ExamAttempt[]
 
   @@map("exam_records")
 }
@@ -225,6 +228,8 @@ model ExamAttempt {
   examRecordId String
   examRecord   ExamRecord @relation(fields: [examRecordId], references: [id], onDelete: Cascade)
   score        Int
+  timeLimit    Int?
+  timeTaken    Int?
   completedAt  DateTime   @default(now())
 
   @@map("exam_attempts")

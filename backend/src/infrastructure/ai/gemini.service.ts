@@ -6,6 +6,7 @@ export interface GeneratedCard {
 }
 
 export interface QuizQuestion {
+  textBase?: string;
   question: string;
   options: string[];
   correctIndex: number;
@@ -229,36 +230,53 @@ REGRAS RÍGIDAS:
     }
   }
 
-  // ── Quiz generation ───────────────────────────────────────────────────────
+  // ── Exam generation (profile-based) ─────────────────────────────────────────
 
-  async generateQuiz(
+  async generateExam(
     cards: { front: string; back: string }[],
-    difficulty: 'easy' | 'medium' | 'hard',
+    profileId: 'quick' | 'applied' | 'contextual',
     count: number,
   ): Promise<QuizQuestion[]> {
     if (!this.apiKey) throw new InternalServerErrorException('GEMINI_API_KEY não configurado.');
 
-    const difficultyLabel = { easy: 'Fácil', medium: 'Médio', hard: 'Difícil' }[difficulty];
-    const context = cards.map(c => `Frente: ${c.front}\nVerso: ${c.back}`).join('\n\n');
+    const PROFILE_SYSTEM: Record<string, string> = {
+      quick: `Você é um professor criando questões de REVISÃO RÁPIDA em português brasileiro.
+ESTILO: questões DIRETAS e CURTAS (máximo 3 linhas no campo "question").
+FOCO: reconhecimento de definições, conceitos, nomenclaturas e relações diretas.
+NÃO use texto-base ou cenário narrativo — a pergunta vai direto ao ponto.
+Opções incorretas: plausíveis mas claramente distintas.
+O campo "textBase" deve ser OMITIDO ou string vazia.`,
+
+      applied: `Você é um professor criando questões de PROVA APLICADA em português brasileiro.
+ESTILO: cada questão apresenta um contexto curto (2 a 5 linhas) DENTRO do campo "question".
+FORMATO: inicie com "Em um experimento...", "Uma empresa observou...", "O paciente apresentou..." etc.
+OBJETIVO: exigir que o estudante APLIQUE o conceito, não apenas reconheça.
+Opções incorretas: bem elaboradas, representando erros comuns de raciocínio.
+O campo "textBase" deve ser OMITIDO ou string vazia.`,
+
+      contextual: `Você é um professor criando questões estilo VESTIBULAR/CONCURSO em português brasileiro.
+OBRIGATÓRIO para cada questão:
+1. Campo "textBase": texto de 6 a 15 linhas descrevendo cenário, caso, situação real ou hipotética em linguagem formal.
+2. Campo "question": pergunta de ANÁLISE, INFERÊNCIA ou INTERPRETAÇÃO — NÃO respondível apenas pelo texto-base. Exige domínio do conteúdo.
+ESTILO: ENEM, Fuvest, Cespe/Cebraspe, concurso público. Tom formal e técnico.
+PROIBIDO: pergunta que a resposta esteja explícita no texto-base.`,
+    };
+
+    const PROFILE_USER_HINT: Record<string, string> = {
+      quick:      'Gere questões de revisão rápida (1-3 linhas, diretas ao ponto):',
+      applied:    'Gere questões aplicadas com contexto situacional curto:',
+      contextual: 'Gere questões estilo vestibular com texto-base longo (6-15 linhas) e pergunta de análise:',
+    };
+
+    const context = cards.map(c => `• ${c.front} → ${c.back}`).join('\n');
 
     const payload = {
       contents: [{
         parts: [{
-          text: `Com base nos seguintes flashcards de estudo, crie exatamente ${count} questões de múltipla escolha com dificuldade "${difficultyLabel}". Use os conceitos dos flashcards como base de conhecimento.\n\n${context}`,
+          text: `${PROFILE_USER_HINT[profileId]}\n\nBase de conhecimento (${cards.length} flashcards):\n${context}\n\nGere EXATAMENTE ${count} questões de múltipla escolha.`,
         }],
       }],
-      systemInstruction: {
-        parts: [{
-          text: `Você é um professor especialista criando questões de múltipla escolha de alta qualidade para provas em português brasileiro.
-Cada questão deve ter exatamente 4 opções (A, B, C, D) onde apenas uma está correta.
-Dificuldades:
-- Fácil: reconhecimento direto de definições e conceitos
-- Médio: aplicação, compreensão e relações entre conceitos
-- Difícil: análise crítica, síntese, casos clínicos/práticos, pegadinhas sutis
-As opções incorretas devem ser plausíveis e bem elaboradas (não óbvias).
-A explicação deve justificar a resposta correta e por que as outras estão erradas.`,
-        }],
-      },
+      systemInstruction: { parts: [{ text: PROFILE_SYSTEM[profileId] }] },
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: {
@@ -269,6 +287,7 @@ A explicação deve justificar a resposta correta e por que as outras estão err
               items: {
                 type: 'OBJECT',
                 properties: {
+                  textBase:     { type: 'STRING' },
                   question:     { type: 'STRING' },
                   options:      { type: 'ARRAY', items: { type: 'STRING' } },
                   correctIndex: { type: 'INTEGER' },
@@ -299,8 +318,8 @@ A explicação deve justificar a resposta correta e por que as outras estão err
       if (!Array.isArray(parsed.questions)) throw new Error('Formato inválido retornado pela IA');
       return parsed.questions as QuizQuestion[];
     } catch (err) {
-      this.logger.error(`Gemini quiz generation failed: ${(err as Error).message}`);
-      throw new InternalServerErrorException(`Falha ao gerar quiz: ${(err as Error).message}`);
+      this.logger.error(`Gemini exam generation failed: ${(err as Error).message}`);
+      throw new InternalServerErrorException(`Falha ao gerar prova: ${(err as Error).message}`);
     }
   }
 

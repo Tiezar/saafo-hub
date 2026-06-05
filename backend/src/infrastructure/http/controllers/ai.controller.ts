@@ -38,9 +38,10 @@ const FILE_SIZE_LIMIT = 50 * 1024 * 1024; // 50 MB
 const MAX_CARDS_PER_DAY = parseInt(process.env.MAX_CARDS_PER_DAY ?? '50', 10);
 
 class GenerateQuizDto {
-  @IsString() @IsNotEmpty() topicId: string;
-  @IsIn(['easy', 'medium', 'hard']) difficulty: 'easy' | 'medium' | 'hard';
-  @IsInt() @IsOptional() @Min(3) @Max(20) count?: number;
+  @IsArray() @ArrayMinSize(1) @ArrayMaxSize(10) @IsString({ each: true })
+  topicIds: string[];
+  @IsIn(['quick', 'applied', 'contextual']) profileId: 'quick' | 'applied' | 'contextual';
+  @IsInt() @IsOptional() @Min(3) @Max(40) count?: number;
 }
 
 class GenerateFromTextDto {
@@ -91,25 +92,31 @@ export class AiController {
   }
 
   @Post('quiz')
-  @Throttle({ default: { limit: 5, ttl: 604_800_000 } }) // 5 quizzes per week
+  @Throttle({ default: { limit: 10, ttl: 604_800_000 } }) // 10 exams per week
   async generateQuiz(@Request() req: any, @Body() body: GenerateQuizDto) {
-    const topic = await this.topicRepository.findById(body.topicId);
-    if (!topic) throw new NotFoundException('Topic not found');
+    const allCards: { front: string; back: string }[] = [];
 
-    const subject = await this.subjectRepository.findById(topic.subjectId);
-    if (!subject || subject.userId !== req.user.id) throw new ForbiddenException('Unauthorized access to topic');
+    for (const topicId of body.topicIds) {
+      const topic = await this.topicRepository.findById(topicId);
+      if (!topic) throw new NotFoundException(`Tópico ${topicId} não encontrado.`);
 
-    const cards = await this.cardRepository.findByTopicId(body.topicId);
-    if (cards.length < 3) {
-      throw new BadRequestException('Adicione pelo menos 3 flashcards ao tópico antes de gerar um quiz.');
+      const subject = await this.subjectRepository.findById(topic.subjectId);
+      if (!subject || subject.userId !== req.user.id) throw new ForbiddenException('Acesso não autorizado ao tópico.');
+
+      const cards = await this.cardRepository.findByTopicId(topicId);
+      allCards.push(...cards.map(c => ({ front: c.front, back: c.back })));
     }
 
+    if (allCards.length < 3) {
+      throw new BadRequestException('Adicione pelo menos 3 flashcards nos tópicos selecionados antes de gerar uma prova.');
+    }
+
+    // Shuffle and cap at 200 cards to keep context manageable
+    const shuffled = allCards.sort(() => Math.random() - 0.5).slice(0, 200);
+    const count = body.count ?? Math.min(10, Math.max(3, Math.floor(allCards.length / 2)));
+
     try {
-      return await this.geminiService.generateQuiz(
-        cards.map(c => ({ front: c.front, back: c.back })),
-        body.difficulty,
-        body.count ?? Math.min(10, Math.max(3, cards.length)),
-      );
+      return await this.geminiService.generateExam(shuffled, body.profileId, count);
     } catch (err) { this.handleError(err); }
   }
 

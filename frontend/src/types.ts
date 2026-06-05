@@ -41,7 +41,11 @@ export interface Insight {
 }
 
 export interface QuizQuestion {
-  question: string; options: string[]; correctIndex: number; explanation: string;
+  textBase?: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
 }
 
 export interface Metrics {
@@ -68,6 +72,8 @@ export interface ExamAttempt {
   id: string;
   examRecordId: string;
   score: number;
+  timeLimit: number | null;
+  timeTaken: number | null;
   completedAt: string;
 }
 
@@ -75,7 +81,10 @@ export interface ExamRecord {
   id: string;
   userId: string;
   topicId: string | null;
+  topicIds: string[];
   topicName: string;
+  scopeLabel: string | null;
+  profileId: string | null;
   mode: 'multiple' | 'essay';
   questions: unknown;
   createdAt: string;
