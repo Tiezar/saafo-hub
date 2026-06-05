@@ -21,7 +21,9 @@ import { GeminiService } from '../../ai/gemini.service';
 import type { ICardRepository } from '../../../domain/repositories/card-repository.interface';
 import type { ITopicRepository } from '../../../domain/repositories/topic-repository.interface';
 import type { ISubjectRepository } from '../../../domain/repositories/subject-repository.interface';
-import { IsString, IsNotEmpty, IsOptional, MaxLength, IsIn, IsInt, Min, Max } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, MaxLength, IsIn, IsInt, Min, Max, IsArray, ValidateNested, ArrayMinSize, ArrayMaxSize } from 'class-validator';
+import { Type } from 'class-transformer';
+import { Card } from '../../../domain/entities/card';
 
 const SUPPORTED_TYPES = new Set([
   'image/jpeg', 'image/png', 'image/webp', 'image/gif',
@@ -39,19 +41,27 @@ class GenerateQuizDto {
 }
 
 class GenerateFromTextDto {
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100_000)
-  text: string;
+  @IsString() @IsNotEmpty() @MaxLength(100_000) text: string;
+  @IsString() @IsNotEmpty() topicId: string;
+  @IsString() @IsOptional() @MaxLength(200) theme?: string;
+  @IsInt() @IsOptional() @Min(3) @Max(30) count?: number;
+}
 
-  @IsString()
-  @IsNotEmpty()
-  topicId: string;
+class CardItemDto {
+  @IsString() @IsNotEmpty() @MaxLength(2000) front: string;
+  @IsString() @IsNotEmpty() @MaxLength(2000) back: string;
+}
 
-  @IsString()
-  @IsOptional()
-  @MaxLength(200)
-  theme?: string;
+class SaveCardsDto {
+  @IsString() @IsNotEmpty() topicId: string;
+  @IsArray() @ValidateNested({ each: true }) @ArrayMinSize(1) @ArrayMaxSize(30) @Type(() => CardItemDto)
+  cards: CardItemDto[];
+}
+
+class EvaluateEssayDto {
+  @IsString() @IsNotEmpty() @MaxLength(1000) question: string;
+  @IsString() @IsNotEmpty() @MaxLength(2000) expectedAnswer: string;
+  @IsString() @MaxLength(5000) userAnswer: string;
 }
 
 @Controller('ai')
@@ -66,13 +76,13 @@ export class AiController {
     private geminiService: GeminiService,
   ) {
     this.useCase = new GenerateFlashcardsUseCase(
-      cardRepository, topicRepository, subjectRepository, geminiService,
+      topicRepository, subjectRepository, geminiService,
     );
   }
 
   private handleError(err: unknown): never {
     const msg = (err as Error).message;
-    if (msg === 'Topic not found')           throw new NotFoundException(msg);
+    if (msg === 'Topic not found')              throw new NotFoundException(msg);
     if (msg === 'Unauthorized access to topic') throw new ForbiddenException(msg);
     throw new BadRequestException(msg);
   }
@@ -100,6 +110,7 @@ export class AiController {
     } catch (err) { this.handleError(err); }
   }
 
+  // Returns generated cards WITHOUT saving — frontend shows preview
   @Post('generate')
   @Throttle({ default: { limit: 5, ttl: 900_000 } })
   async generateFromText(@Request() req: any, @Body() body: GenerateFromTextDto) {
@@ -109,17 +120,19 @@ export class AiController {
         topicId: body.topicId,
         userId: req.user.id,
         theme: body.theme,
+        count: body.count,
       });
     } catch (err) { this.handleError(err); }
   }
 
+  // Returns generated cards WITHOUT saving — frontend shows preview
   @Post('generate-file')
   @Throttle({ default: { limit: 5, ttl: 900_000 } })
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: FILE_SIZE_LIMIT } }))
   async generateFromFile(
     @Request() req: any,
     @UploadedFile() file: Express.Multer.File,
-    @Body() body: { topicId: string; theme?: string },
+    @Body() body: { topicId: string; theme?: string; count?: string },
   ) {
     if (!file) throw new BadRequestException('Nenhum arquivo enviado.');
     if (!body.topicId) throw new BadRequestException('topicId é obrigatório.');
@@ -140,11 +153,12 @@ export class AiController {
     let text: string | undefined;
 
     if (mimeType === 'text/plain') {
-      // Plain text files: treat as text directly
       text = file.buffer.toString('utf-8');
     } else {
       fileBuffer = file.buffer;
     }
+
+    const count = body.count ? parseInt(body.count, 10) : undefined;
 
     try {
       return await this.useCase.execute({
@@ -154,7 +168,47 @@ export class AiController {
         topicId: body.topicId,
         userId: req.user.id,
         theme: body.theme,
+        count: count && !isNaN(count) ? count : undefined,
       });
+    } catch (err) { this.handleError(err); }
+  }
+
+  // Saves user-confirmed card selection after preview
+  @Post('save')
+  async saveCards(@Request() req: any, @Body() body: SaveCardsDto) {
+    const topic = await this.topicRepository.findById(body.topicId);
+    if (!topic) throw new NotFoundException('Topic not found');
+
+    const subject = await this.subjectRepository.findById(topic.subjectId);
+    if (!subject || subject.userId !== req.user.id) throw new ForbiddenException('Unauthorized access to topic');
+
+    const created: Card[] = [];
+    for (const card of body.cards) {
+      created.push(
+        await this.cardRepository.create({
+          front: card.front,
+          back: card.back,
+          topicId: body.topicId,
+          userId: req.user.id,
+          repetitions: 0,
+          interval: 0,
+          easeFactor: 2.5,
+          nextReview: new Date(),
+        }),
+      );
+    }
+    return created;
+  }
+
+  @Post('evaluate-essay')
+  @Throttle({ default: { limit: 30, ttl: 900_000 } })
+  async evaluateEssay(@Body() body: EvaluateEssayDto) {
+    try {
+      return await this.geminiService.evaluateEssayAnswer(
+        body.question,
+        body.expectedAnswer,
+        body.userAnswer,
+      );
     } catch (err) { this.handleError(err); }
   }
 }

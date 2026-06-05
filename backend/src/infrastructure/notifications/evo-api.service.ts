@@ -45,7 +45,9 @@ export class EvoApiService {
   }
 
   private normalizePhone(phone: string): string {
-    // Ensure format: 55XXXXXXXXXX (country code + number, no special chars)
-    return phone.replace(/\D/g, '').replace(/^0+/, '');
+    const digits = phone.replace(/\D/g, '').replace(/^0+/, '');
+    // Prepend country code 55 (Brazil) if not already present
+    if (digits.startsWith('55') && digits.length >= 12) return digits;
+    return `55${digits}`;
   }
 }

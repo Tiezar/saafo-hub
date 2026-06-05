@@ -32,6 +32,114 @@ export class ResendService {
     this.logger.log(`Verification email sent to ${to}`);
   }
 
+  async sendReminderEmail(
+    to: string,
+    name: string,
+    eventTitle: string,
+    eventType: string,
+    timeStr: string,
+    when: string,
+  ): Promise<void> {
+    const from = process.env.RESEND_FROM_EMAIL!;
+    if (!from || !process.env.RESEND_API_KEY) {
+      this.logger.warn('Resend not configured — skipping email reminder');
+      return;
+    }
+
+    const { error } = await this.resend.emails.send({
+      from,
+      to,
+      subject: `⏰ Lembrete: ${eventTitle} — SAAFO HUB`,
+      html: this.buildReminderEmailHtml(name, eventTitle, eventType, timeStr, when),
+    });
+
+    if (error) {
+      this.logger.error(`Failed to send reminder email to ${to}: ${error.message}`);
+      return;
+    }
+
+    this.logger.log(`Reminder email sent to ${to}`);
+  }
+
+  private buildReminderEmailHtml(
+    name: string,
+    eventTitle: string,
+    eventType: string,
+    timeStr: string,
+    when: string,
+  ): string {
+    return `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lembrete — SAAFO HUB</title>
+</head>
+<body style="margin:0;padding:0;background:#09090b;font-family:'Inter',system-ui,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+    style="background:#09090b;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width:520px;">
+
+          <tr>
+            <td align="center" style="padding-bottom:32px;">
+              <div style="display:inline-flex;align-items:center;gap:10px;">
+                <div style="width:36px;height:36px;background:linear-gradient(135deg,#7c3aed,#6366f1);
+                  border-radius:8px;display:inline-flex;align-items:center;justify-content:center;">
+                  <span style="color:white;font-size:18px;font-weight:bold;">S</span>
+                </div>
+                <span style="font-family:Georgia,serif;font-size:22px;font-weight:800;
+                  color:#a78bfa;letter-spacing:-0.5px;">SAAFO HUB</span>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#18181b;border:1px solid rgba(255,255,255,0.08);
+              border-radius:16px;padding:40px 36px;">
+              <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#a78bfa;
+                text-transform:uppercase;letter-spacing:0.08em;">⏰ Lembrete</p>
+              <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#f4f4f5;">
+                ${eventType} em ${when}
+              </h1>
+              <p style="margin:0 0 24px;font-size:15px;color:#a1a1aa;line-height:1.6;">
+                Olá, <strong style="color:#f4f4f5;">${name}</strong>! Não esqueça do seu compromisso.
+              </p>
+
+              <div style="background:#09090b;border:1px solid rgba(255,255,255,0.08);
+                border-radius:12px;padding:20px 24px;margin-bottom:24px;">
+                <div style="font-size:18px;font-weight:700;color:#f4f4f5;margin-bottom:6px;">
+                  ${eventTitle}
+                </div>
+                <div style="font-size:14px;color:#a1a1aa;">
+                  🕐 ${timeStr}
+                </div>
+              </div>
+
+              <p style="margin:0;font-size:13px;color:#71717a;line-height:1.5;">
+                Bons estudos! 📚
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="padding-top:24px;">
+              <p style="margin:0;font-size:12px;color:#52525b;">
+                SAAFO HUB &mdash; Plataforma de flashcards com repetição espaçada
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+  }
+
   private buildVerificationEmailHtml(name: string, verifyUrl: string): string {
     return `
 <!DOCTYPE html>

@@ -1,0 +1,107 @@
+/* ── Obsidian Deep Indigo — Design System Tokens ───────────────────────────
+   Source: saafo-design/obsidian_deep_indigo/DESIGN.md
+   8px base spacing unit. Tonal layering replaces shadows.
+────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Typography */
+  --font-display: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-label:   'Geist', 'JetBrains Mono', monospace;
+
+  /* Background tonal layers (deep → bright) */
+  --bg-base:     #010f1f;
+  --bg-deep:     #051424;
+  --bg-surface:  #0e1c2d;
+  --bg-card:     #122031;
+  --bg-card-high:#1d2b3c;
+  --bg-overlay:  #283647;
+
+  /* On-surface text */
+  --text-primary:   #d5e4fa;
+  --text-secondary: #c7c4d7;
+  --text-muted:     #908fa0;
+
+  /* Accent palette */
+  --color-primary:        #494bd6;   /* interactive / buttons */
+  --color-primary-light:  #c0c1ff;   /* Electric Indigo — text highlights */
+  --color-primary-dim:    #8083ff;   /* hover states */
+  --color-secondary:      #ddb7ff;   /* Soft Violet — active indicators */
+  --color-secondary-dim:  #6900b3;   /* secondary container */
+  --color-tertiary:       #2fd9f4;   /* Cyan/Teal — streaks, progress */
+  --color-success:        #2fd9f4;
+  --color-danger:         #ffb4ab;
+  --color-danger-dim:     #93000a;
+  --color-warning:        #ffd166;
+
+  /* Borders — tonal (no heavy shadows) */
+  --border-color:  rgba(255, 255, 255, 0.06);
+  --border-subtle: rgba(255, 255, 255, 0.10);
+  --border-active: #c0c1ff;
+
+  /* Gradients */
+  --grad-primary: linear-gradient(135deg, #494bd6 0%, #8083ff 100%);
+  --grad-secondary: linear-gradient(135deg, #6900b3 0%, #ddb7ff 40%);
+  --grad-tertiary: linear-gradient(135deg, #008395 0%, #2fd9f4 100%);
+  --grad-danger: linear-gradient(135deg, #93000a 0%, #ffb4ab 100%);
+
+  /* Glow — primary modal/popover indicator */
+  --glow-primary: 0 0 0 1px rgba(192, 193, 255, 0.15), 0 8px 32px rgba(73, 75, 214, 0.25);
+  --glow-active:  0 0 0 2px rgba(192, 193, 255, 0.3);
+
+  /* Border radius */
+  --radius-xs:   0.25rem;
+  --radius-sm:   0.5rem;
+  --radius-md:   0.75rem;
+  --radius-lg:   1rem;
+  --radius-xl:   1.5rem;
+  --radius-full: 9999px;
+
+  /* Spacing (8px grid) */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* Layout */
+  --sidebar-w: 248px;
+
+  /* Transitions */
+  --transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: all 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Light theme overrides ─────────────────────────────────────────────── */
+.light-theme {
+  --bg-base:     #f0f4f8;
+  --bg-deep:     #f8fafc;
+  --bg-surface:  #ffffff;
+  --bg-card:     #f1f5f9;
+  --bg-card-high:#e8edf3;
+  --bg-overlay:  #dde3ea;
+
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+
+  --color-primary:       #3730a3;
+  --color-primary-light: #4f46e5;
+  --color-primary-dim:   #6366f1;
+  --color-secondary:     #7c3aed;
+  --color-tertiary:      #0284c7;
+  --color-success:       #0284c7;
+  --color-danger:        #dc2626;
+  --color-warning:       #d97706;
+
+  --border-color:  rgba(0, 0, 0, 0.07);
+  --border-subtle: rgba(0, 0, 0, 0.12);
+  --border-active: #4f46e5;
+
+  --glow-primary: 0 0 0 1px rgba(79, 70, 229, 0.12), 0 8px 24px rgba(79, 70, 229, 0.12);
+  --glow-active:  0 0 0 2px rgba(79, 70, 229, 0.25);
+}

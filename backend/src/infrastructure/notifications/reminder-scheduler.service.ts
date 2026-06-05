@@ -2,6 +2,7 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import type { IEventReminderRepository, DueReminder } from '../../domain/repositories/event-reminder-repository.interface';
 import { EvoApiService } from './evo-api.service';
+import { ResendService } from '../email/resend.service';
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   EXAM: '📝 Prova',
@@ -19,6 +20,7 @@ export class ReminderSchedulerService {
     @Inject('IEventReminderRepository')
     private reminderRepo: IEventReminderRepository,
     private evoApiService: EvoApiService,
+    private resendService: ResendService,
   ) {}
 
   @Cron(CronExpression.EVERY_MINUTE)
@@ -76,6 +78,15 @@ export class ReminderSchedulerService {
 
     if (reminder.method === 'WHATSAPP' && event.user.phone) {
       await this.evoApiService.sendWhatsApp(event.user.phone, message);
+    } else if (reminder.method === 'EMAIL') {
+      await this.resendService.sendReminderEmail(
+        event.user.email,
+        event.user.name,
+        event.title,
+        label,
+        timeStr,
+        when,
+      );
     }
   }
 

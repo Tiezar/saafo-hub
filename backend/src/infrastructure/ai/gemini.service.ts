@@ -19,22 +19,44 @@ export interface Insight {
   priority: 'high' | 'medium' | 'low';
 }
 
+export interface EssayEvaluation {
+  score: number;
+  feedback: string;
+  correct: string[];
+  missing: string[];
+}
+
 export interface GeminiGenerateOptions {
   text?: string;
   fileBuffer?: Buffer;
   mimeType?: string;
   theme?: string;
+  count?: number;
 }
 
 const INLINE_SIZE_LIMIT = 5 * 1024 * 1024; // 5 MB — use Files API above this
 
-const SYSTEM_PROMPT = `Você é um especialista em educação ativa e memorização. \
-Analise o conteúdo fornecido e extraia os conceitos mais importantes, \
-transformando-os em flashcards concisos e objetivos. \
-Cada flashcard deve ter: "front" (pergunta direta ou conceito lacunado) \
-e "back" (resposta direta, objetiva e explicativa). \
-Foque em conceitos-chave, definições, fórmulas e relações de causa-efeito. \
-Retorne os dados estritamente em português brasileiro.`;
+const SYSTEM_PROMPT = `Você é um especialista em educação ativa, memorização espaçada e elaboração de flashcards de alta qualidade.
+
+Ao analisar o conteúdo fornecido, siga estas diretrizes rigorosas:
+
+FRENTE (front):
+- Formule como pergunta direta, lacuna de completamento ("____ é responsável por...") ou pedido de definição
+- Seja específico o suficiente para ter uma única resposta correta
+- Evite perguntas vagas ou excessivamente amplas
+- Use o mesmo vocabulário técnico do texto original
+
+VERSO (back):
+- Resposta direta, objetiva e completa — sem rodeios
+- Inclua o essencial (definição, mecanismo, fórmula, consequência) em 1–3 frases
+- Quando cabível, adicione um exemplo prático ou mnemônico entre parênteses
+
+REGRAS GERAIS:
+- Priorize: definições técnicas, relações causa-efeito, fórmulas, etapas de processos, exceções e comparações
+- NÃO gere cards duplicados ou excessivamente similares
+- NÃO parafraseie trivialmente — cada card deve agregar valor independente
+- Escreva 100% em português brasileiro, tom acadêmico direto
+- Distribua os cards para cobrir o conteúdo de forma abrangente, não repetitiva`;
 
 @Injectable()
 export class GeminiService {
@@ -53,14 +75,16 @@ export class GeminiService {
     }
 
     const parts = await this.buildParts(options);
+    const countTarget = options.count ?? 10;
     const themeContext = options.theme?.trim()
-      ? `\n\nFoque especificamente no tema: "${options.theme.trim()}". Gere flashcards apenas sobre este assunto.`
+      ? `\n\nTEMA ESPECÍFICO: "${options.theme.trim()}" — gere flashcards exclusivamente sobre este assunto.`
       : '';
+    const countInstruction = `\n\nGere EXATAMENTE ${countTarget} flashcards. Nem mais, nem menos. Se o conteúdo for insuficiente para ${countTarget} cards únicos de qualidade, gere o máximo possível sem repetir.`;
 
     const userTextPart = {
       text: options.text
-        ? `Analise o seguinte conteúdo de estudos e gere flashcards:${themeContext}\n\n${options.text}`
-        : `Analise o conteúdo enviado e gere flashcards objetivos.${themeContext}`,
+        ? `Analise o seguinte conteúdo de estudos e gere flashcards:${themeContext}${countInstruction}\n\n${options.text}`
+        : `Analise o conteúdo enviado e gere flashcards objetivos.${themeContext}${countInstruction}`,
     };
 
     const payload = {
@@ -270,6 +294,75 @@ A explicação deve justificar a resposta correta e por que as outras estão err
     } catch (err) {
       this.logger.error(`Gemini quiz generation failed: ${(err as Error).message}`);
       throw new InternalServerErrorException(`Falha ao gerar quiz: ${(err as Error).message}`);
+    }
+  }
+
+  // ── Essay evaluation ──────────────────────────────────────────────────────
+
+  async evaluateEssayAnswer(
+    question: string,
+    expectedAnswer: string,
+    userAnswer: string,
+  ): Promise<EssayEvaluation> {
+    if (!this.apiKey) throw new InternalServerErrorException('GEMINI_API_KEY não configurado.');
+
+    const payload = {
+      contents: [{
+        parts: [{
+          text: `Avalie a resposta do estudante para a seguinte questão:
+
+QUESTÃO: ${question}
+
+GABARITO (resposta esperada): ${expectedAnswer}
+
+RESPOSTA DO ESTUDANTE: ${userAnswer || '(sem resposta)'}`,
+        }],
+      }],
+      systemInstruction: {
+        parts: [{
+          text: `Você é um professor avaliando respostas dissertativas de estudantes.
+Analise com rigor e precisão, comparando a resposta do estudante com o gabarito.
+
+Avalie e retorne:
+- score: nota de 0 a 10 (inteiro), onde 10 = completa e correta, 0 = sem resposta ou totalmente errada
+- feedback: 1-3 frases explicando a nota, tom didático e encorajador
+- correct: lista com os pontos que o estudante acertou ou mencionou (pode ser vazia)
+- missing: lista com os pontos importantes que faltaram ou estão incorretos (pode ser vazia)
+
+Critérios: seja justo mas exigente. Conceitos corretos mas incompletos = nota parcial. Termos diferentes mas equivalentes = aceite. Informação factualmente errada = desconte.
+Escreva em português brasileiro.`,
+        }],
+      },
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'OBJECT',
+          properties: {
+            score:    { type: 'INTEGER' },
+            feedback: { type: 'STRING' },
+            correct:  { type: 'ARRAY', items: { type: 'STRING' } },
+            missing:  { type: 'ARRAY', items: { type: 'STRING' } },
+          },
+          required: ['score', 'feedback', 'correct', 'missing'],
+        },
+      },
+    };
+
+    try {
+      const res = await fetch(
+        `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
+      );
+      if (!res.ok) throw new Error(`Gemini API ${res.status}: ${await res.text()}`);
+      const data = await res.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawText) throw new Error('Resposta vazia da Gemini API');
+      const parsed = JSON.parse(rawText) as EssayEvaluation;
+      parsed.score = Math.max(0, Math.min(10, parsed.score));
+      return parsed;
+    } catch (err) {
+      this.logger.error(`Gemini essay evaluation failed: ${(err as Error).message}`);
+      throw new InternalServerErrorException(`Falha ao avaliar resposta: ${(err as Error).message}`);
     }
   }
 

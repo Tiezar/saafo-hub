@@ -23,7 +23,7 @@ export class PrismaEventReminderRepository implements IEventReminderRepository {
             recurrenceDays: true,
             recurrenceEndsAt: true,
             userId: true,
-            user: { select: { phone: true } },
+            user: { select: { phone: true, email: true, name: true } },
           },
         },
       },
