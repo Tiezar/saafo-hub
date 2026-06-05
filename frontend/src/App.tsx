@@ -325,6 +325,25 @@ export default function App() {
     setPlanStatus(null); setInsights([]);
   }, []);
 
+  // ── API call ──────────────────────────────────────────────────────────────
+  const apiCall = useCallback(async (endpoint: string, options: RequestInit = {}) => {
+    const t = localStorage.getItem('token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(t ? { Authorization: `Bearer ${t}` } : {}),
+      ...(options.headers as Record<string, string> | undefined),
+    };
+    const res = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+    if (res.status === 401) { handleLogout(); throw new Error('Sessão expirada.'); }
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      const msg = Array.isArray(e.message) ? e.message.join(', ') : e.message || 'Erro na requisição';
+      throw new Error(msg);
+    }
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+  }, [handleLogout]);
+
   // ── Plan / Billing ─────────────────────────────────────────────────────────
   const fetchPlanStatus = useCallback(async () => {
     try { setPlanStatus(await apiCall('/billing/status')); }
@@ -354,25 +373,6 @@ export default function App() {
     } catch (e: unknown) { showError((e as Error).message); }
     finally { setCheckoutLoading(false); }
   }, [apiCall, showError]);
-
-  // ── API call ──────────────────────────────────────────────────────────────
-  const apiCall = useCallback(async (endpoint: string, options: RequestInit = {}) => {
-    const t = localStorage.getItem('token');
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(t ? { Authorization: `Bearer ${t}` } : {}),
-      ...(options.headers as Record<string, string> | undefined),
-    };
-    const res = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
-    if (res.status === 401) { handleLogout(); throw new Error('Sessão expirada.'); }
-    if (!res.ok) {
-      const e = await res.json().catch(() => ({}));
-      const msg = Array.isArray(e.message) ? e.message.join(', ') : e.message || 'Erro na requisição';
-      throw new Error(msg);
-    }
-    const text = await res.text();
-    return text ? JSON.parse(text) : null;
-  }, [handleLogout]);
 
   const storeAuth = useCallback((at: string, user: User) => {
     localStorage.setItem('token', at); setToken(at); setCurrentUser(user);
