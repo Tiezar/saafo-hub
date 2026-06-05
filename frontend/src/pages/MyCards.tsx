@@ -150,7 +150,12 @@ export default function MyCards() {
                           </span>
                         )}
                         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                          Próxima revisão: {new Date(c.nextReview).toLocaleDateString('pt-BR')}
+                          Próxima revisão: {(() => {
+                            const diff = Math.floor((new Date(c.nextReview).getTime() - now.getTime()) / 86400000);
+                            if (diff <= 0) return 'Hoje';
+                            if (diff === 1) return 'Amanhã';
+                            return `Em ${diff} dias`;
+                          })()}
                         </span>
                       </div>
                       <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{c.front}</div>

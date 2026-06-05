@@ -316,7 +316,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { if (token && !currentUser) fetchUserProfile(); }, [token, currentUser, fetchUserProfile]);
   useEffect(() => {
     if (currentUser) {
+      const now = new Date();
       fetchSubjects(); fetchMetrics(); fetchInstitutions(); fetchSpaces(); fetchPlanStatus();
+      fetchAllCards();
+      fetchCalendarEvents(now.getFullYear(), now.getMonth() + 1);
     }
   }, [currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
 

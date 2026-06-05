@@ -168,16 +168,16 @@ export class GeminiService {
       }],
       systemInstruction: {
         parts: [{
-          text: `Você é um tutor de estudos especializado que analisa métricas e gera insights motivadores e acionáveis.
-Regras:
+          text: `Você é um tutor de estudos que gera insights concisos e acionáveis.
+Regras obrigatórias:
 - Gere entre 4 e 6 insights baseados nos dados fornecidos
-- Use o nome do estudante naturalmente quando fizer sentido
-- Cada insight deve ter uma sugestão concreta e prática
-- Seja motivador mas honesto sobre pontos fracos
-- Escreva em português brasileiro, tom amigável e direto
-- Priorize insights mais urgentes como "high"
-- Types disponíveis: streak, weak_subject, exam_alert, overdue_cards, productivity_pattern, focus_concentration
-- Não gere insights sem dados suficientes (ex: não mencione exames se não houver)`,
+- title: máximo 5 palavras, imperativo direto (ex: "Revise Direito Civil hoje")
+- message: máximo 15 palavras, 1 frase, foco na ação (ex: "23 cards atrasados — revise 10 por dia para recuperar.")
+- Sem introduções, sem rodeios, sem repetir o título
+- Português brasileiro, tom direto
+- Priorize insights urgentes como "high"
+- Types: streak, weak_subject, exam_alert, overdue_cards, productivity_pattern, focus_concentration
+- Não mencione exames se não houver dados de exames`,
         }],
       },
       generationConfig: {

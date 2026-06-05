@@ -4,8 +4,8 @@ import { useApp } from '../contexts/AppContext';
 
 const RATINGS = [
   { value: 1, label: 'Não lembrei', key: '1', color: 'var(--color-danger)' },
-  { value: 2, label: 'Difícil',     key: '2', color: 'var(--color-warning)' },
-  { value: 3, label: 'Boa',         key: '3', color: 'var(--color-tertiary)' },
+  { value: 3, label: 'Difícil',     key: '2', color: 'var(--color-warning)' },
+  { value: 4, label: 'Boa',         key: '3', color: 'var(--color-tertiary)' },
   { value: 5, label: 'Fácil',       key: '4', color: 'var(--color-success)' },
 ];
 
