@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, RotateCw, CreditCard, X } from 'lucide-react';
+import { Star, RotateCw, CreditCard, X, Bot, ClipboardList, Lightbulb, MessageCircle, FileUp, CalendarDays, Timer } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 export default function UpgradeModal() {
@@ -27,16 +27,17 @@ export default function UpgradeModal() {
             <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>PIX · Boleto · Cartão de Crédito</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {[
-              '🤖 Geração ilimitada de flashcards com IA',
-              '📝 Sessão de Provas com IA (múltipla escolha)',
-              '💡 Insights inteligentes automáticos',
-              '📱 Lembretes via WhatsApp',
-              '📄 Upload de documentos PDF e imagens',
-              '🗓️ Calendário com recorrência e alertas',
-              '🍅 Pomodoro + todos os recursos básicos',
-            ].map(text => (
+            {([
+              { icon: <Bot size={15} color="var(--color-primary-light)" />, text: 'Geração ilimitada de flashcards com IA' },
+              { icon: <ClipboardList size={15} color="var(--color-success)" />, text: 'Sessão de Provas com IA (múltipla escolha)' },
+              { icon: <Lightbulb size={15} color="#f59e0b" />, text: 'Insights inteligentes automáticos' },
+              { icon: <MessageCircle size={15} color="var(--color-success)" />, text: 'Lembretes via WhatsApp' },
+              { icon: <FileUp size={15} color="var(--color-tertiary)" />, text: 'Upload de documentos PDF e imagens' },
+              { icon: <CalendarDays size={15} color="var(--color-primary-light)" />, text: 'Calendário com recorrência e alertas' },
+              { icon: <Timer size={15} color="var(--color-danger)" />, text: 'Pomodoro + todos os recursos básicos' },
+            ] as const).map(({ icon, text }) => (
               <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 14 }}>
+                <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>
                 <span>{text}</span>
               </div>
             ))}

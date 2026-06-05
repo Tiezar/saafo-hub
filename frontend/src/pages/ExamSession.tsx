@@ -297,7 +297,7 @@ export default function ExamSession() {
                         background: difficulty === d ? `${DIFF_COLORS[d]}18` : 'transparent',
                         color: difficulty === d ? DIFF_COLORS[d] : 'var(--text-secondary)',
                       }}>
-                      {d === 'easy' ? '🟢' : d === 'medium' ? '🟡' : '🔴'} {DIFF_LABELS[d]}
+                      {DIFF_LABELS[d]}
                     </button>
                   ))}
                 </div>
@@ -460,7 +460,7 @@ export default function ExamSession() {
               <div className="quiz-score-ring" style={{ color }}>{pct}%</div>
               <p style={{ fontSize: 18, fontWeight: 600, marginTop: 8 }}>{correct} de {questions.length} corretas</p>
               <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
-                {pct >= 80 ? '🎉 Excelente! Você domina este conteúdo.' : pct >= 60 ? '👍 Bom resultado! Revise os pontos errados.' : '📚 Estude mais e tente novamente.'}
+                {pct >= 80 ? 'Excelente! Você domina este conteúdo.' : pct >= 60 ? 'Bom resultado! Revise os pontos errados.' : 'Estude mais e tente novamente.'}
               </p>
               <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left' }}>
                 {questions.map((q, i) => (
@@ -498,7 +498,7 @@ export default function ExamSession() {
             </div>
             <p style={{ fontSize: 16, fontWeight: 600, marginTop: 8 }}>Média geral</p>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
-              {avgScore >= 8 ? '🎉 Excelente domínio do conteúdo!' : avgScore >= 5 ? '👍 Bom resultado! Revise os pontos faltantes.' : '📚 Estude mais e revise os conceitos.'}
+              {avgScore >= 8 ? 'Excelente domínio do conteúdo!' : avgScore >= 5 ? 'Bom resultado! Revise os pontos faltantes.' : 'Estude mais e revise os conceitos.'}
             </p>
           </div>
 

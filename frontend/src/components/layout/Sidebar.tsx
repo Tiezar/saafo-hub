@@ -32,7 +32,7 @@ export default function Sidebar() {
   const [spaceForm,    setSpaceForm]    = React.useState(false);
   const [newName,      setNewName]      = React.useState('');
   const [newColor,     setNewColor]     = React.useState('#494bd6');
-  const [newIcon,      setNewIcon]      = React.useState('📚');
+  const [newIcon,      setNewIcon]      = React.useState('BookOpen');
 
   async function submitSpace(e: React.FormEvent) {
     e.preventDefault();

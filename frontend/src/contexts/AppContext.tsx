@@ -5,7 +5,7 @@ import React, {
 import { API_URL } from '../lib/constants';
 import type {
   User, Institution, StudySpace, Subject, Topic, Card,
-  CalendarEvent, Metrics, PlanStatus, Insight, EventDraft,
+  CalendarEvent, Metrics, PlanStatus, Insight, EventDraft, UserEventType,
 } from '../types';
 import { blankDraft } from '../lib/utils';
 
@@ -40,6 +40,7 @@ interface AppContextValue {
   cards: Card[];
   metrics: Metrics | null;
   calendarEvents: CalendarEvent[];
+  eventTypes: UserEventType[];
   institutions: Institution[];
   planStatus: PlanStatus | null;
   insights: Insight[];
@@ -113,6 +114,11 @@ interface AppContextValue {
   handleUpdateCard: (id: string, front: string, back: string) => Promise<void>;
   fetchAllCards: () => Promise<void>;
   handleUpdateProfile: (data: Record<string, unknown>) => Promise<User>;
+  // Event types
+  fetchEventTypes: () => Promise<void>;
+  handleCreateEventType: (name: string, color: string, icon: string) => Promise<UserEventType>;
+  handleUpdateEventType: (id: string, patch: Partial<Pick<UserEventType, 'name' | 'color' | 'icon'>>) => Promise<void>;
+  handleDeleteEventType: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -170,6 +176,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [cards,         setCards]        = useState<Card[]>([]);
   const [metrics,       setMetrics]      = useState<Metrics | null>(null);
   const [calendarEvents,setCalendarEvents]= useState<CalendarEvent[]>([]);
+  const [eventTypes,    setEventTypes]   = useState<UserEventType[]>([]);
   const [institutions,  setInstitutions] = useState<Institution[]>([]);
   const [planStatus,    setPlanStatus]   = useState<PlanStatus | null>(null);
   const [insights,            setInsights]            = useState<Insight[]>([]);
@@ -322,6 +329,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       fetchSubjects(); fetchMetrics(); fetchInstitutions(); fetchSpaces(); fetchPlanStatus();
       fetchAllCards();
       fetchCalendarEvents(now.getFullYear(), now.getMonth() + 1);
+      fetchEventTypes();
     }
   }, [currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -434,6 +442,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setCards(list);
     } catch (e) { showError((e as Error).message); }
   }, [apiCall, showError]);
+
+  // ── Event types ───────────────────────────────────────────────────────────
+  const fetchEventTypes = useCallback(async () => {
+    try {
+      const list = await apiCall('/event-types') as UserEventType[];
+      setEventTypes(list);
+    } catch { /* non-critical */ }
+  }, [apiCall]);
+
+  const handleCreateEventType = useCallback(async (name: string, color: string, icon: string): Promise<UserEventType> => {
+    const created = await apiCall('/event-types', { method: 'POST', body: JSON.stringify({ name, color, icon }) }) as UserEventType;
+    setEventTypes(prev => [...prev, created]);
+    return created;
+  }, [apiCall]);
+
+  const handleUpdateEventType = useCallback(async (id: string, patch: Partial<Pick<UserEventType, 'name' | 'color' | 'icon'>>) => {
+    const updated = await apiCall(`/event-types/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }) as UserEventType;
+    setEventTypes(prev => prev.map(t => t.id === id ? updated : t));
+  }, [apiCall]);
+
+  const handleDeleteEventType = useCallback(async (id: string) => {
+    await apiCall(`/event-types/${id}`, { method: 'DELETE' });
+    setEventTypes(prev => prev.filter(t => t.id !== id));
+  }, [apiCall]);
 
   // ── Study session ─────────────────────────────────────────────────────────
   const startStudySession = useCallback(async (topicId?: string, ignoreContext = false) => {
@@ -601,7 +633,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     handleLogout, storeAuth, apiCall,
     theme, toggleTheme,
     toasts, showSuccess, showError, dismissToast,
-    spaces, subjects, topics, cards, metrics, calendarEvents,
+    spaces, subjects, topics, cards, metrics, calendarEvents, eventTypes,
     institutions, planStatus, insights, insightsLoading, insightsLastUpdated,
     activeSpaceId, setActiveSpaceId,
     selectedSubject, setSelectedSubject,
@@ -622,6 +654,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     handleCreateTopic, handleDeleteTopic,
     handleCreateCard, handleDeleteCard, handleUpdateCard, fetchAllCards,
     handleUpdateProfile,
+    fetchEventTypes, handleCreateEventType, handleUpdateEventType, handleDeleteEventType,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

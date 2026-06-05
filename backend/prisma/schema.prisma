@@ -7,14 +7,6 @@ generator client {
   engineType = "library"
 }
 
-enum EventType {
-  EXAM
-  DEADLINE
-  FIXED_BLOCK
-  REMINDER
-  STUDY_SESSION
-}
-
 enum ReminderMethod {
   WHATSAPP
   EMAIL
@@ -44,6 +36,7 @@ model User {
   calendarEvents      CalendarEvent[]
   insightCache        InsightCache?
   examRecords         ExamRecord[]
+  eventTypes          UserEventType[]
 
   @@map("users")
 }
@@ -101,6 +94,20 @@ model Subject {
   @@map("subjects")
 }
 
+model UserEventType {
+  id       String  @id @default(uuid())
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name     String
+  color    String  @default("#6366f1")
+  icon     String  @default("Calendar")
+  isSystem Boolean @default(false)
+  key      String?
+  order    Int     @default(0)
+
+  @@map("user_event_types")
+}
+
 model CalendarEvent {
   id               String          @id @default(uuid())
   userId           String
@@ -110,7 +117,7 @@ model CalendarEvent {
   subjectId        String?
   subject          Subject?        @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   title            String
-  type             EventType
+  type             String
   startAt          DateTime
   endAt            DateTime?
   allDay           Boolean         @default(false)

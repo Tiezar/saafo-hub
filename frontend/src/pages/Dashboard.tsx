@@ -2,16 +2,18 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpen, RotateCw, Flame, CheckCircle, Zap, RefreshCw,
-  Star, Calendar, ShieldAlert, Clock,
+  Star, Calendar, ShieldAlert, Clock, AlertTriangle, CalendarDays,
+  Moon, Target, Lightbulb,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { getEventMeta } from '../lib/constants';
+import { EventIcon } from '../components/EventIcon';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const {
     cards, metrics, insights, insightsLoading, insightsLastUpdated,
-    calendarEvents, planStatus,
+    calendarEvents, planStatus, eventTypes,
     fetchInsights, handleRefreshInsights,
     setUpgradeModalOpen,
     openEditEvent, startStudySession,
@@ -135,9 +137,13 @@ export default function Dashboard() {
                 : ins.priority === 'medium'
                 ? 'var(--color-warning)'
                 : 'var(--color-success)';
-              const typeIcon: Record<string, string> = {
-                streak: '🔥', weak_subject: '⚠️', exam_alert: '📅',
-                overdue_cards: '😴', productivity_pattern: '⏰', focus_concentration: '🎯',
+              const insightIcon: Record<string, React.ReactNode> = {
+                streak:                <Flame size={14} color="var(--color-warning)" />,
+                weak_subject:          <AlertTriangle size={14} color="var(--color-danger)" />,
+                exam_alert:            <CalendarDays size={14} color="var(--color-primary-light)" />,
+                overdue_cards:         <Moon size={14} color="var(--color-tertiary)" />,
+                productivity_pattern:  <Clock size={14} color="var(--text-muted)" />,
+                focus_concentration:   <Target size={14} color="var(--color-success)" />,
               };
               return (
                 <div key={i} style={{
@@ -145,7 +151,7 @@ export default function Dashboard() {
                   border: '1px solid var(--border-color)', borderLeft: `4px solid ${priorityColor}`,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                    <span style={{ fontSize: 16 }}>{typeIcon[ins.type] ?? '💡'}</span>
+                    <span style={{ display: 'flex', alignItems: 'center' }}>{insightIcon[ins.type] ?? <Lightbulb size={14} color="var(--color-warning)" />}</span>
                     <span style={{ fontWeight: 700, fontSize: 13 }}>{ins.title}</span>
                   </div>
                   <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>
@@ -204,7 +210,7 @@ export default function Dashboard() {
           ) : (
             <>
               {upcoming.map(ev => {
-                const meta = getEventMeta(ev.type);
+                const meta = getEventMeta(ev.type, eventTypes);
                 const d = new Date(ev.startAt);
                 return (
                   <div key={ev.id}
@@ -219,7 +225,7 @@ export default function Dashboard() {
                         {ev.recurrenceDays.length > 0 && ' · Recorrente'}
                       </div>
                     </div>
-                    <span style={{ fontSize: 10, color: meta.color, fontWeight: 600, flexShrink: 0 }}>{meta.emoji}</span>
+                    <EventIcon name={meta.icon} size={13} color={meta.color} />
                   </div>
                 );
               })}

@@ -53,6 +53,17 @@ export interface Metrics {
   }[];
 }
 
+export interface UserEventType {
+  id: string;
+  userId: string;
+  name: string;
+  color: string;
+  icon: string;
+  isSystem: boolean;
+  key: string | null;
+  order: number;
+}
+
 export interface ExamAttempt {
   id: string;
   examRecordId: string;

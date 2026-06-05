@@ -1,11 +1,3 @@
-export enum EventType {
-  EXAM = 'EXAM',
-  DEADLINE = 'DEADLINE',
-  FIXED_BLOCK = 'FIXED_BLOCK',
-  REMINDER = 'REMINDER',
-  STUDY_SESSION = 'STUDY_SESSION',
-}
-
 export enum ReminderMethod {
   WHATSAPP = 'WHATSAPP',
   EMAIL = 'EMAIL',
@@ -29,7 +21,7 @@ export class CalendarEvent {
     public readonly id: string,
     public userId: string,
     public title: string,
-    public type: EventType,
+    public type: string,
     public startAt: Date,
     public endAt: Date | null,
     public allDay: boolean,

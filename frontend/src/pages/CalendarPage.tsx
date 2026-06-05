@@ -1,8 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Clock, Repeat, Bell, X, Check, RotateCw, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  ChevronLeft, ChevronRight, Plus, Clock, Repeat, Bell, X, Check, RotateCw,
+  ChevronDown, ChevronUp, Settings, Pencil, Trash2,
+} from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
-import { DAYS_PT_SHORT, MONTHS_PT, EVENT_TYPES, getEventMeta, REMINDER_PRESETS } from '../lib/constants';
+import { DAYS_PT_SHORT, MONTHS_PT, getEventMeta, REMINDER_PRESETS } from '../lib/constants';
 import { getCalendarDays, eventOccursOn, formatEventTime, blankDraft } from '../lib/utils';
+import { EventIcon, AVAILABLE_EVENT_ICONS } from '../components/EventIcon';
+import type { UserEventType } from '../types';
 
 export default function CalendarPage() {
   const {
@@ -10,13 +15,14 @@ export default function CalendarPage() {
     eventModalOpen, eventDraft, setEventDraft, draftSaving,
     openCreateEventWithData, openEditEvent, handleSaveEvent, handleDeleteEvent, closeEventModal,
     quickCreateEvent, fetchCalendarEvents, subjects, spaces, currentUser,
+    eventTypes, handleCreateEventType, handleUpdateEventType, handleDeleteEventType,
   } = useApp();
 
   const [tab, setTab] = useState<'month' | 'agenda'>('month');
 
   // Quick-add state
   const [quickTitle,  setQuickTitle]  = useState('');
-  const [quickType,   setQuickType]   = useState('STUDY');
+  const [quickType,   setQuickType]   = useState('');
   const [quickDate,   setQuickDate]   = useState(() => new Date().toISOString().slice(0, 10));
   const [quickAllDay, setQuickAllDay] = useState(true);
   const [quickSaving, setQuickSaving] = useState(false);
@@ -25,12 +31,25 @@ export default function CalendarPage() {
   // Modal advanced section
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
+  // Event types management modal
+  const [typesModalOpen, setTypesModalOpen] = useState(false);
+  const [editingType,    setEditingType]    = useState<UserEventType | null>(null);
+  const [typeName,  setTypeName]  = useState('');
+  const [typeColor, setTypeColor] = useState('#6366f1');
+  const [typeIcon,  setTypeIcon]  = useState('Calendar');
+  const [typesSaving, setTypesSaving] = useState(false);
+
   const year  = calendarMonth.getFullYear();
   const month = calendarMonth.getMonth();
 
   useEffect(() => {
     fetchCalendarEvents(year, month + 1);
   }, [year, month]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Set default quickType when eventTypes loads
+  useEffect(() => {
+    if (eventTypes.length && !quickType) setQuickType(eventTypes[0].id);
+  }, [eventTypes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const days  = getCalendarDays(year, month);
   const today = new Date();
@@ -49,9 +68,7 @@ export default function CalendarPage() {
     e.preventDefault();
     if (!quickTitle.trim()) return;
     setQuickSaving(true);
-    const startAt = quickAllDay
-      ? `${quickDate}T00:00`
-      : `${quickDate}T09:00`;
+    const startAt = quickAllDay ? `${quickDate}T00:00` : `${quickDate}T09:00`;
     await quickCreateEvent(quickTitle.trim(), quickType, startAt, quickAllDay);
     setQuickTitle('');
     setQuickSaving(false);
@@ -59,12 +76,7 @@ export default function CalendarPage() {
 
   const handleMoreOptions = () => {
     const startAt = quickAllDay ? `${quickDate}T00:00` : `${quickDate}T09:00`;
-    openCreateEventWithData({
-      title: quickTitle,
-      type: quickType,
-      startAt,
-      allDay: quickAllDay,
-    });
+    openCreateEventWithData({ title: quickTitle, type: quickType, startAt, allDay: quickAllDay });
     setAdvancedOpen(false);
   };
 
@@ -73,6 +85,32 @@ export default function CalendarPage() {
   const updateReminder = (i: number, patch: Partial<{ minutesBefore: number; method: string }>) =>
     setEventDraft(d => ({ ...d, reminders: d.reminders.map((r, idx) => idx === i ? { ...r, ...patch } : r) }));
 
+  // ── Type management modal helpers ─────────────────────────────────────────
+  function openNewType() {
+    setEditingType(null); setTypeName(''); setTypeColor('#6366f1'); setTypeIcon('Calendar');
+    setTypesModalOpen(true);
+  }
+  function openEditType(t: UserEventType) {
+    setEditingType(t); setTypeName(t.name); setTypeColor(t.color); setTypeIcon(t.icon);
+    setTypesModalOpen(true);
+  }
+  async function saveType() {
+    if (!typeName.trim()) return;
+    setTypesSaving(true);
+    try {
+      if (editingType) {
+        await handleUpdateEventType(editingType.id, { name: typeName.trim(), color: typeColor, icon: typeIcon });
+      } else {
+        await handleCreateEventType(typeName.trim(), typeColor, typeIcon);
+      }
+      setTypesModalOpen(false);
+    } finally { setTypesSaving(false); }
+  }
+  async function removeType(id: string) {
+    if (!window.confirm('Excluir este tipo de evento?')) return;
+    await handleDeleteEventType(id);
+  }
+
   return (
     <div className="page">
       <div className="page-header">
@@ -80,27 +118,21 @@ export default function CalendarPage() {
           <h1 className="page-title">Calendário</h1>
           <p className="page-subtitle">Organize provas, entregas e blocos de estudo</p>
         </div>
+        <button className="btn-secondary" style={{ width: 'auto', padding: '8px 14px' }}
+          onClick={() => setTypesModalOpen(true)}>
+          <Settings size={15} /> Tipos de evento
+        </button>
       </div>
 
       {/* Quick-add bar */}
       <form onSubmit={handleQuickSubmit} className="glass-card" style={{ marginBottom: 20, padding: '14px 16px' }}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <input
-            ref={quickTitleRef}
-            type="text"
-            className="form-input"
+          <input ref={quickTitleRef} type="text" className="form-input"
             placeholder="Título do evento..."
-            value={quickTitle}
-            onChange={e => setQuickTitle(e.target.value)}
-            style={{ flex: '1 1 200px', minWidth: 0 }}
-          />
-          <input
-            type="date"
-            className="form-input"
-            value={quickDate}
-            onChange={e => setQuickDate(e.target.value)}
-            style={{ width: 160 }}
-          />
+            value={quickTitle} onChange={e => setQuickTitle(e.target.value)}
+            style={{ flex: '1 1 200px', minWidth: 0 }} />
+          <input type="date" className="form-input" value={quickDate}
+            onChange={e => setQuickDate(e.target.value)} style={{ width: 160 }} />
           <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
             <input type="checkbox" checked={quickAllDay} onChange={e => setQuickAllDay(e.target.checked)} />
             Dia todo
@@ -119,16 +151,18 @@ export default function CalendarPage() {
 
         {/* Type chips */}
         <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-          {EVENT_TYPES.map(et => (
-            <button key={et.value} type="button"
-              onClick={() => setQuickType(et.value)}
+          {eventTypes.map(et => (
+            <button key={et.id} type="button"
+              onClick={() => setQuickType(et.id)}
               style={{
+                display: 'flex', alignItems: 'center', gap: 5,
                 padding: '4px 12px', borderRadius: 20, border: `1px solid ${et.color}44`,
                 cursor: 'pointer', fontSize: 11, fontWeight: 600,
-                background: quickType === et.value ? `${et.color}22` : 'transparent',
-                color: quickType === et.value ? et.color : 'var(--text-secondary)',
+                background: quickType === et.id ? `${et.color}22` : 'transparent',
+                color: quickType === et.id ? et.color : 'var(--text-secondary)',
               }}>
-              {et.emoji} {et.label}
+              <EventIcon name={et.icon} size={11} color={quickType === et.id ? et.color : 'var(--text-muted)'} />
+              {et.name}
             </button>
           ))}
         </div>
@@ -182,7 +216,7 @@ export default function CalendarPage() {
                   onClick={() => handleDayClick(day)}>
                   <div className="calendar-day-number">{day.getDate()}</div>
                   {dayEvts.slice(0, 3).map((ev, ei) => {
-                    const meta = getEventMeta(ev.type);
+                    const meta = getEventMeta(ev.type, eventTypes);
                     return (
                       <div key={ei} className="event-pill"
                         style={{ background: `${meta.color}22`, color: meta.color, borderLeft: `3px solid ${meta.color}` }}
@@ -196,20 +230,21 @@ export default function CalendarPage() {
               );
             })}
           </div>
+          {/* Legend */}
           <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
-            {EVENT_TYPES.map(et => (
-              <div key={et.value} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
-                <div style={{ width: 10, height: 10, borderRadius: 2, background: et.color }} />
-                {et.emoji} {et.label}
+            {eventTypes.map(et => (
+              <div key={et.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
+                <EventIcon name={et.icon} size={12} color={et.color} />
+                {et.name}
               </div>
             ))}
           </div>
         </>
       ) : (
-        <AgendaView events={calendarEvents} today={today} subjects={subjects} openEditEvent={openEditEvent} />
+        <AgendaView events={calendarEvents} today={today} subjects={subjects} openEditEvent={openEditEvent} eventTypes={eventTypes} />
       )}
 
-      {/* Event Modal — title/type/date always visible, advanced collapsed */}
+      {/* ── Event Modal ────────────────────────────────────────────────────── */}
       {eventModalOpen && (
         <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) closeEventModal(); }}>
           <div className="modal" style={{ maxWidth: 520 }}>
@@ -219,33 +254,32 @@ export default function CalendarPage() {
             </div>
 
             <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              {/* Title */}
               <div className="form-group">
                 <label className="form-label">Título *</label>
                 <input type="text" className="form-input" placeholder="Nome do evento" autoFocus
                   value={eventDraft.title} onChange={e => setEventDraft(d => ({ ...d, title: e.target.value }))} />
               </div>
 
-              {/* Type */}
               <div className="form-group">
                 <label className="form-label">Tipo</label>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {EVENT_TYPES.map(et => (
-                    <button key={et.value} type="button"
-                      onClick={() => setEventDraft(d => ({ ...d, type: et.value }))}
+                  {eventTypes.map(et => (
+                    <button key={et.id} type="button"
+                      onClick={() => setEventDraft(d => ({ ...d, type: et.id }))}
                       style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
                         padding: '6px 14px', borderRadius: 20, border: `1px solid ${et.color}44`,
                         cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                        background: eventDraft.type === et.value ? `${et.color}22` : 'transparent',
-                        color: eventDraft.type === et.value ? et.color : 'var(--text-secondary)',
+                        background: eventDraft.type === et.id || eventDraft.type === et.key ? `${et.color}22` : 'transparent',
+                        color: eventDraft.type === et.id || eventDraft.type === et.key ? et.color : 'var(--text-secondary)',
                       }}>
-                      {et.emoji} {et.label}
+                      <EventIcon name={et.icon} size={12} color={eventDraft.type === et.id || eventDraft.type === et.key ? et.color : 'var(--text-muted)'} />
+                      {et.name}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Date/Time */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'end' }}>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label">{eventDraft.allDay ? 'Data' : 'Data e Horário'}</label>
@@ -263,14 +297,12 @@ export default function CalendarPage() {
                 </div>
               </div>
 
-              {/* Advanced toggle */}
-              <button type="button"
-                onClick={() => setAdvancedOpen(o => !o)}
+              <button type="button" onClick={() => setAdvancedOpen(o => !o)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center',
                   background: 'none', border: '1px dashed var(--border-color)', borderRadius: 8,
                   color: 'var(--text-muted)', cursor: 'pointer', padding: '8px', fontSize: 13,
-                  marginBottom: advancedOpen ? 16 : 0, width: '100%', transition: 'var(--transition)',
+                  marginBottom: advancedOpen ? 16 : 0, width: '100%',
                 }}>
                 {advancedOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 {advancedOpen ? 'Ocultar configurações avançadas' : 'Configurações avançadas (término, matéria, lembretes…)'}
@@ -285,15 +317,13 @@ export default function CalendarPage() {
                         onChange={e => setEventDraft(d => ({ ...d, endAt: e.target.value }))} />
                     </div>
                   )}
-
-                  {/* Space & Subject */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div className="form-group" style={{ margin: 0 }}>
                       <label className="form-label">Área (opcional)</label>
                       <select className="form-input" value={eventDraft.spaceId}
                         onChange={e => setEventDraft(d => ({ ...d, spaceId: e.target.value }))}>
                         <option value="">Sem área</option>
-                        {spaces.map(s => <option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}
+                        {spaces.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                       </select>
                     </div>
                     <div className="form-group" style={{ margin: 0 }}>
@@ -305,16 +335,12 @@ export default function CalendarPage() {
                       </select>
                     </div>
                   </div>
-
-                  {/* Notes */}
                   <div className="form-group">
                     <label className="form-label">Notas (opcional)</label>
                     <textarea className="form-input" rows={2} style={{ resize: 'vertical' }}
                       value={eventDraft.notes} onChange={e => setEventDraft(d => ({ ...d, notes: e.target.value }))}
                       placeholder="Observações..." />
                   </div>
-
-                  {/* Recurrence */}
                   <div className="form-group">
                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: 8 }}>
                       <input type="checkbox" checked={eventDraft.recurrenceEnabled}
@@ -350,8 +376,6 @@ export default function CalendarPage() {
                       </div>
                     )}
                   </div>
-
-                  {/* Reminders */}
                   <div className="form-group">
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                       <label className="form-label" style={{ margin: 0 }}><Bell size={12} style={{ marginRight: 4 }} />Lembretes</label>
@@ -408,17 +432,118 @@ export default function CalendarPage() {
           </div>
         </div>
       )}
+
+      {/* ── Event Types Management Modal ──────────────────────────────────── */}
+      {typesModalOpen && (
+        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setTypesModalOpen(false); }}>
+          <div className="modal" style={{ maxWidth: 480 }}>
+            <div className="modal-header">
+              <h3>Tipos de Evento</h3>
+              <button onClick={() => setTypesModalOpen(false)} className="btn-ghost btn-icon"><X size={18} /></button>
+            </div>
+            <div className="modal-body">
+              {/* List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+                {eventTypes.map(et => (
+                  <div key={et.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
+                    borderRadius: 8, background: 'var(--bg-surface)', border: '1px solid var(--border-color)',
+                  }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: `${et.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <EventIcon name={et.icon} size={16} color={et.color} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{et.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{et.isSystem ? 'Padrão' : 'Personalizado'}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button onClick={() => openEditType(et)} title="Editar"
+                        style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 7, borderRadius: 6, display: 'flex', alignItems: 'center' }}>
+                        <Pencil size={13} />
+                      </button>
+                      <button onClick={() => removeType(et.id)} title="Excluir"
+                        style={{ background: 'rgba(255,180,171,0.08)', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', padding: 7, borderRadius: 6, display: 'flex', alignItems: 'center' }}>
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Form: create or edit */}
+              <div style={{ padding: 16, borderRadius: 10, background: 'var(--bg-overlay)', border: '1px solid var(--color-primary)40' }}>
+                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12 }}>
+                  {editingType ? 'Editar tipo' : 'Novo tipo'}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Nome</label>
+                  <input type="text" className="form-input" value={typeName}
+                    onChange={e => setTypeName(e.target.value)} placeholder="Ex: Simulado, Apresentação..." maxLength={40} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">Cor</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input type="color" value={typeColor} onChange={e => setTypeColor(e.target.value)}
+                        style={{ width: 36, height: 36, padding: 2, borderRadius: 6, border: '1px solid var(--border-color)', cursor: 'pointer', background: 'transparent' }} />
+                      <input type="text" className="form-input" value={typeColor}
+                        onChange={e => setTypeColor(e.target.value)} style={{ fontFamily: 'monospace', fontSize: 13 }} />
+                    </div>
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">Ícone selecionado</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 38, padding: '0 12px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-surface)' }}>
+                      <EventIcon name={typeIcon} size={16} color={typeColor} />
+                      <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{typeIcon}</span>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ marginTop: 12 }}>
+                  <label className="form-label">Escolher ícone</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 6 }}>
+                    {AVAILABLE_EVENT_ICONS.map(name => (
+                      <button key={name} type="button" title={name}
+                        onClick={() => setTypeIcon(name)}
+                        style={{
+                          padding: 8, borderRadius: 7, border: `1px solid ${typeIcon === name ? typeColor : 'var(--border-subtle)'}`,
+                          background: typeIcon === name ? `${typeColor}20` : 'transparent',
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                        <EventIcon name={name} size={16} color={typeIcon === name ? typeColor : 'var(--text-muted)'} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
+                  {editingType && (
+                    <button type="button" onClick={() => { setEditingType(null); setTypeName(''); setTypeColor('#6366f1'); setTypeIcon('Calendar'); }}
+                      style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 13 }}>
+                      Cancelar edição
+                    </button>
+                  )}
+                  <button type="button" className="btn-primary" style={{ width: 'auto', padding: '9px 20px' }}
+                    onClick={saveType} disabled={typesSaving || !typeName.trim()}>
+                    {typesSaving ? <RotateCw size={14} className="animate-spin" /> : <Check size={14} />}
+                    {editingType ? 'Salvar' : 'Criar tipo'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function AgendaView({
-  events, today, subjects, openEditEvent,
+  events, today, subjects, openEditEvent, eventTypes,
 }: {
   events: ReturnType<typeof useApp>['calendarEvents'];
   today: Date;
   subjects: ReturnType<typeof useApp>['subjects'];
   openEditEvent: ReturnType<typeof useApp>['openEditEvent'];
+  eventTypes: ReturnType<typeof useApp>['eventTypes'];
 }) {
   const agendaDays: { date: Date; events: typeof events }[] = [];
   for (let i = 0; i < 30; i++) {
@@ -473,7 +598,7 @@ function AgendaView({
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 52 }}>
                 {dayEvts.map(ev => {
-                  const meta = getEventMeta(ev.type);
+                  const meta = getEventMeta(ev.type, eventTypes);
                   const subj = subjects.find(s => s.id === ev.subjectId);
                   return (
                     <div key={ev.id} onClick={() => openEditEvent(ev)}
@@ -484,7 +609,10 @@ function AgendaView({
                       }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
-                          <div style={{ fontWeight: 600, fontSize: 14 }}>{meta.emoji} {ev.title}</div>
+                          <div style={{ fontWeight: 600, fontSize: 14, display: 'flex', alignItems: 'center', gap: 7 }}>
+                            <EventIcon name={meta.icon} size={14} color={meta.color} />
+                            {ev.title}
+                          </div>
                           <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
                             <Clock size={10} /> {formatEventTime(ev)}
                             {ev.recurrenceDays.length > 0 && <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Repeat size={10} /> recorrente</span>}
