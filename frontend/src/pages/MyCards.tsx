@@ -41,7 +41,7 @@ export default function MyCards() {
           <h1 className="page-title">Meus Flashcards</h1>
           <p className="page-subtitle">Visualize, busque e gerencie todos os seus flashcards</p>
         </div>
-        <button className="btn-primary" onClick={startStudySession}>
+        <button className="btn-primary" onClick={() => startStudySession(undefined, true)}>
           <RotateCw size={16} /> Estudar Pendentes
         </button>
       </div>

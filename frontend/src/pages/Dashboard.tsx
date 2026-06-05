@@ -31,7 +31,7 @@ export default function Dashboard() {
           <h1 className="page-title">Dashboard</h1>
           <p className="page-subtitle">Acompanhe estatísticas e revisões pendentes</p>
         </div>
-        <button className="btn-primary" onClick={startStudySession}>
+        <button className="btn-primary" onClick={() => startStudySession(undefined, true)}>
           <RotateCw size={16} /> Estudar Pendentes
         </button>
       </div>

@@ -66,7 +66,7 @@ interface AppContextValue {
   setIsCardFlipped: (v: boolean) => void;
   sessionDone: boolean;
   sessionStats: { ratings: number[]; startTime: number } | null;
-  startStudySession: (topicId?: string) => Promise<void>;
+  startStudySession: (topicId?: string, ignoreContext?: boolean) => Promise<void>;
   handleReviewCard: (rating: number) => Promise<void>;
   closeSession: () => void;
 
@@ -430,12 +430,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [apiCall, showError]);
 
   // ── Study session ─────────────────────────────────────────────────────────
-  const startStudySession = useCallback(async (topicId?: string) => {
+  const startStudySession = useCallback(async (topicId?: string, ignoreContext = false) => {
+    // Ensure cards are loaded — fetch all if state is empty
+    let pool = cards;
+    if (pool.length === 0) {
+      try {
+        const list = await apiCall('/cards/all') as Card[];
+        setCards(list);
+        pool = list;
+      } catch { /* silent — will show "sem pendentes" below if truly empty */ }
+    }
+
     const now = new Date();
-    const due = cards.filter(c => {
+    const due = pool.filter(c => {
       if (topicId) return c.topicId === topicId && new Date(c.nextReview) <= now;
-      if (selectedTopic) return c.topicId === selectedTopic.id && new Date(c.nextReview) <= now;
-      if (selectedSubject) return topics.filter(t => t.subjectId === selectedSubject.id).some(t => t.id === c.topicId) && new Date(c.nextReview) <= now;
+      if (!ignoreContext && selectedTopic) return c.topicId === selectedTopic.id && new Date(c.nextReview) <= now;
+      if (!ignoreContext && selectedSubject) return topics.filter(t => t.subjectId === selectedSubject.id).some(t => t.id === c.topicId) && new Date(c.nextReview) <= now;
       return new Date(c.nextReview) <= now;
     });
     if (!due.length) { showError('Não há cards pendentes!'); return; }
