@@ -108,7 +108,7 @@ interface AppContextValue {
   handleDeleteSubject: (id: string) => Promise<void>;
   handleCreateTopic: (name: string) => Promise<void>;
   handleDeleteTopic: (id: string) => Promise<void>;
-  handleCreateCard: (front: string, back: string) => Promise<void>;
+  handleCreateCard: (front: string, back: string, topicId?: string) => Promise<void>;
   handleDeleteCard: (id: string) => Promise<void>;
   handleUpdateCard: (id: string, front: string, back: string) => Promise<void>;
   fetchAllCards: () => Promise<void>;
@@ -402,10 +402,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [apiCall, selectedTopic, showSuccess, showError]);
 
   // ── CRUD — Cards ──────────────────────────────────────────────────────────
-  const handleCreateCard = useCallback(async (front: string, back: string) => {
-    if (!selectedTopic) return;
+  const handleCreateCard = useCallback(async (front: string, back: string, topicId?: string) => {
+    const tid = topicId ?? selectedTopic?.id;
+    if (!tid) return;
     try {
-      const c = await apiCall('/cards', { method: 'POST', body: JSON.stringify({ front, back, topicId: selectedTopic.id }) }) as Card;
+      const c = await apiCall('/cards', { method: 'POST', body: JSON.stringify({ front, back, topicId: tid }) }) as Card;
       setCards(prev => [...prev, c]);
       showSuccess('Card criado!');
     } catch (e) { showError((e as Error).message); }
