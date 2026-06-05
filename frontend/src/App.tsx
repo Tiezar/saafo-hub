@@ -175,6 +175,7 @@ export default function App() {
   const [authName,    setAuthName]    = useState('');
   const [authPassword,setAuthPassword]= useState('');
   const [authLoading, setAuthLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [isRegistering,setIsRegistering] = useState(false);
 
   // Theme
@@ -391,6 +392,22 @@ export default function App() {
     finally { setAuthLoading(false); }
   }, [apiCall, storeAuth, showError]);
 
+  const handleResendEmail = useCallback(async () => {
+    if (!emailPending) return;
+    setResendLoading(true);
+    try {
+      const d = await apiCall('/auth/resend-verification', {
+        method: 'POST',
+        body: JSON.stringify({ email: emailPending }),
+      });
+      showSuccess(d.message);
+    } catch (e: unknown) {
+      showError((e as Error).message);
+    } finally {
+      setResendLoading(false);
+    }
+  }, [emailPending, apiCall, showSuccess, showError]);
+
   const handleAuth = useCallback(async (e: React.FormEvent) => {
     e.preventDefault(); setAuthLoading(true);
     try {
@@ -402,7 +419,16 @@ export default function App() {
         const d = await apiCall('/auth/login', { method: 'POST', body: JSON.stringify({ email: authEmail, password: authPassword }) });
         storeAuth(d.access_token, d.user);
       }
-    } catch (e: unknown) { showError((e as Error).message); }
+    } catch (e: unknown) {
+      const msg = (e as Error).message;
+      if (!isRegistering && msg && (msg.toLowerCase().includes('não verificado') || msg.toLowerCase().includes('caixa de entrada') || msg.toLowerCase().includes('verify-email'))) {
+        setEmailPending(authEmail);
+        setAuthEmail('');
+        setAuthPassword('');
+      } else {
+        showError(msg);
+      }
+    }
     finally { setAuthLoading(false); }
   }, [isRegistering, authEmail, authName, authPassword, apiCall, storeAuth, showError, showSuccess]);
 
@@ -867,10 +893,17 @@ export default function App() {
           <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 28, lineHeight: 1.6 }}>
             Clique no link do email para ativar sua conta.<br/>O link expira em 24 horas.
           </p>
-          <button className="btn-secondary" style={{ width: 'auto', padding: '10px 24px', margin: '0 auto' }}
-            onClick={() => { setEmailPending(null); setIsRegistering(false); }}>
-            Voltar ao login
-          </button>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 16 }}>
+            <button className="btn-secondary" style={{ width: 'auto', padding: '10px 20px' }}
+              onClick={() => { setEmailPending(null); setIsRegistering(false); }}>
+              Voltar ao login
+            </button>
+            <button className="btn-primary" style={{ width: 'auto', padding: '10px 20px', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+              onClick={handleResendEmail} disabled={resendLoading}>
+              {resendLoading && <RotateCw size={14} className="animate-spin"/>}
+              Reenviar e-mail
+            </button>
+          </div>
         </div>
       </div>
     );

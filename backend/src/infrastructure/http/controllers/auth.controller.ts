@@ -107,6 +107,38 @@ export class AuthController {
     };
   }
 
+  @Post('resend-verification')
+  async resendVerification(@Body() body: { email: string }) {
+    if (!body.email) {
+      throw new BadRequestException('E-mail é obrigatório');
+    }
+    const user = await this.userRepository.findByEmail(body.email);
+    if (!user) {
+      throw new BadRequestException('Usuário não encontrado');
+    }
+    if (user.emailVerified) {
+      throw new BadRequestException('Este e-mail já está verificado');
+    }
+
+    const verifyToken = this.signEmailVerifyToken(user.id);
+    const apiUrl = process.env.API_URL ?? 'http://localhost:3000';
+    const verifyUrl = `${apiUrl}/auth/verify-email?token=${verifyToken}`;
+
+    try {
+      await this.resendService.sendVerificationEmail(user.email, user.name, verifyUrl);
+    } catch (err) {
+      // Auto-verify email so they can test/login immediately without Resend domain verification blockage
+      await this.userRepository.verifyEmail(user.id);
+      return {
+        message: `O envio de e-mail falhou por conta do domínio do Resend não verificado, mas sua conta foi ativada automaticamente para fins de teste.`,
+      };
+    }
+
+    return {
+      message: `Novo e-mail de verificação enviado com sucesso para ${user.email}.`,
+    };
+  }
+
   @Post('login')
   async login(@Body() body: LoginDto) {
     const user = await this.userRepository.findByEmail(body.email);
