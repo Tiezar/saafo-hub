@@ -149,14 +149,19 @@ export default function MyCards() {
                             Pendente
                           </span>
                         )}
-                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                          Próxima revisão: {(() => {
-                            const diff = Math.floor((new Date(c.nextReview).getTime() - now.getTime()) / 86400000);
-                            if (diff <= 0) return 'Hoje';
-                            if (diff === 1) return 'Amanhã';
-                            return `Em ${diff} dias`;
-                          })()}
-                        </span>
+                        {isDue ? (
+                          <span style={{ fontSize: 11, color: 'var(--color-danger)', fontWeight: 600 }}>
+                            Pendente — revisar agora
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                            Próxima revisão: {(() => {
+                              const diff = Math.floor((new Date(c.nextReview).getTime() - now.getTime()) / 86400000);
+                              if (diff === 1) return 'Amanhã';
+                              return `Em ${diff} dia${diff !== 1 ? 's' : ''}`;
+                            })()}
+                          </span>
+                        )}
                       </div>
                       <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{c.front}</div>
                       <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{c.back}</div>

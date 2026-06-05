@@ -66,6 +66,7 @@ interface AppContextValue {
   setIsCardFlipped: (v: boolean) => void;
   sessionDone: boolean;
   sessionStats: { ratings: number[]; startTime: number } | null;
+  requeuedCardIds: Set<string>;
   startStudySession: (topicId?: string, ignoreContext?: boolean) => Promise<void>;
   handleReviewCard: (rating: number) => Promise<void>;
   closeSession: () => void;
@@ -187,6 +188,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isCardFlipped,           setIsCardFlipped]           = useState(false);
   const [sessionDone,             setSessionDone]             = useState(false);
   const [sessionStats,            setSessionStats]            = useState<{ ratings: number[]; startTime: number } | null>(null);
+  const [requeuedCardIds,         setRequeuedCardIds]         = useState<Set<string>>(new Set());
 
   // ── Calendar modal ────────────────────────────────────────────────────────
   const [calendarMonth,  setCalendarMonth]  = useState(() => new Date());
@@ -457,6 +459,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setActiveSessionId(s.id); setSessionCards(due);
       setCurrentSessionCardIndex(0); setIsCardFlipped(false);
       setSessionDone(false); setSessionStats({ ratings: [], startTime: Date.now() });
+      setRequeuedCardIds(new Set());
     } catch (e) { showError((e as Error).message); }
   }, [cards, selectedTopic, selectedSubject, topics, apiCall, showError]);
 
@@ -466,19 +469,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       await apiCall('/study-sessions/review', { method: 'POST', body: JSON.stringify({ cardId: card.id, sessionId: activeSessionId, rating }) });
       setSessionStats(prev => prev ? { ...prev, ratings: [...prev.ratings, rating] } : prev);
-      if (currentSessionCardIndex + 1 < sessionCards.length) {
+
+      // Re-fila Anki: se errou e ainda não foi re-enfileirado, coloca no fim
+      const willRequeue = rating === 1 && !requeuedCardIds.has(card.id);
+      if (willRequeue) {
+        setSessionCards(prev => [...prev, card]);
+        setRequeuedCardIds(prev => new Set([...prev, card.id]));
+      }
+
+      const nextIndex = currentSessionCardIndex + 1;
+      const remaining = sessionCards.length - nextIndex + (willRequeue ? 1 : 0);
+      if (remaining > 0) {
         setIsCardFlipped(false);
-        setTimeout(() => setCurrentSessionCardIndex(i => i + 1), 120);
+        setTimeout(() => setCurrentSessionCardIndex(nextIndex), 120);
       } else {
         setSessionDone(true);
         fetchMetrics();
       }
     } catch (e) { showError((e as Error).message); }
-  }, [activeSessionId, sessionCards, currentSessionCardIndex, apiCall, showError, fetchMetrics]);
+  }, [activeSessionId, sessionCards, currentSessionCardIndex, requeuedCardIds, apiCall, showError, fetchMetrics]);
 
   const closeSession = useCallback(() => {
     setActiveSessionId(null); setSessionCards([]);
     setSessionDone(false); setSessionStats(null);
+    setRequeuedCardIds(new Set());
   }, []);
 
   // ── Calendar modal ────────────────────────────────────────────────────────
@@ -594,7 +608,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     visibleSubjects, visibleTopics,
     activeSessionId, sessionCards, currentSessionCardIndex,
     isCardFlipped, setIsCardFlipped,
-    sessionDone, sessionStats,
+    sessionDone, sessionStats, requeuedCardIds,
     startStudySession, handleReviewCard, closeSession,
     calendarMonth, setCalendarMonth,
     eventModalOpen, eventDraft, setEventDraft, draftSaving,

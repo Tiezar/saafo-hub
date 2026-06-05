@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X, RotateCcw, CheckCircle2 } from 'lucide-react';
+import { X, RotateCcw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 const RATINGS = [
@@ -13,7 +13,7 @@ export default function StudySessionOverlay() {
   const {
     sessionCards, currentSessionCardIndex,
     isCardFlipped, setIsCardFlipped,
-    sessionDone, sessionStats,
+    sessionDone, sessionStats, requeuedCardIds,
     handleReviewCard, closeSession,
   } = useApp();
 
@@ -83,6 +83,7 @@ export default function StudySessionOverlay() {
   const card = sessionCards[currentSessionCardIndex];
   if (!card) return null;
 
+  const isRequeued = requeuedCardIds.has(card.id);
   const progress = Math.round(((currentSessionCardIndex + 1) / sessionCards.length) * 100);
 
   return (
@@ -102,6 +103,19 @@ export default function StudySessionOverlay() {
             <X size={18} />
           </button>
         </div>
+
+        {/* Re-queue badge */}
+        {isRequeued && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'rgba(255,180,171,0.12)', border: '1px solid rgba(255,180,171,0.3)',
+            borderRadius: 8, padding: '6px 12px', fontSize: 12,
+            color: 'var(--color-danger)', alignSelf: 'stretch',
+          }}>
+            <AlertCircle size={14} />
+            Revisando novamente — você errou este card antes
+          </div>
+        )}
 
         {/* Card */}
         <div
