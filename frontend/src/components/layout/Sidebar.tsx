@@ -9,7 +9,7 @@ import { useApp } from '../../contexts/AppContext';
 
 const NAV_ITEMS = [
   { to: '/',          icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/materiais', icon: BookOpen,        label: 'Materiais' },
+  { to: '/materiais', icon: BookOpen,        label: 'Matérias' },
   { to: '/cards',     icon: Layers,          label: 'Meus Cards' },
   { to: '/ia',        icon: Sparkles,        label: 'Gerar com IA' },
   { to: '/calendario',icon: Calendar,        label: 'Calendário'  },
