@@ -27,6 +27,10 @@ class CreateSubjectDto {
   @IsString()
   @IsOptional()
   color?: string;
+
+  @IsString()
+  @IsOptional()
+  spaceId?: string;
 }
 
 @Controller('subjects')
@@ -51,6 +55,7 @@ export class SubjectController {
         name: body.name,
         color: body.color || null,
         userId: req.user.id,
+        spaceId: body.spaceId || null,
       });
     } catch (err) {
       throw new BadRequestException((err as Error).message);

@@ -1,11 +1,10 @@
-export class Subject {
+export class StudySpace {
   constructor(
     public readonly id: string,
+    public userId: string,
     public name: string,
     public color: string | null,
-    public userId: string,
+    public icon: string | null,
     public readonly createdAt?: Date,
-    public readonly updatedAt?: Date,
-    public spaceId?: string | null,
   ) {}
 }

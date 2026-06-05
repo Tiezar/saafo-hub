@@ -4,7 +4,25 @@ import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import { PinoLoggerService } from './infrastructure/logger/pino-logger.service';
 
+function validateEnv(): void {
+  const required = [
+    'JWT_SECRET',
+    'GOOGLE_CLIENT_ID',
+    'FRONTEND_URL',
+    'RESEND_API_KEY',
+    'RESEND_FROM_EMAIL',
+  ];
+  const missing = required.filter((key) => !process.env[key]);
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missing.join(', ')}`,
+    );
+  }
+}
+
 async function bootstrap() {
+  validateEnv();
+
   const logger = new PinoLoggerService();
   const app = await NestFactory.create(AppModule, { logger });
 
@@ -13,7 +31,7 @@ async function bootstrap() {
 
   // 2. Configuração de CORS Restrito
   app.enableCors({
-    origin: process.env.FRONTEND_URL || '*',
+    origin: process.env.FRONTEND_URL!.split(',').map((o) => o.trim()),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });

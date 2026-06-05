@@ -32,6 +32,9 @@ export class ReviewCardUseCase {
     if (session.userId !== input.userId) {
       throw new Error('Unauthorized access to study session');
     }
+    if (session.endedAt !== null) {
+      throw new Error('Study session is already closed');
+    }
 
     const calculation = SpacedRepetitionService.calculate(
       input.rating,

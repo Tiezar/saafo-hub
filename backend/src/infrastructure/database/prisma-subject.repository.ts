@@ -16,6 +16,7 @@ export class PrismaSubjectRepository implements ISubjectRepository {
       prismaSubject.userId,
       prismaSubject.createdAt,
       prismaSubject.updatedAt,
+      prismaSubject.spaceId,
     );
   }
 
@@ -38,6 +39,7 @@ export class PrismaSubjectRepository implements ISubjectRepository {
         name: subject.name!,
         color: subject.color,
         userId: subject.userId!,
+        spaceId: subject.spaceId,
       },
     });
     return this.toDomain(created);
@@ -49,6 +51,7 @@ export class PrismaSubjectRepository implements ISubjectRepository {
       data: {
         name: subject.name,
         color: subject.color,
+        ...(subject.spaceId !== undefined && { spaceId: subject.spaceId }),
       },
     });
     return this.toDomain(updated);

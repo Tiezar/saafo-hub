@@ -23,7 +23,8 @@ export class MetricsController {
 
   @Get()
   async getMetrics(@Request() req: any, @Query('days') days?: string) {
-    const daysLimit = days ? parseInt(days, 10) : 30;
+    const parsed = days ? parseInt(days, 10) : 30;
+    const daysLimit = Number.isNaN(parsed) || parsed < 1 ? 30 : Math.min(parsed, 365);
     return await this.getStudyMetricsUseCase.execute(req.user.id, daysLimit);
   }
 }

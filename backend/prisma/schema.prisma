@@ -7,22 +7,68 @@ generator client {
   engineType = "library"
 }
 
+enum EventType {
+  EXAM
+  DEADLINE
+  FIXED_BLOCK
+  REMINDER
+  STUDY_SESSION
+}
+
+enum ReminderMethod {
+  WHATSAPP
+  EMAIL
+}
+
 model User {
-  id            String         @id @default(uuid())
-  email         String         @unique
-  name          String
-  nickname      String?
-  googleId      String?        @unique
-  passwordHash  String?
-  institutionId String?
-  institution   Institution?   @relation(fields: [institutionId], references: [id], onDelete: SetNull)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  subjects      Subject[]
-  cards         Card[]
-  studySessions StudySession[]
+  id                  String          @id @default(uuid())
+  email               String          @unique
+  name                String
+  nickname            String?
+  googleId            String?         @unique
+  passwordHash        String?
+  emailVerified       Boolean         @default(false)
+  phone               String?
+  institutionId       String?
+  institution         Institution?    @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  plan                String          @default("FREE_TRIAL")
+  trialEndsAt         DateTime?
+  asaasCustomerId     String?         @unique
+  asaasSubscriptionId String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  subjects            Subject[]
+  cards               Card[]
+  studySessions       StudySession[]
+  studySpaces         StudySpace[]
+  calendarEvents      CalendarEvent[]
+  insightCache        InsightCache?
 
   @@map("users")
+}
+
+model InsightCache {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data        Json
+  generatedAt DateTime @default(now())
+
+  @@map("insight_caches")
+}
+
+model StudySpace {
+  id             String          @id @default(uuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  color          String?
+  icon           String?
+  subjects       Subject[]
+  calendarEvents CalendarEvent[]
+  createdAt      DateTime        @default(now())
+
+  @@map("study_spaces")
 }
 
 model Institution {
@@ -39,16 +85,58 @@ model Institution {
 }
 
 model Subject {
-  id        String   @id @default(uuid())
-  name      String
-  color     String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topics    Topic[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String          @id @default(uuid())
+  name           String
+  color          String?
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spaceId        String?
+  space          StudySpace?     @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+  topics         Topic[]
+  calendarEvents CalendarEvent[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@map("subjects")
+}
+
+model CalendarEvent {
+  id               String          @id @default(uuid())
+  userId           String
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spaceId          String?
+  space            StudySpace?     @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+  subjectId        String?
+  subject          Subject?        @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  title            String
+  type             EventType
+  startAt          DateTime
+  endAt            DateTime?
+  allDay           Boolean         @default(false)
+  notes            String?
+  color            String?
+  recurrenceDays   Int[]
+  recurrenceEndsAt DateTime?
+  reminders        EventReminder[]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@map("calendar_events")
+}
+
+model EventReminder {
+  id            String        @id @default(uuid())
+  eventId       String
+  event         CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  minutesBefore Int
+  method        ReminderMethod
+  scheduledAt   DateTime
+  sent          Boolean       @default(false)
+  sentAt        DateTime?
+  createdAt     DateTime      @default(now())
+
+  @@index([scheduledAt, sent])
+  @@map("event_reminders")
 }
 
 model Topic {

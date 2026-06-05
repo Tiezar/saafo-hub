@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
 import { GeminiService } from '../../ai/gemini.service';
+import { PlanGuard } from '../guards/plan.guard';
 import { SubjectController } from '../controllers/subject.controller';
 import { TopicController } from '../controllers/topic.controller';
 import { CardController } from '../controllers/card.controller';
@@ -18,6 +19,6 @@ import { MetricsController } from '../controllers/metrics.controller';
     AiController,
     MetricsController,
   ],
-  providers: [GeminiService],
+  providers: [GeminiService, PlanGuard],
 })
 export class MaterialsMemoryModule {}

@@ -16,9 +16,9 @@ export class InstitutionController {
     }
 
     const query = search.trim();
-    
-    // Filtrar por nome ou sigla da instituição no banco
+
     return this.prisma.institution.findMany({
+      take: 30,
       where: {
         OR: [
           { name: { contains: query, mode: 'insensitive' } },

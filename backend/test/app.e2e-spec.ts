@@ -16,6 +16,7 @@ describe('SAAFO HUB API (e2e)', () => {
   let tokenUser1: string;
   let tokenUser2: string;
   let userId1: string;
+  let userId2: string;
 
   let subjectId: string;
   let topicId: string;

@@ -17,14 +17,22 @@ export class LoginGoogleUseCase {
       if (user) {
         user = await this.userRepository.update(user.id, {
           googleId: payload.googleId,
+          emailVerified: true,
         });
       } else {
+        const trialEndsAt = new Date();
+        trialEndsAt.setDate(trialEndsAt.getDate() + 14);
         user = await this.userRepository.create({
           email: payload.email,
           name: payload.name,
           googleId: payload.googleId,
+          emailVerified: true,
+          plan: 'FREE_TRIAL',
+          trialEndsAt,
         });
       }
+    } else if (!user.emailVerified) {
+      user = await this.userRepository.verifyEmail(user.id);
     }
     return user;
   }

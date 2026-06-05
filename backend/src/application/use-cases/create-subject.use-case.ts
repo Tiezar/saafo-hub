@@ -5,6 +5,7 @@ export interface CreateSubjectInput {
   name: string;
   color: string | null;
   userId: string;
+  spaceId?: string | null;
 }
 
 export class CreateSubjectUseCase {
@@ -18,6 +19,7 @@ export class CreateSubjectUseCase {
       name: input.name,
       color: input.color,
       userId: input.userId,
+      spaceId: input.spaceId ?? null,
     });
   }
 }

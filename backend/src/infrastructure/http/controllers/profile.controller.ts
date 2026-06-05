@@ -7,6 +7,7 @@ import {
   Request,
   Inject,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UpdateProfileUseCase } from '../../../application/use-cases/update-profile.use-case';
@@ -30,6 +31,10 @@ class UpdateProfileDto {
   @IsString()
   @IsOptional()
   institutionId?: string;
+
+  @IsString()
+  @IsOptional()
+  phone?: string;
 }
 
 @Controller('profile')
@@ -55,6 +60,7 @@ export class ProfileController {
       name: user.name,
       nickname: user.nickname,
       institutionId: user.institutionId,
+      phone: user.phone,
     };
   }
 
@@ -69,9 +75,14 @@ export class ProfileController {
         name: user.name,
         nickname: user.nickname,
         institutionId: user.institutionId,
+        phone: user.phone,
       };
     } catch (err) {
-      throw new NotFoundException((err as Error).message);
+      const msg = (err as Error).message;
+      if (msg === 'User not found' || msg === 'Institution not found') {
+        throw new NotFoundException(msg);
+      }
+      throw new BadRequestException(msg);
     }
   }
 }

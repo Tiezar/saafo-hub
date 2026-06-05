@@ -5,9 +5,14 @@ import { GeminiService } from '../../infrastructure/ai/gemini.service';
 import { Card } from '../../domain/entities/card';
 
 export interface GenerateFlashcardsInput {
-  text: string;
   topicId: string;
   userId: string;
+  theme?: string;
+  // text-mode
+  text?: string;
+  // file-mode
+  fileBuffer?: Buffer;
+  mimeType?: string;
 }
 
 export class GenerateFlashcardsUseCase {
@@ -19,38 +24,44 @@ export class GenerateFlashcardsUseCase {
   ) {}
 
   async execute(input: GenerateFlashcardsInput): Promise<Card[]> {
-    if (!input.text.trim()) {
-      throw new Error('Study text cannot be empty');
+    if (!input.text?.trim() && !input.fileBuffer) {
+      throw new Error('Forneça um texto ou um arquivo para gerar flashcards.');
     }
 
     const topic = await this.topicRepository.findById(input.topicId);
-    if (!topic) {
-      throw new Error('Topic not found');
-    }
+    if (!topic) throw new Error('Topic not found');
 
     const subject = await this.subjectRepository.findById(topic.subjectId);
     if (!subject || subject.userId !== input.userId) {
       throw new Error('Unauthorized access to topic');
     }
 
-    const generated = await this.geminiService.generateFlashcards(input.text);
+    const generated = await this.geminiService.generateFlashcards({
+      text: input.text,
+      fileBuffer: input.fileBuffer,
+      mimeType: input.mimeType,
+      theme: input.theme,
+    });
 
-    const createdCards: Card[] = [];
-
-    for (const cardData of generated) {
-      const card = await this.cardRepository.create({
-        front: cardData.front,
-        back: cardData.back,
-        topicId: input.topicId,
-        userId: input.userId,
-        repetitions: 0,
-        interval: 0,
-        easeFactor: 2.5,
-        nextReview: new Date(),
-      });
-      createdCards.push(card);
+    if (!generated.length) {
+      throw new Error('A IA não conseguiu extrair flashcards do conteúdo fornecido.');
     }
 
-    return createdCards;
+    const created: Card[] = [];
+    for (const card of generated) {
+      created.push(
+        await this.cardRepository.create({
+          front: card.front,
+          back: card.back,
+          topicId: input.topicId,
+          userId: input.userId,
+          repetitions: 0,
+          interval: 0,
+          easeFactor: 2.5,
+          nextReview: new Date(),
+        }),
+      );
+    }
+    return created;
   }
 }
