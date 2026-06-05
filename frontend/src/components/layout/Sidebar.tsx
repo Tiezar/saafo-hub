@@ -23,7 +23,10 @@ export default function Sidebar() {
     currentUser, handleLogout, theme, toggleTheme,
     spaces, activeSpaceId, setActiveSpaceId,
     handleCreateSpace, handleDeleteSpace,
+    cards,
   } = useApp();
+
+  const dueCount = cards.filter(c => new Date(c.nextReview) <= new Date()).length;
 
   const [spacesOpen,   setSpacesOpen]   = React.useState(false);
   const [spaceForm,    setSpaceForm]    = React.useState(false);
@@ -80,7 +83,7 @@ export default function Sidebar() {
                 </button>
                 <button
                   className="sidebar-space-delete"
-                  onClick={() => handleDeleteSpace(s.id)}
+                  onClick={() => { if (window.confirm(`Excluir a área "${s.name}"?`)) handleDeleteSpace(s.id); }}
                   title="Excluir área"
                 >
                   <Trash2 size={12} />
@@ -123,6 +126,9 @@ export default function Sidebar() {
           >
             <Icon size={18} />
             <span>{label}</span>
+            {dueCount > 0 && (to === '/cards' || to === '/materiais') && (
+              <span className="nav-item-badge">{dueCount}</span>
+            )}
           </NavLink>
         ))}
       </nav>

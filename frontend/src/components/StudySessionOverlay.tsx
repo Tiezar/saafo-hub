@@ -83,7 +83,7 @@ export default function StudySessionOverlay() {
   const card = sessionCards[currentSessionCardIndex];
   if (!card) return null;
 
-  const progress = Math.round((currentSessionCardIndex / sessionCards.length) * 100);
+  const progress = Math.round(((currentSessionCardIndex + 1) / sessionCards.length) * 100);
 
   return (
     <div className="study-overlay">

@@ -14,9 +14,13 @@ export default function Pomodoro() {
   const [seconds,      setSeconds]       = useState(25 * 60);
   const [round,        setRound]         = useState(1);
   const [sessions,     setSessions]      = useState(0);
-  const [focusMin,     setFocusMin]      = useState(25);
-  const [breakMin,     setBreakMin]      = useState(5);
-  const [longMin,      setLongMin]       = useState(15);
+  const [focusMin,     setFocusMinRaw]   = useState(() => Number(localStorage.getItem('pomo_focus') ?? 25));
+  const [breakMin,     setBreakMinRaw]   = useState(() => Number(localStorage.getItem('pomo_break') ?? 5));
+  const [longMin,      setLongMinRaw]    = useState(() => Number(localStorage.getItem('pomo_long')  ?? 15));
+
+  const setFocusMin = (n: number) => { setFocusMinRaw(n); localStorage.setItem('pomo_focus', String(n)); };
+  const setBreakMin = (n: number) => { setBreakMinRaw(n); localStorage.setItem('pomo_break', String(n)); };
+  const setLongMin  = (n: number) => { setLongMinRaw(n);  localStorage.setItem('pomo_long',  String(n)); };
   const [topicId,      setTopicId]       = useState('');
   const [showSettings, setShowSettings] = useState(false);
 

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpen, RotateCw, Flame, CheckCircle, Zap, RefreshCw,
-  Star, Calendar, ShieldAlert, Clock, CreditCard,
+  Star, Calendar, ShieldAlert, Clock,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { getEventMeta } from '../lib/constants';
@@ -13,15 +13,23 @@ export default function Dashboard() {
     cards, metrics, insights, insightsLoading, insightsLastUpdated,
     calendarEvents, planStatus,
     fetchInsights, handleRefreshInsights,
-    setUpgradeModalOpen, handleCheckout, checkoutLoading,
+    setUpgradeModalOpen,
     openEditEvent, startStudySession,
   } = useApp();
 
   useEffect(() => { fetchInsights(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const dueCount = cards.filter(c => new Date(c.nextReview) <= new Date()).length;
+
+  const streak = (() => {
+    const days = [...(metrics?.dailyActivity ?? [])].reverse();
+    let count = 0;
+    for (const d of days) { if (d.count > 0) count++; else break; }
+    return count;
+  })();
   const upcoming = calendarEvents
     .filter(e => new Date(e.startAt) >= new Date() || e.recurrenceDays.length > 0)
+    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
     .slice(0, 4);
 
   return (
@@ -39,12 +47,31 @@ export default function Dashboard() {
       {/* Plan banners */}
       <PlanBanner planStatus={planStatus} onUpgrade={() => setUpgradeModalOpen(true)} />
 
+      {/* Welcome empty state */}
+      {cards.length === 0 && (
+        <div className="glass-card" style={{ textAlign: 'center', padding: '40px 32px', marginBottom: 24 }}>
+          <BookOpen size={48} style={{ color: 'var(--color-primary-light)', marginBottom: 16, opacity: 0.7 }} />
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', marginBottom: 8 }}>Bem-vindo ao SAAFO!</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24, maxWidth: 420, margin: '0 auto 24px' }}>
+            Crie sua primeira matéria ou use a IA para gerar flashcards a partir dos seus resumos.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button className="btn-primary" style={{ width: 'auto', padding: '10px 24px' }} onClick={() => navigate('/materiais')}>
+              <BookOpen size={16} /> Criar matéria
+            </button>
+            <button className="btn-secondary" style={{ width: 'auto', padding: '10px 24px' }} onClick={() => navigate('/ia')}>
+              <Zap size={16} /> Gerar com IA
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="stats-grid">
         <StatCard icon={<BookOpen size={22} />} value={cards.length} label="Total de Flashcards" />
         <StatCard icon={<RotateCw size={22} />} value={dueCount} label="Pendentes Hoje" />
         <StatCard icon={<Flame size={22} color="var(--color-warning)" />}
-          value={`${metrics?.dailyActivity.length ?? 0} dias`} label="Dias com Atividade" />
+          value={`${streak} dia${streak !== 1 ? 's' : ''}`} label="Sequência Atual" />
         <StatCard icon={<CheckCircle size={22} color="var(--color-success)" />}
           value={metrics ? `${(metrics.retentionRate ?? 0).toFixed(1)}%` : '—'}
           label="Taxa de Retenção" />
@@ -152,6 +179,13 @@ export default function Dashboard() {
               <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
                 {metrics ? `${metrics.totalReviewed} revisões totais` : 'Sem dados'}
               </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>
+                <span>Menos</span>
+                {(['', 'level-1', 'level-2', 'level-3', 'level-4'] as const).map(lv => (
+                  <div key={lv} className={`heatmap-day ${lv}`} style={{ width: 10, height: 10 }} />
+                ))}
+                <span>Mais</span>
+              </div>
             </div>
           </div>
         </div>
@@ -222,13 +256,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Upgrade modal (inline) */}
-      <UpgradeModal
-        open={false}
-        onClose={() => setUpgradeModalOpen(false)}
-        onCheckout={handleCheckout}
-        loading={checkoutLoading}
-      />
     </div>
   );
 }
@@ -284,51 +311,3 @@ function PlanBanner({ planStatus, onUpgrade }: { planStatus: ReturnType<typeof u
   return null;
 }
 
-function UpgradeModal({ open, onClose, onCheckout, loading }: { open: boolean; onClose: () => void; onCheckout: () => void; loading: boolean }) {
-  if (!open) return null;
-  return (
-    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal" style={{ maxWidth: 480 }}>
-        <div className="modal-header">
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Star size={18} style={{ color: '#f59e0b' }} /> Plano Estudante
-          </h3>
-          <button onClick={onClose} className="btn-ghost btn-icon">×</button>
-        </div>
-        <div className="modal-body">
-          <div style={{ textAlign: 'center', padding: '8px 0 20px' }}>
-            <div style={{ fontSize: 48, fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--color-primary-light)', lineHeight: 1 }}>
-              R$ 19<span style={{ fontSize: 18, fontWeight: 400 }}>/mês</span>
-            </div>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>PIX · Boleto · Cartão de Crédito</p>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {[
-              '🤖 Geração ilimitada de flashcards com IA',
-              '📝 Sessão de Provas com IA (múltipla escolha + dissertativo)',
-              '💡 Insights inteligentes automáticos',
-              '📱 Lembretes via WhatsApp',
-              '📄 Upload de documentos PDF e imagens',
-              '🗓️ Calendário com recorrência e alertas',
-              '🍅 Pomodoro + todos os recursos básicos',
-            ].map(text => (
-              <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 14 }}>
-                <span>{text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="modal-footer" style={{ flexDirection: 'column', gap: 12 }}>
-          <button className="btn-primary" style={{ width: '100%', padding: '14px' }} onClick={onCheckout} disabled={loading}>
-            {loading
-              ? <><RotateCw size={16} className="animate-spin" /> Aguarde...</>
-              : <><CreditCard size={16} /> Assinar agora — R$ 19/mês</>}
-          </button>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
-            Cancele quando quiser. Sem multas ou fidelidade.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}

@@ -272,7 +272,7 @@ export default function ExamSession() {
                 {questions.map((q, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, background: answers[i] ? 'rgba(47,217,244,0.06)' : 'rgba(255,180,171,0.06)', border: `1px solid ${answers[i] ? 'rgba(47,217,244,0.2)' : 'rgba(255,180,171,0.2)'}` }}>
                     {answers[i] ? <CheckCircle size={16} style={{ color: 'var(--color-success)', flexShrink: 0 }} /> : <X size={16} style={{ color: 'var(--color-danger)', flexShrink: 0 }} />}
-                    <span style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Q{i + 1}: {q.question}</span>
+                    <span style={{ fontSize: 13 }}>Q{i + 1}: {q.question}</span>
                   </div>
                 ))}
               </div>
@@ -475,7 +475,7 @@ export default function ExamSession() {
             <div style={{ marginTop: 20 }}>
               {/* Score badge */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <div style={{ width: 48, height: 48, borderRadius: '50%', background: scoreColor(currentEval.score), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'white', flexShrink: 0 }}>
+                <div className="score-badge-anim" style={{ width: 48, height: 48, borderRadius: '50%', background: scoreColor(currentEval.score), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'white', flexShrink: 0 }}>
                   {currentEval.score}
                 </div>
                 <p style={{ fontWeight: 600, fontSize: 15, margin: 0 }}>{currentEval.feedback}</p>

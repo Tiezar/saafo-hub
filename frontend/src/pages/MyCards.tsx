@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Trash2, RotateCw, Pencil, Check, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 
 export default function MyCards() {
+  const navigate = useNavigate();
   const {
     cards, topics, subjects,
     handleDeleteCard, handleUpdateCard, fetchAllCards,
     startStudySession,
   } = useApp();
 
-  const [search,        setSearch]        = useState('');
-  const [editingCardId, setEditingCardId] = useState<string | null>(null);
-  const [editFront,     setEditFront]     = useState('');
-  const [editBack,      setEditBack]      = useState('');
+  const [search,          setSearch]          = useState('');
+  const [filterSubjectId, setFilterSubjectId] = useState('');
+  const [onlyDue,         setOnlyDue]         = useState(false);
+  const [sortBy,          setSortBy]          = useState<'review' | 'az'>('review');
+  const [editingCardId,   setEditingCardId]   = useState<string | null>(null);
+  const [editFront,       setEditFront]       = useState('');
+  const [editBack,        setEditBack]        = useState('');
 
   useEffect(() => { fetchAllCards(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -26,13 +31,26 @@ export default function MyCards() {
     setEditingCardId(null);
   }
 
-  const filtered = cards.filter(c => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return c.front.toLowerCase().includes(q) || c.back.toLowerCase().includes(q);
-  });
-
   const now = new Date();
+
+  const filtered = cards
+    .filter(c => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!c.front.toLowerCase().includes(q) && !c.back.toLowerCase().includes(q)) return false;
+      }
+      if (filterSubjectId) {
+        const topic = topics.find(t => t.id === c.topicId);
+        if (!topic || topic.subjectId !== filterSubjectId) return false;
+      }
+      if (onlyDue && new Date(c.nextReview) > now) return false;
+      return true;
+    })
+    .sort((a, b) =>
+      sortBy === 'az'
+        ? a.front.localeCompare(b.front)
+        : new Date(a.nextReview).getTime() - new Date(b.nextReview).getTime()
+    );
 
   return (
     <div className="page">
@@ -47,12 +65,30 @@ export default function MyCards() {
       </div>
 
       <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
-        <div style={{ position: 'relative' }}>
-          <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input type="text" className="form-input"
-            placeholder="Pesquisar nos seus cards (pergunta ou resposta)..."
-            style={{ paddingLeft: 42 }}
-            value={search} onChange={e => setSearch(e.target.value)} />
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: '1 1 240px' }}>
+            <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input type="text" className="form-input"
+              placeholder="Pesquisar cards..."
+              style={{ paddingLeft: 42 }}
+              value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <select className="form-input" style={{ flex: '0 1 200px' }}
+            value={filterSubjectId} onChange={e => setFilterSubjectId(e.target.value)}>
+            <option value="">Todas as matérias</option>
+            {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+          <select className="form-input" style={{ flex: '0 1 180px' }}
+            value={sortBy} onChange={e => setSortBy(e.target.value as 'review' | 'az')}>
+            <option value="review">Próxima revisão</option>
+            <option value="az">A–Z</option>
+          </select>
+          <button
+            className={onlyDue ? 'btn-primary' : 'btn-secondary'}
+            style={{ width: 'auto', padding: '0 16px', whiteSpace: 'nowrap' }}
+            onClick={() => setOnlyDue(d => !d)}>
+            Só pendentes
+          </button>
         </div>
       </div>
 
@@ -125,7 +161,7 @@ export default function MyCards() {
                         style={{ color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Pencil size={15} />
                       </button>
-                      <button onClick={() => handleDeleteCard(c.id)}
+                      <button onClick={() => { if (window.confirm('Excluir este card?')) handleDeleteCard(c.id); }}
                         style={{ color: 'var(--color-danger)', background: 'rgba(255,180,171,0.08)', padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Trash2 size={15} />
                       </button>
@@ -137,9 +173,23 @@ export default function MyCards() {
           })}
 
           {!filtered.length && (
-            <p style={{ color: 'var(--text-muted)', fontSize: 14, textAlign: 'center', padding: '32px 0' }}>
-              {search ? 'Nenhum card corresponde à sua pesquisa.' : 'Você ainda não tem nenhum flashcard criado.'}
-            </p>
+            <div style={{ textAlign: 'center', padding: '32px 0' }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: search || filterSubjectId || onlyDue ? 0 : 16 }}>
+                {search || filterSubjectId || onlyDue ? 'Nenhum card corresponde aos filtros.' : 'Você ainda não tem nenhum flashcard criado.'}
+              </p>
+              {!search && !filterSubjectId && !onlyDue && (
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button className="btn-primary" style={{ width: 'auto', padding: '10px 20px' }}
+                    onClick={() => navigate('/ia')}>
+                    Gerar com IA
+                  </button>
+                  <button className="btn-secondary" style={{ width: 'auto', padding: '10px 20px' }}
+                    onClick={() => navigate('/materiais')}>
+                    Criar manualmente
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

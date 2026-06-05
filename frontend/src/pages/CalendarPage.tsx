@@ -435,58 +435,80 @@ function AgendaView({
     );
   }
 
+  const getGroupLabel = (date: Date) => {
+    const diff = Math.floor((date.getTime() - today.getTime()) / 86400000);
+    if (diff === 0) return 'Hoje';
+    if (diff === 1) return 'Amanhã';
+    if (diff <= 7)  return 'Esta semana';
+    return 'Próximas semanas';
+  };
+
+  let lastGroup = '';
+
   return (
     <div>
-      {agendaDays.map(({ date, events: dayEvts }) => (
-        <div key={date.toDateString()} style={{ marginBottom: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 8, flexShrink: 0,
-              background: date.toDateString() === today.toDateString() ? 'var(--color-primary)' : 'var(--bg-surface)',
-              border: '1px solid var(--border-color)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1 }}>{date.getDate()}</div>
-              <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.5px', opacity: 0.7 }}>{DAYS_PT_SHORT[date.getDay()]}</div>
-            </div>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{MONTHS_PT[date.getMonth()]}</span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 52 }}>
-            {dayEvts.map(ev => {
-              const meta = getEventMeta(ev.type);
-              const subj = subjects.find(s => s.id === ev.subjectId);
-              return (
-                <div key={ev.id} onClick={() => openEditEvent(ev)}
-                  style={{
-                    padding: '12px 16px', background: 'var(--bg-surface)',
-                    border: '1px solid var(--border-color)', borderLeft: `4px solid ${meta.color}`,
-                    borderRadius: '0 8px 8px 0', cursor: 'pointer', transition: 'var(--transition)',
-                  }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{meta.emoji} {ev.title}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Clock size={10} /> {formatEventTime(ev)}
-                        {ev.recurrenceDays.length > 0 && <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Repeat size={10} /> recorrente</span>}
-                        {subj && <span>· {subj.name}</span>}
-                      </div>
-                    </div>
-                    <span style={{ fontSize: 10, color: meta.color, fontWeight: 700, background: `${meta.color}22`, padding: '2px 8px', borderRadius: 10 }}>
-                      {meta.label}
-                    </span>
-                  </div>
-                  {ev.notes && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>{ev.notes}</p>}
-                  {ev.reminders.filter(r => !r.sent).length > 0 && (
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <Bell size={10} /> {ev.reminders.filter(r => !r.sent).length} lembrete(s) ativo(s)
-                    </div>
-                  )}
+      {agendaDays.map(({ date, events: dayEvts }) => {
+        const group = getGroupLabel(date);
+        const showGroupLabel = group !== lastGroup;
+        lastGroup = group;
+        return (
+          <React.Fragment key={date.toDateString()}>
+            {showGroupLabel && (
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 8, marginTop: 4 }}>
+                {group}
+              </div>
+            )}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 8, flexShrink: 0,
+                  background: date.toDateString() === today.toDateString() ? 'var(--color-primary)' : 'var(--bg-surface)',
+                  border: '1px solid var(--border-color)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1 }}>{date.getDate()}</div>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.5px', opacity: 0.7 }}>{DAYS_PT_SHORT[date.getDay()]}</div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{MONTHS_PT[date.getMonth()]}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 52 }}>
+                {dayEvts.map(ev => {
+                  const meta = getEventMeta(ev.type);
+                  const subj = subjects.find(s => s.id === ev.subjectId);
+                  return (
+                    <div key={ev.id} onClick={() => openEditEvent(ev)}
+                      style={{
+                        padding: '12px 16px', background: 'var(--bg-surface)',
+                        border: '1px solid var(--border-color)', borderLeft: `4px solid ${meta.color}`,
+                        borderRadius: '0 8px 8px 0', cursor: 'pointer', transition: 'var(--transition)',
+                      }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: 14 }}>{meta.emoji} {ev.title}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Clock size={10} /> {formatEventTime(ev)}
+                            {ev.recurrenceDays.length > 0 && <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Repeat size={10} /> recorrente</span>}
+                            {subj && <span>· {subj.name}</span>}
+                          </div>
+                        </div>
+                        <span style={{ fontSize: 10, color: meta.color, fontWeight: 700, background: `${meta.color}22`, padding: '2px 8px', borderRadius: 10 }}>
+                          {meta.label}
+                        </span>
+                      </div>
+                      {ev.notes && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>{ev.notes}</p>}
+                      {ev.reminders.filter(r => !r.sent).length > 0 && (
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Bell size={10} /> {ev.reminders.filter(r => !r.sent).length} lembrete(s) ativo(s)
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 }

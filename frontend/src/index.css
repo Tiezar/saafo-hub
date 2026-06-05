@@ -1464,3 +1464,17 @@ select.form-input { cursor: pointer; appearance: none; }
 
 /* Due badge on topic chips / subject cards */
 .badge-due { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--color-danger); color: #fff; font-family: var(--font-label); font-size: 10px; font-weight: 700; line-height: 1; }
+
+/* Topic chip delete button — visible only on hover */
+.topic-chip-delete { opacity: 0; transition: opacity 0.15s; }
+span:hover > .topic-chip-delete { opacity: 1; }
+
+/* Exam score badge fade-in */
+@keyframes fadeInScale { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
+.score-badge-anim { animation: fadeInScale 0.4s ease forwards; }
+
+/* Range slider — cross-browser dark mode safe */
+input[type="range"] { -webkit-appearance: none; appearance: none; height: 6px; background: var(--border-color); border-radius: 3px; outline: none; cursor: pointer; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--color-primary); border: 2px solid var(--bg-surface); cursor: pointer; }
+input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--color-primary); border: 2px solid var(--bg-surface); cursor: pointer; }
+input[type="range"]::-ms-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--color-primary); border: 2px solid var(--bg-surface); cursor: pointer; }

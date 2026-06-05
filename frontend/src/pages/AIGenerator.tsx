@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Sparkles, RotateCw, CheckCircle, Upload, FileText, Image as ImageIcon, Type, Trash2, Check, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
@@ -23,9 +23,17 @@ export default function AIGenerator() {
   const [aiCount,     setAiCount]     = useState<number>(10);
   const [aiFile,      setAiFile]      = useState<File | null>(null);
   const [aiDragOver,  setAiDragOver]  = useState(false);
+  const [previewUrl,  setPreviewUrl]  = useState<string | null>(null);
   const [generating,  setGenerating]  = useState(false);
   const [saving,      setSaving]      = useState(false);
   const [preview,     setPreview]     = useState<PreviewCard[] | null>(null);
+
+  useEffect(() => {
+    if (!aiFile?.type.startsWith('image/')) { setPreviewUrl(null); return; }
+    const url = URL.createObjectURL(aiFile);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [aiFile]);
 
   const reset = () => {
     setAiText(''); setAiTheme(''); setAiFile(null); setPreview(null);
@@ -114,6 +122,11 @@ export default function AIGenerator() {
                 <option key={t.id} value={t.id}>{subjects.find(s => s.id === t.subjectId)?.name} › {t.name}</option>
               ))}
             </select>
+            {visibleTopics.length === 0 && (
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+                Nenhum tópico disponível. <a href="/materiais" style={{ color: 'var(--color-primary-light)' }}>Crie uma matéria em Materiais primeiro →</a>
+              </p>
+            )}
           </div>
           <div className="form-group" style={{ margin: 0 }}>
             <label className="form-label">Tema específico (opcional)</label>
@@ -232,7 +245,7 @@ export default function AIGenerator() {
 
             {aiFile?.type.startsWith('image/') && (
               <div style={{ marginBottom: 20, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border-color)', maxHeight: 240 }}>
-                <img src={URL.createObjectURL(aiFile)} alt="preview"
+                <img src={previewUrl ?? ''} alt="preview"
                   style={{ width: '100%', maxHeight: 240, objectFit: 'contain', background: 'var(--bg-deep)' }} />
               </div>
             )}

@@ -12,6 +12,7 @@ export default function Materials() {
     startStudySession,
   } = useApp();
 
+  const [showSubjectForm, setShowSubjectForm] = useState(false);
   const [subjectName,  setSubjectName]  = useState('');
   const [subjectColor, setSubjectColor] = useState('#494bd6');
   const [topicName,    setTopicName]    = useState('');
@@ -79,24 +80,33 @@ export default function Materials() {
         {/* Left — Subjects */}
         <div>
           <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
-            <h3 className="card-title" style={{ marginBottom: 16 }}>
-              Nova Matéria
-              {activeSpaceId && (
-                <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--color-primary-light)', marginLeft: 8 }}>
-                  → {spaces.find(s => s.id === activeSpaceId)?.name}
-                </span>
-              )}
-            </h3>
-            <form onSubmit={submitSubject} style={{ display: 'flex', gap: 12 }}>
-              <input type="text" className="form-input" placeholder="Nome da matéria"
-                value={subjectName} onChange={e => setSubjectName(e.target.value)} />
-              <input type="color"
-                style={{ width: 44, height: 44, border: 'none', borderRadius: 4, cursor: 'pointer', background: 'transparent' }}
-                value={subjectColor} onChange={e => setSubjectColor(e.target.value)} />
-              <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0 20px' }}>
-                <Plus size={18} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 className="card-title" style={{ margin: 0 }}>
+                Matérias
+                {activeSpaceId && (
+                  <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--color-primary-light)', marginLeft: 8 }}>
+                    · {spaces.find(s => s.id === activeSpaceId)?.name}
+                  </span>
+                )}
+              </h3>
+              <button className="btn-secondary" style={{ width: 'auto', padding: '6px 14px', fontSize: 13 }}
+                onClick={() => setShowSubjectForm(f => !f)}>
+                <Plus size={14} /> Nova Matéria
               </button>
-            </form>
+            </div>
+            {showSubjectForm && (
+              <form onSubmit={async e => { await submitSubject(e); setShowSubjectForm(false); }}
+                style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+                <input type="text" className="form-input" placeholder="Nome da matéria" autoFocus
+                  value={subjectName} onChange={e => setSubjectName(e.target.value)} />
+                <input type="color"
+                  style={{ width: 44, height: 44, border: 'none', borderRadius: 4, cursor: 'pointer', background: 'transparent' }}
+                  value={subjectColor} onChange={e => setSubjectColor(e.target.value)} />
+                <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0 20px' }}>
+                  <Plus size={18} />
+                </button>
+              </form>
+            )}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -127,7 +137,7 @@ export default function Materials() {
                     </div>
                   </div>
                   <button
-                    onClick={e => { e.stopPropagation(); handleDeleteSubject(sub.id); }}
+                    onClick={e => { e.stopPropagation(); if (window.confirm(`Excluir a matéria "${sub.name}" e todos os seus tópicos e cards?`)) handleDeleteSubject(sub.id); }}
                     style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                     <Trash2 size={16} />
                   </button>
@@ -181,7 +191,8 @@ export default function Materials() {
                         </span>
                       )}
                       <button
-                        onClick={e => { e.stopPropagation(); handleDeleteTopic(t.id); }}
+                        className="topic-chip-delete"
+                        onClick={e => { e.stopPropagation(); if (window.confirm(`Excluir o tópico "${t.name}" e todos os seus cards?`)) handleDeleteTopic(t.id); }}
                         style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', lineHeight: 1 }}>
                         ×
                       </button>
@@ -195,9 +206,11 @@ export default function Materials() {
                   <h4 style={{ marginBottom: 12, fontSize: 16 }}>Cards — {selectedTopic.name}</h4>
                   <form onSubmit={submitCard}
                     style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24, border: '1px dashed var(--border-color)', padding: 16, borderRadius: 8 }}>
-                    <input type="text" className="form-input" placeholder="Frente (Pergunta)"
+                    <textarea className="form-input" placeholder="Frente (Pergunta)" rows={2}
+                      style={{ resize: 'vertical' }}
                       value={cardFront} onChange={e => setCardFront(e.target.value)} />
-                    <input type="text" className="form-input" placeholder="Verso (Resposta)"
+                    <textarea className="form-input" placeholder="Verso (Resposta)" rows={2}
+                      style={{ resize: 'vertical' }}
                       value={cardBack} onChange={e => setCardBack(e.target.value)} />
                     <button type="submit" className="btn-primary"
                       style={{ alignSelf: 'flex-end', width: 'auto', padding: '8px 16px' }}>
@@ -241,7 +254,7 @@ export default function Materials() {
                                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                                 <Pencil size={14} />
                               </button>
-                              <button onClick={() => handleDeleteCard(c.id)}
+                              <button onClick={() => { if (window.confirm('Excluir este card?')) handleDeleteCard(c.id); }}
                                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                                 <Trash2 size={14} />
                               </button>

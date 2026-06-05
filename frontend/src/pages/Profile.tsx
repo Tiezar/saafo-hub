@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CreditCard, Search, Check, Star, RotateCw } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import type { Institution } from '../types';
@@ -39,6 +39,7 @@ export default function Profile() {
   const [selectedInst,  setSelectedInst]  = useState<Institution | null>(null);
   const [showDropdown,  setShowDropdown]  = useState(false);
   const [saving,        setSaving]        = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Init search label from existing institution
   useEffect(() => {
@@ -154,10 +155,12 @@ export default function Profile() {
                   value={instSearch}
                   onChange={e => {
                     setInstSearch(e.target.value);
-                    fetchInstitutions(e.target.value);
                     setShowDropdown(true);
+                    if (debounceRef.current) clearTimeout(debounceRef.current);
+                    debounceRef.current = setTimeout(() => fetchInstitutions(e.target.value), 300);
                   }}
                   onFocus={() => setShowDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
                   placeholder={selectedInst ? `${selectedInst.sigla} - ${selectedInst.name}` : 'Digite o nome da escola'} />
               </div>
               {showDropdown && institutions.length > 0 && (
