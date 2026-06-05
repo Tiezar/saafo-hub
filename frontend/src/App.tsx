@@ -1429,7 +1429,7 @@ export default function App() {
               </div>
               <div className="stat-card">
                 <div className="stat-icon"><CheckCircle size={24} style={{ color: 'var(--color-success)' }}/></div>
-                <div><div className="stat-value">{metrics ? `${metrics.retentionRate.toFixed(1)}%` : '—'}</div><div className="stat-label">Taxa de Retenção</div></div>
+                <div><div className="stat-value">{metrics ? `${(metrics.retentionRate ?? 0).toFixed(1)}%` : '—'}</div><div className="stat-label">Taxa de Retenção</div></div>
               </div>
             </div>
 
@@ -1567,8 +1567,8 @@ export default function App() {
                       <tr key={i}>
                         <td style={{ fontWeight: 600 }}>{s.subjectName}</td>
                         <td>{s.totalCards}</td><td>{s.reviewedCards}</td>
-                        <td><span className="badge badge-cyan">★ {s.averageRating.toFixed(1)}</span></td>
-                        <td><strong style={{ color: 'var(--color-success)' }}>{s.retentionRate.toFixed(1)}%</strong></td>
+                        <td><span className="badge badge-cyan">★ {(s.averageRating ?? 0).toFixed(1)}</span></td>
+                        <td><strong style={{ color: 'var(--color-success)' }}>{(s.retentionRate ?? 0).toFixed(1)}%</strong></td>
                       </tr>
                     ))}
                     {(!metrics || !metrics.subjectsPerformance.length) && (
