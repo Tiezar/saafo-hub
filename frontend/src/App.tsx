@@ -169,13 +169,14 @@ export default function App() {
   // Auth
   const [token,       setToken]       = useState<string | null>(() => localStorage.getItem('token'));
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [currentView, setCurrentView] = useState<'dashboard'|'subjects'|'ai'|'calendar'|'profile'|'pomodoro'|'quiz'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard'|'subjects'|'cards'|'ai'|'calendar'|'profile'|'pomodoro'|'quiz'>('dashboard');
   const [emailPending,setEmailPending]= useState<string | null>(null);
   const [authEmail,   setAuthEmail]   = useState('');
   const [authName,    setAuthName]    = useState('');
   const [authPassword,setAuthPassword]= useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  const [cardSearch,  setCardSearch]  = useState('');
   const [isRegistering,setIsRegistering] = useState(false);
 
   // Theme
@@ -1303,6 +1304,7 @@ export default function App() {
           {([
             { view: 'dashboard', icon: <TrendingUp size={18}/>,    label: 'Desempenho' },
             { view: 'subjects',  icon: <Layers size={18}/>,        label: 'Matérias' },
+            { view: 'cards',     icon: <BookOpen size={18}/>,      label: 'Meus Cards' },
             { view: 'calendar',  icon: <Calendar size={18}/>,      label: 'Calendário' },
             { view: 'pomodoro',  icon: <Timer size={18}/>,         label: 'Pomodoro' },
             { view: 'quiz',      icon: <GraduationCap size={18}/>, label: 'Quiz por IA' },
@@ -1343,6 +1345,7 @@ export default function App() {
             <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 32, fontWeight: 700, margin: 0 }}>
               {currentView === 'dashboard' && 'Dashboard de Desempenho'}
               {currentView === 'subjects'  && 'Estrutura de Estudos'}
+              {currentView === 'cards'     && 'Meus Flashcards'}
               {currentView === 'calendar'  && 'Calendário e Agenda'}
               {currentView === 'pomodoro'  && 'Pomodoro Timer'}
               {currentView === 'quiz'      && 'Quiz por Inteligência Artificial'}
@@ -1352,6 +1355,7 @@ export default function App() {
             <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 4 }}>
               {currentView === 'dashboard' && 'Acompanhe estatísticas e revisões pendentes'}
               {currentView === 'subjects'  && 'Navegue por Matérias, Tópicos e Flashcards'}
+              {currentView === 'cards'     && 'Visualize, busque e gerencie todos os seus flashcards criados'}
               {currentView === 'calendar'  && 'Organize provas, entregas e blocos de estudo'}
               {currentView === 'pomodoro'  && 'Sessões de foco com a técnica Pomodoro (25/5/15)'}
               {currentView === 'quiz'      && 'Gere questões de múltipla escolha dos seus flashcards com IA'}
@@ -1811,6 +1815,80 @@ export default function App() {
             </div>
           );
         })()}
+
+        {/* ── CARDS LIST ────────────────────────────────────────────────────── */}
+        {currentView === 'cards' && (
+          <div>
+            <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
+              <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ flexGrow: 1, minWidth: 200, position: 'relative' }}>
+                  <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}/>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Pesquisar nos seus cards (pergunta ou resposta)..."
+                    style={{ paddingLeft: 42 }}
+                    value={cardSearch}
+                    onChange={e => setCardSearch(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="glass-card" style={{ padding: 24 }}>
+              <h3 className="card-title" style={{ marginBottom: 20 }}>Meus Flashcards ({cards.length})</h3>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {cards
+                  .filter(c => {
+                    if (!cardSearch) return true;
+                    const q = cardSearch.toLowerCase();
+                    return c.front.toLowerCase().includes(q) || c.back.toLowerCase().includes(q);
+                  })
+                  .map(c => {
+                    const topic = topics.find(t => t.id === c.topicId);
+                    const subject = topic ? subjects.find(s => s.id === topic.subjectId) : null;
+                    return (
+                      <div key={c.id} style={{ padding: 16, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+                        <div style={{ flexGrow: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
+                            {subject && (
+                              <span className="badge" style={{ background: `${subject.color ?? 'var(--color-primary)'}22`, color: subject.color ?? 'var(--color-primary-light)', border: `1px solid ${subject.color ?? 'var(--color-primary)'}44`, fontSize: 11, padding: '3px 8px' }}>
+                                {subject.name}
+                              </span>
+                            )}
+                            {topic && (
+                              <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', fontSize: 11, padding: '3px 8px' }}>
+                                {topic.name}
+                              </span>
+                            )}
+                            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                              Próxima revisão: {new Date(c.nextReview).toLocaleDateString('pt-BR')}
+                            </span>
+                          </div>
+                          <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-main)', marginBottom: 4 }}>{c.front}</div>
+                          <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{c.back}</div>
+                        </div>
+                        <button onClick={() => handleDeleteCard(c.id)} style={{ color: 'var(--color-danger)', background: 'rgba(239,68,68,0.1)', padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Excluir Card">
+                          <Trash2 size={16}/>
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                {cards.filter(c => {
+                  if (!cardSearch) return true;
+                  const q = cardSearch.toLowerCase();
+                  return c.front.toLowerCase().includes(q) || c.back.toLowerCase().includes(q);
+                }).length === 0 && (
+                  <p style={{ color: 'var(--text-muted)', fontSize: 14, textAlign: 'center', padding: '32px 0' }}>
+                    {cardSearch ? 'Nenhum card corresponde à sua pesquisa.' : 'Você ainda não tem nenhum flashcard criado.'}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── AI ────────────────────────────────────────────────────────────── */}
         {currentView === 'ai' && (
