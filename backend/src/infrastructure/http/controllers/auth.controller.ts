@@ -172,6 +172,21 @@ export class AuthController {
     }
   }
 
+  @Get('force-verify')
+  async forceVerify(@Query('email') email: string) {
+    if (!email) {
+      throw new BadRequestException('E-mail é obrigatório');
+    }
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) {
+      throw new BadRequestException('Usuário não encontrado');
+    }
+    await this.userRepository.verifyEmail(user.id);
+    return {
+      message: `E-mail ${email} verificado com sucesso! Pode fazer o login agora.`,
+    };
+  }
+
   @Post('google')
   async loginGoogle(@Body() body: LoginGoogleDto) {
     let ticket;
