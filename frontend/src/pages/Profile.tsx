@@ -3,6 +3,27 @@ import { CreditCard, Search, Check, Star, RotateCw } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import type { Institution } from '../types';
 
+function initPhoneDisplay(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  const local = digits.startsWith('55') && digits.length > 2 ? digits.slice(2) : digits;
+  return formatBRPhone(local);
+}
+
+function formatBRPhone(input: string): string {
+  const digits = input.replace(/\D/g, '');
+  if (digits.length === 0) return '';
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+}
+
+function toRawPhone(display: string): string {
+  const digits = display.replace(/\D/g, '');
+  if (!digits) return '';
+  return `55${digits}`;
+}
+
 export default function Profile() {
   const {
     currentUser, planStatus, institutions,
@@ -10,10 +31,10 @@ export default function Profile() {
     setUpgradeModalOpen, showSuccess, showError,
   } = useApp();
 
-  const [name,          setName]          = useState(currentUser?.name ?? '');
-  const [nickname,      setNickname]      = useState(currentUser?.nickname ?? '');
-  const [phone,         setPhone]         = useState(currentUser?.phone ?? '');
-  const [password,      setPassword]      = useState('');
+  const [name,         setName]         = useState(currentUser?.name ?? '');
+  const [nickname,     setNickname]     = useState(currentUser?.nickname ?? '');
+  const [phoneDisplay, setPhoneDisplay] = useState(() => initPhoneDisplay(currentUser?.phone ?? ''));
+  const [password,     setPassword]     = useState('');
   const [instSearch,    setInstSearch]    = useState('');
   const [selectedInst,  setSelectedInst]  = useState<Institution | null>(null);
   const [showDropdown,  setShowDropdown]  = useState(false);
@@ -34,7 +55,7 @@ export default function Profile() {
         name, nickname: nickname || undefined,
         password: password || undefined,
         institutionId: selectedInst?.id || undefined,
-        phone: phone || undefined,
+        phone: phoneDisplay ? toRawPhone(phoneDisplay) : undefined,
       });
       setPassword('');
       showSuccess('Perfil atualizado!');
@@ -113,13 +134,16 @@ export default function Profile() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">WhatsApp (para lembretes via EvoAPI)</label>
-              <input type="tel" className="form-input" value={phone}
-                onChange={e => setPhone(e.target.value)}
-                placeholder="5511999999999 (com código do país)" />
-              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                Formato: 55 + DDD + número. Ex: 5511987654321
-              </p>
+              <label className="form-label">WhatsApp (para lembretes)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1px solid var(--border-color)', borderRadius: 8, overflow: 'hidden', background: 'var(--bg-input, rgba(255,255,255,0.05))' }}>
+                <div style={{ padding: '0 14px', display: 'flex', alignItems: 'center', borderRight: '1px solid var(--border-color)', height: 44, flexShrink: 0, fontSize: 20 }}>
+                  🇧🇷
+                </div>
+                <input type="tel" value={phoneDisplay}
+                  onChange={e => setPhoneDisplay(formatBRPhone(e.target.value))}
+                  placeholder="(DDD) XXXXX-XXXX"
+                  style={{ flex: 1, background: 'none', border: 'none', outline: 'none', padding: '0 14px', height: 44, fontSize: 14, color: 'inherit' }} />
+              </div>
             </div>
 
             <div className="form-group" style={{ position: 'relative' }}>

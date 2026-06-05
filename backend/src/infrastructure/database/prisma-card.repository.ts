@@ -37,6 +37,22 @@ export class PrismaCardRepository implements ICardRepository {
     return cards.map(this.toDomain);
   }
 
+  async findByUserId(userId: string): Promise<Card[]> {
+    const cards = await this.prisma.card.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+    return cards.map(c => this.toDomain(c));
+  }
+
+  async countGeneratedToday(userId: string): Promise<number> {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    return this.prisma.card.count({
+      where: { userId, createdAt: { gte: startOfDay } },
+    });
+  }
+
   async findDueCards(userId: string, date: Date): Promise<Card[]> {
     const cards = await this.prisma.card.findMany({
       where: {

@@ -11,6 +11,8 @@ import {
   ForbiddenException,
   NotFoundException,
   PayloadTooLargeException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -33,6 +35,7 @@ const SUPPORTED_TYPES = new Set([
 ]);
 
 const FILE_SIZE_LIMIT = 50 * 1024 * 1024; // 50 MB
+const MAX_CARDS_PER_DAY = parseInt(process.env.MAX_CARDS_PER_DAY ?? '50', 10);
 
 class GenerateQuizDto {
   @IsString() @IsNotEmpty() topicId: string;
@@ -88,7 +91,7 @@ export class AiController {
   }
 
   @Post('quiz')
-  @Throttle({ default: { limit: 10, ttl: 900_000 } })
+  @Throttle({ default: { limit: 5, ttl: 604_800_000 } }) // 5 quizzes per week
   async generateQuiz(@Request() req: any, @Body() body: GenerateQuizDto) {
     const topic = await this.topicRepository.findById(body.topicId);
     if (!topic) throw new NotFoundException('Topic not found');
@@ -114,6 +117,10 @@ export class AiController {
   @Post('generate')
   @Throttle({ default: { limit: 5, ttl: 900_000 } })
   async generateFromText(@Request() req: any, @Body() body: GenerateFromTextDto) {
+    const todayCount = await this.cardRepository.countGeneratedToday(req.user.id);
+    if (todayCount >= MAX_CARDS_PER_DAY) {
+      throw new HttpException(`Limite diário de ${MAX_CARDS_PER_DAY} cards gerados atingido. Tente novamente amanhã.`, HttpStatus.TOO_MANY_REQUESTS);
+    }
     try {
       return await this.useCase.execute({
         text: body.text,
@@ -136,6 +143,10 @@ export class AiController {
   ) {
     if (!file) throw new BadRequestException('Nenhum arquivo enviado.');
     if (!body.topicId) throw new BadRequestException('topicId é obrigatório.');
+    const todayCount = await this.cardRepository.countGeneratedToday(req.user.id);
+    if (todayCount >= MAX_CARDS_PER_DAY) {
+      throw new HttpException(`Limite diário de ${MAX_CARDS_PER_DAY} cards gerados atingido. Tente novamente amanhã.`, HttpStatus.TOO_MANY_REQUESTS);
+    }
 
     const mimeType = file.mimetype;
 
@@ -182,8 +193,15 @@ export class AiController {
     const subject = await this.subjectRepository.findById(topic.subjectId);
     if (!subject || subject.userId !== req.user.id) throw new ForbiddenException('Unauthorized access to topic');
 
+    const todayCount = await this.cardRepository.countGeneratedToday(req.user.id);
+    const remaining = MAX_CARDS_PER_DAY - todayCount;
+    if (remaining <= 0) {
+      throw new HttpException(`Limite diário de ${MAX_CARDS_PER_DAY} cards atingido. Tente novamente amanhã.`, HttpStatus.TOO_MANY_REQUESTS);
+    }
+    const cardsToSave = body.cards.slice(0, remaining);
+
     const created: Card[] = [];
-    for (const card of body.cards) {
+    for (const card of cardsToSave) {
       created.push(
         await this.cardRepository.create({
           front: card.front,

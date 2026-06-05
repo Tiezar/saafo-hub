@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, HelpCircle, RotateCw } from 'lucide-react';
+import { Plus, Trash2, HelpCircle, RotateCw, Pencil, Check, X } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 export default function Materials() {
@@ -8,7 +8,7 @@ export default function Materials() {
     selectedSubject, setSelectedSubject, selectedTopic, setSelectedTopic,
     handleCreateSubject, handleDeleteSubject,
     handleCreateTopic, handleDeleteTopic,
-    handleCreateCard, handleDeleteCard,
+    handleCreateCard, handleDeleteCard, handleUpdateCard,
     startStudySession,
   } = useApp();
 
@@ -17,6 +17,20 @@ export default function Materials() {
   const [topicName,    setTopicName]    = useState('');
   const [cardFront,    setCardFront]    = useState('');
   const [cardBack,     setCardBack]     = useState('');
+
+  const [editingCardId, setEditingCardId]   = useState<string | null>(null);
+  const [editFront,     setEditFront]       = useState('');
+  const [editBack,      setEditBack]        = useState('');
+
+  function startEditCard(id: string, front: string, back: string) {
+    setEditingCardId(id); setEditFront(front); setEditBack(back);
+  }
+
+  async function saveEditCard(id: string) {
+    if (!editFront.trim() || !editBack.trim()) return;
+    await handleUpdateCard(id, editFront.trim(), editBack.trim());
+    setEditingCardId(null);
+  }
 
   async function submitSubject(e: React.FormEvent) {
     e.preventDefault();
@@ -196,17 +210,44 @@ export default function Materials() {
                       <div key={c.id}
                         style={{
                           padding: 12, background: 'rgba(255,255,255,0.02)',
-                          border: '1px solid var(--border-color)', borderRadius: 8,
-                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          border: editingCardId === c.id ? '1px solid var(--color-primary)' : '1px solid var(--border-color)',
+                          borderRadius: 8,
                         }}>
-                        <div style={{ flexGrow: 1, minWidth: 0, paddingRight: 16 }}>
-                          <div style={{ fontWeight: 600, fontSize: 14 }}>{c.front}</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{c.back}</div>
-                        </div>
-                        <button onClick={() => handleDeleteCard(c.id)}
-                          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                          <Trash2 size={14} />
-                        </button>
+                        {editingCardId === c.id ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <input className="form-input" value={editFront} onChange={e => setEditFront(e.target.value)}
+                              placeholder="Frente" style={{ fontSize: 13 }} autoFocus />
+                            <input className="form-input" value={editBack} onChange={e => setEditBack(e.target.value)}
+                              placeholder="Verso" style={{ fontSize: 13 }} />
+                            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                              <button onClick={() => setEditingCardId(null)}
+                                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                                <X size={16} />
+                              </button>
+                              <button onClick={() => saveEditCard(c.id)}
+                                style={{ background: 'none', border: 'none', color: 'var(--color-primary-light)', cursor: 'pointer' }}>
+                                <Check size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ flexGrow: 1, minWidth: 0, paddingRight: 16 }}>
+                              <div style={{ fontWeight: 600, fontSize: 14 }}>{c.front}</div>
+                              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{c.back}</div>
+                            </div>
+                            <div style={{ display: 'flex', gap: 4 }}>
+                              <button onClick={() => startEditCard(c.id, c.front, c.back)}
+                                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                                <Pencil size={14} />
+                              </button>
+                              <button onClick={() => handleDeleteCard(c.id)}
+                                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                     {!selectedTopicCards.length && (

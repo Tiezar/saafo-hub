@@ -10,7 +10,7 @@ import { getEventMeta } from '../lib/constants';
 export default function Dashboard() {
   const navigate = useNavigate();
   const {
-    cards, metrics, insights, insightsLoading,
+    cards, metrics, insights, insightsLoading, insightsLastUpdated,
     calendarEvents, planStatus,
     fetchInsights, handleRefreshInsights,
     setUpgradeModalOpen, handleCheckout, checkoutLoading,
@@ -58,10 +58,17 @@ export default function Dashboard() {
           </h3>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {planStatus?.isActive && (
-              <button onClick={handleRefreshInsights} disabled={insightsLoading}
-                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
-                <RefreshCw size={13} className={insightsLoading ? 'animate-spin' : ''} /> Atualizar
-              </button>
+              <>
+                {insightsLastUpdated && !insightsLoading && (
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                    atualizado às {insightsLastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+                <button onClick={handleRefreshInsights} disabled={insightsLoading}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                  <RefreshCw size={13} className={insightsLoading ? 'animate-spin' : ''} /> Atualizar
+                </button>
+              </>
             )}
             {!planStatus?.isActive && (
               <button onClick={() => setUpgradeModalOpen(true)}

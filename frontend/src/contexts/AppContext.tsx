@@ -44,6 +44,7 @@ interface AppContextValue {
   planStatus: PlanStatus | null;
   insights: Insight[];
   insightsLoading: boolean;
+  insightsLastUpdated: Date | null;
 
   // Selection
   activeSpaceId: string | null;
@@ -108,6 +109,8 @@ interface AppContextValue {
   handleDeleteTopic: (id: string) => Promise<void>;
   handleCreateCard: (front: string, back: string) => Promise<void>;
   handleDeleteCard: (id: string) => Promise<void>;
+  handleUpdateCard: (id: string, front: string, back: string) => Promise<void>;
+  fetchAllCards: () => Promise<void>;
   handleUpdateProfile: (data: Record<string, unknown>) => Promise<User>;
 }
 
@@ -168,8 +171,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [calendarEvents,setCalendarEvents]= useState<CalendarEvent[]>([]);
   const [institutions,  setInstitutions] = useState<Institution[]>([]);
   const [planStatus,    setPlanStatus]   = useState<PlanStatus | null>(null);
-  const [insights,      setInsights]     = useState<Insight[]>([]);
-  const [insightsLoading,setInsightsLoading] = useState(false);
+  const [insights,            setInsights]            = useState<Insight[]>([]);
+  const [insightsLoading,     setInsightsLoading]     = useState(false);
+  const [insightsLastUpdated, setInsightsLastUpdated] = useState<Date | null>(null);
 
   // ── Selection ─────────────────────────────────────────────────────────────
   const [activeSpaceId,   setActiveSpaceId]   = useState<string | null>(null);
@@ -288,14 +292,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const fetchInsights = useCallback(async () => {
     setInsightsLoading(true);
-    try { setInsights(await apiCall('/insights') as Insight[]); }
+    try {
+      const list = await apiCall('/insights') as Insight[];
+      setInsights(list);
+      setInsightsLastUpdated(new Date());
+    }
     catch { /* silent */ }
     finally { setInsightsLoading(false); }
   }, [apiCall]);
 
   const handleRefreshInsights = useCallback(async () => {
     setInsightsLoading(true);
-    try { setInsights(await apiCall('/insights/cache', { method: 'DELETE' }) as Insight[]); }
+    try {
+      const list = await apiCall('/insights/cache', { method: 'DELETE' }) as Insight[];
+      setInsights(list);
+      setInsightsLastUpdated(new Date());
+    }
     catch { /* silent */ }
     finally { setInsightsLoading(false); }
   }, [apiCall]);
@@ -401,6 +413,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       showSuccess('Card excluído.');
     } catch (e) { showError((e as Error).message); }
   }, [apiCall, showSuccess, showError]);
+
+  const handleUpdateCard = useCallback(async (id: string, front: string, back: string) => {
+    try {
+      const updated = await apiCall(`/cards/${id}`, { method: 'PATCH', body: JSON.stringify({ front, back }) }) as Card;
+      setCards(prev => prev.map(c => c.id === id ? updated : c));
+      showSuccess('Card atualizado!');
+    } catch (e) { showError((e as Error).message); }
+  }, [apiCall, showSuccess, showError]);
+
+  const fetchAllCards = useCallback(async () => {
+    try {
+      const list = await apiCall('/cards/all') as Card[];
+      setCards(list);
+    } catch (e) { showError((e as Error).message); }
+  }, [apiCall, showError]);
 
   // ── Study session ─────────────────────────────────────────────────────────
   const startStudySession = useCallback(async (topicId?: string) => {
@@ -547,7 +574,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     theme, toggleTheme,
     toasts, showSuccess, showError, dismissToast,
     spaces, subjects, topics, cards, metrics, calendarEvents,
-    institutions, planStatus, insights, insightsLoading,
+    institutions, planStatus, insights, insightsLoading, insightsLastUpdated,
     activeSpaceId, setActiveSpaceId,
     selectedSubject, setSelectedSubject,
     selectedTopic, setSelectedTopic,
@@ -565,7 +592,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     handleCreateSpace, handleDeleteSpace,
     handleCreateSubject, handleDeleteSubject,
     handleCreateTopic, handleDeleteTopic,
-    handleCreateCard, handleDeleteCard,
+    handleCreateCard, handleDeleteCard, handleUpdateCard, fetchAllCards,
     handleUpdateProfile,
   };
 

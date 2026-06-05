@@ -25,6 +25,10 @@ body {
 
 a { color: var(--color-primary-light); text-decoration: none; }
 
+/* Browser resets button color to ButtonText (black) — override globally */
+button { color: inherit; background: transparent; border: none; }
+input, select, textarea { color: inherit; }
+
 /* ── Scrollbar ──────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar        { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track  { background: transparent; }
