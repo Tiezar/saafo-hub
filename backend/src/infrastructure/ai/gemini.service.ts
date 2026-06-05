@@ -172,16 +172,15 @@ export class GeminiService {
       }],
       systemInstruction: {
         parts: [{
-          text: `Você é um tutor de estudos que gera insights concisos e acionáveis.
-Regras obrigatórias:
-- Gere entre 4 e 6 insights baseados nos dados fornecidos
-- title: máximo 5 palavras, imperativo direto (ex: "Revise Direito Civil hoje")
-- message: máximo 15 palavras, 1 frase, foco na ação (ex: "23 cards atrasados — revise 10 por dia para recuperar.")
-- Sem introduções, sem rodeios, sem repetir o título
-- Português brasileiro, tom direto
-- Priorize insights urgentes como "high"
+          text: `Você é um tutor de estudos. Gere insights ULTRA-CURTOS para leitura em 2 segundos.
+REGRAS RÍGIDAS:
+- Gere exatamente 4 insights
+- title: 3 a 4 palavras, imperativo (ex: "Revise Direito Civil")
+- message: 1 frase, MÁXIMO 8 palavras, use números (ex: "23 cards atrasados. Revise hoje.")
+- PROIBIDO: frases longas, explicações, introduções, repetir o título
+- Português direto, sem vírgulas desnecessárias
 - Types: streak, weak_subject, exam_alert, overdue_cards, productivity_pattern, focus_concentration
-- Não mencione exames se não houver dados de exames`,
+- Não mencione exames se upcomingExams estiver vazio`,
         }],
       },
       generationConfig: {
@@ -195,8 +194,8 @@ Regras obrigatórias:
                 type: 'OBJECT',
                 properties: {
                   type:     { type: 'STRING' },
-                  title:    { type: 'STRING' },
-                  message:  { type: 'STRING' },
+                  title:    { type: 'STRING', maxLength: 40 },
+                  message:  { type: 'STRING', maxLength: 80 },
                   priority: { type: 'STRING', enum: ['high', 'medium', 'low'] },
                 },
                 required: ['type', 'title', 'message', 'priority'],
@@ -219,7 +218,11 @@ Regras obrigatórias:
       if (!rawText) throw new Error('Resposta vazia da Gemini API');
       const parsed = JSON.parse(rawText);
       if (!Array.isArray(parsed.insights)) throw new Error('Formato inválido');
-      return parsed.insights as Insight[];
+      return (parsed.insights as Insight[]).map(ins => ({
+        ...ins,
+        title:   ins.title.length   > 40 ? ins.title.slice(0, 38) + '…'   : ins.title,
+        message: ins.message.length > 80 ? ins.message.slice(0, 78) + '…' : ins.message,
+      }));
     } catch (err) {
       this.logger.error(`Gemini insights failed: ${(err as Error).message}`);
       throw new InternalServerErrorException(`Falha ao gerar insights: ${(err as Error).message}`);
