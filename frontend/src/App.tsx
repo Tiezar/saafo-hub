@@ -7,7 +7,7 @@ import {
   Calendar, ChevronLeft, X, Bell, Clock, Repeat,
   Upload, FileText, Image as ImageIcon, Type,
   Play, Pause, SkipForward, Timer, Trophy, GraduationCap, Settings,
-  Zap, TrendingDown, ShieldAlert, CreditCard, Star, RefreshCw,
+  Zap, ShieldAlert, CreditCard, Star, RefreshCw,
 } from 'lucide-react';
 
 const API_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:3000';
@@ -914,7 +914,7 @@ export default function App() {
           <div className="divider">ou continue com</div>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => showError('Falha no login com Google.')}
-              text="signin_with" locale="pt_BR" shape="rectangular"
+              text="signin_with" shape="rectangular"
               theme={theme === 'dark' ? 'filled_black' : 'outline'} size="large"/>
           </div>
           <p style={{ marginTop: 24, fontSize: 14, color: 'var(--text-secondary)', textAlign: 'center' }}>
@@ -1501,8 +1501,8 @@ export default function App() {
                     const meta = getEventMeta(ev.type);
                     const d = new Date(ev.startAt);
                     return (
-                      <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border-color)' }}
-                        onClick={() => { setCurrentView('calendar'); openEditEvent(ev); }} style2={{ cursor: 'pointer' }}>
+                      <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}
+                        onClick={() => { setCurrentView('calendar'); openEditEvent(ev); }}>
                         <div style={{ width: 8, height: 8, borderRadius: '50%', background: meta.color, flexShrink: 0 }}/>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</div>
@@ -1663,8 +1663,8 @@ export default function App() {
                     <button onClick={() => setCalendarMonth(new Date())} style={{ background: 'none', border: '1px solid var(--border-color)', borderRadius: 6, color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px 10px', fontSize: 12 }}>Hoje</button>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => setCalendarTab('month')} style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid var(--border-color)', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: calendarTab === 'month' ? 'var(--color-primary)' : 'transparent', color: calendarTab === 'month' ? 'white' : 'var(--text-secondary)' }}>Mês</button>
-                    <button onClick={() => setCalendarTab('agenda')} style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid var(--border-color)', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: calendarTab === 'agenda' ? 'var(--color-primary)' : 'transparent', color: calendarTab === 'agenda' ? 'white' : 'var(--text-secondary)' }}>Agenda</button>
+                    <button onClick={() => setCalendarTab('month')} style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid var(--border-color)', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: 'var(--color-primary)', color: 'white' }}>Mês</button>
+                    <button onClick={() => setCalendarTab('agenda')} style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid var(--border-color)', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: 'transparent', color: 'var(--text-secondary)' }}>Agenda</button>
                   </div>
                 </div>
 
