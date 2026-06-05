@@ -14,7 +14,7 @@ class CreateExamRecordDto {
   @IsString() @IsNotEmpty() topicName: string;
   @IsString() @IsOptional() scopeLabel?: string;
   @IsIn(['multiple', 'essay']) mode: 'multiple' | 'essay';
-  questions: any;
+  @IsArray() questions: any[];
   @IsString() @IsOptional() topicId?: string;
   @IsArray() @IsOptional() @IsString({ each: true }) topicIds?: string[];
   @IsString() @IsOptional() profileId?: string;

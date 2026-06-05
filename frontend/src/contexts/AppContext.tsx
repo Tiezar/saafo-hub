@@ -135,9 +135,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const toastIdRef = useRef(0);
 
   // ── Auth ──────────────────────────────────────────────────────────────────
-  const [token,       setToken]       = useState<string | null>(() => localStorage.getItem('token'));
+  const [token,       setToken]       = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [emailPending,setEmailPending]= useState<string | null>(null);
+
+  // Ref keeps access token readable inside async callbacks without stale closure issues
+  const tokenRef      = useRef<string | null>(null);
+  // Serialises concurrent refresh attempts so only one POST /auth/refresh fires at a time
+  const refreshingRef = useRef<Promise<string | null> | null>(null);
+
+  useEffect(() => { tokenRef.current = token; }, [token]);
 
   // ── Theme ─────────────────────────────────────────────────────────────────
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -209,24 +216,61 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Logout ────────────────────────────────────────────────────────────────
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('token');
+    // Fire-and-forget: revoke refresh token cookie on server
+    fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
+    tokenRef.current = null;
     setToken(null); setCurrentUser(null);
     setSubjects([]); setTopics([]); setCards([]); setMetrics(null);
     setSpaces([]); setCalendarEvents([]);
     setPlanStatus(null); setInsights([]);
     setActiveSessionId(null); setSessionCards([]);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── tryRefresh ────────────────────────────────────────────────────────────
+  const tryRefresh = useCallback((): Promise<string | null> => {
+    // Return the in-flight promise if one is already running
+    if (refreshingRef.current) return refreshingRef.current;
+
+    const p: Promise<string | null> = (async () => {
+      try {
+        const res = await fetch(`${API_URL}/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!res.ok) return null;
+        const data = await res.json() as { access_token: string };
+        tokenRef.current = data.access_token;
+        setToken(data.access_token);
+        return data.access_token;
+      } catch {
+        return null;
+      } finally {
+        refreshingRef.current = null;
+      }
+    })();
+
+    refreshingRef.current = p;
+    return p;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── apiCall ───────────────────────────────────────────────────────────────
-  const apiCall = useCallback(async (endpoint: string, options: RequestInit = {}) => {
-    const t = localStorage.getItem('token');
+  const apiCall = useCallback(async (endpoint: string, options: RequestInit = {}, _retryToken?: string): Promise<unknown> => {
+    const t = _retryToken ?? tokenRef.current;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(t ? { Authorization: `Bearer ${t}` } : {}),
       ...(options.headers as Record<string, string> | undefined),
     };
-    const res = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
-    if (res.status === 401) { handleLogout(); throw new Error('Sessão expirada.'); }
+    const res = await fetch(`${API_URL}${endpoint}`, { ...options, headers, credentials: 'include' });
+
+    if (res.status === 401 && !_retryToken) {
+      const newToken = await tryRefresh();
+      if (newToken) return apiCall(endpoint, options, newToken);
+      handleLogout();
+      throw new Error('Sessão expirada. Faça login novamente.');
+    }
+
     if (!res.ok) {
       const e = await res.json().catch(() => ({}));
       const msg = Array.isArray(e.message) ? e.message.join(', ') : e.message || 'Erro na requisição';
@@ -234,11 +278,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
     const text = await res.text();
     return text ? JSON.parse(text) : null;
-  }, [handleLogout]);
+  }, [tryRefresh, handleLogout]);
 
   // ── Auth helpers ──────────────────────────────────────────────────────────
   const storeAuth = useCallback((at: string, user: User) => {
-    localStorage.setItem('token', at);
+    tokenRef.current = at;
     setToken(at); setCurrentUser(user);
   }, []);
 
@@ -322,6 +366,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [apiCall]);
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+  // On mount: attempt to restore session from httpOnly refresh token cookie
+  useEffect(() => { tryRefresh(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => { if (token && !currentUser) fetchUserProfile(); }, [token, currentUser, fetchUserProfile]);
   useEffect(() => {
     if (currentUser) {

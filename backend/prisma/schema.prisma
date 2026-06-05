@@ -37,6 +37,7 @@ model User {
   insightCache        InsightCache?
   examRecords         ExamRecord[]
   eventTypes          UserEventType[]
+  refreshTokens       RefreshToken[]
 
   @@map("users")
 }
@@ -233,4 +234,18 @@ model ExamAttempt {
   completedAt  DateTime   @default(now())
 
   @@map("exam_attempts")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  family    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, family])
+  @@map("refresh_tokens")
 }

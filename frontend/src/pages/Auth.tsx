@@ -26,12 +26,10 @@ export default function Auth() {
   // Handle email verification redirect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const at = params.get('access_token');
     const authError = params.get('auth_error');
-    if (at) {
-      localStorage.setItem('token', at);
-      // Token stored — app will re-mount with auth
-      if (params.get('verified')) showSuccess('Email verificado! Bem-vindo.');
+    if (params.get('verified')) {
+      // Backend set httpOnly cookie; AppContext.tryRefresh() on mount will restore the session
+      showSuccess('Email verificado! Bem-vindo.');
       window.history.replaceState({}, '', window.location.pathname);
     } else if (authError) {
       const msgs: Record<string, string> = {
