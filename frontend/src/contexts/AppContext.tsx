@@ -470,8 +470,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       await apiCall('/study-sessions/review', { method: 'POST', body: JSON.stringify({ cardId: card.id, sessionId: activeSessionId, rating }) });
       setSessionStats(prev => prev ? { ...prev, ratings: [...prev.ratings, rating] } : prev);
 
-      // Re-fila Anki: se errou e ainda não foi re-enfileirado, coloca no fim
-      const willRequeue = rating === 1 && !requeuedCardIds.has(card.id);
+      // Re-fila Anki: card errado volta ao fim até ser acertado
+      const willRequeue = rating === 1;
       if (willRequeue) {
         setSessionCards(prev => [...prev, card]);
         setRequeuedCardIds(prev => new Set([...prev, card.id]));
