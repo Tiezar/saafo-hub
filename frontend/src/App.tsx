@@ -1969,7 +1969,23 @@ export default function App() {
                 <div>
                   <p style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-success)' }}>{aiResultCount} flashcards criados!</p>
                   <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>
-                    Salvos no tópico selecionado. Acesse <strong>Minhas Matérias</strong> para revisar.
+                    Salvos no tópico selecionado. Acesse{' '}
+                    <button
+                      onClick={() => setCurrentView('subjects')}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        color: 'var(--color-primary-light)',
+                        fontWeight: 700,
+                        textDecoration: 'underline',
+                        cursor: 'pointer',
+                        fontSize: 'inherit',
+                      }}
+                    >
+                      Matérias
+                    </button>{' '}
+                    para revisar.
                   </p>
                 </div>
               </div>
