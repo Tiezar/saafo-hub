@@ -8,6 +8,7 @@ import { CardController } from '../controllers/card.controller';
 import { StudySessionController } from '../controllers/study-session.controller';
 import { AiController } from '../controllers/ai.controller';
 import { MetricsController } from '../controllers/metrics.controller';
+import { ExamHistoryController } from '../controllers/exam-history.controller';
 
 @Module({
   imports: [DatabaseModule],
@@ -18,6 +19,7 @@ import { MetricsController } from '../controllers/metrics.controller';
     StudySessionController,
     AiController,
     MetricsController,
+    ExamHistoryController,
   ],
   providers: [GeminiService, PlanGuard],
 })

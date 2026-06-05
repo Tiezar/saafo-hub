@@ -43,6 +43,7 @@ model User {
   studySpaces         StudySpace[]
   calendarEvents      CalendarEvent[]
   insightCache        InsightCache?
+  examRecords         ExamRecord[]
 
   @@map("users")
 }
@@ -196,4 +197,28 @@ model CardReview {
   reviewedAt DateTime     @default(now())
 
   @@map("card_reviews")
+}
+
+model ExamRecord {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicId   String?
+  topicName String
+  mode      String        // 'multiple' | 'essay'
+  questions Json
+  createdAt DateTime      @default(now())
+  attempts  ExamAttempt[]
+
+  @@map("exam_records")
+}
+
+model ExamAttempt {
+  id           String     @id @default(uuid())
+  examRecordId String
+  examRecord   ExamRecord @relation(fields: [examRecordId], references: [id], onDelete: Cascade)
+  score        Int
+  completedAt  DateTime   @default(now())
+
+  @@map("exam_attempts")
 }

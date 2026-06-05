@@ -32,6 +32,7 @@ export interface GeminiGenerateOptions {
   mimeType?: string;
   theme?: string;
   count?: number;
+  existingCards?: { front: string }[];
 }
 
 const INLINE_SIZE_LIMIT = 5 * 1024 * 1024; // 5 MB — use Files API above this
@@ -80,11 +81,14 @@ export class GeminiService {
       ? `\n\nTEMA ESPECÍFICO: "${options.theme.trim()}" — gere flashcards exclusivamente sobre este assunto.`
       : '';
     const countInstruction = `\n\nGere EXATAMENTE ${countTarget} flashcards. Nem mais, nem menos. Se o conteúdo for insuficiente para ${countTarget} cards únicos de qualidade, gere o máximo possível sem repetir.`;
+    const dedupeInstruction = options.existingCards?.length
+      ? `\n\nCARDS JÁ EXISTENTES NO TÓPICO (NÃO repita perguntas iguais ou muito similares a estas):\n${options.existingCards.map((c, i) => `${i + 1}. ${c.front}`).join('\n')}`
+      : '';
 
     const userTextPart = {
       text: options.text
-        ? `Analise o seguinte conteúdo de estudos e gere flashcards:${themeContext}${countInstruction}\n\n${options.text}`
-        : `Analise o conteúdo enviado e gere flashcards objetivos.${themeContext}${countInstruction}`,
+        ? `Analise o seguinte conteúdo de estudos e gere flashcards:${themeContext}${countInstruction}${dedupeInstruction}\n\n${options.text}`
+        : `Analise o conteúdo enviado e gere flashcards objetivos.${themeContext}${countInstruction}${dedupeInstruction}`,
     };
 
     const payload = {

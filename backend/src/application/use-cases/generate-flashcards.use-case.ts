@@ -1,5 +1,6 @@
 import { ITopicRepository } from '../../domain/repositories/topic-repository.interface';
 import { ISubjectRepository } from '../../domain/repositories/subject-repository.interface';
+import { ICardRepository } from '../../domain/repositories/card-repository.interface';
 import { GeminiService, GeneratedCard } from '../../infrastructure/ai/gemini.service';
 
 export interface GenerateFlashcardsInput {
@@ -19,6 +20,7 @@ export class GenerateFlashcardsUseCase {
     private topicRepository: ITopicRepository,
     private subjectRepository: ISubjectRepository,
     private geminiService: GeminiService,
+    private cardRepository?: ICardRepository,
   ) {}
 
   async execute(input: GenerateFlashcardsInput): Promise<GeneratedCard[]> {
@@ -34,12 +36,17 @@ export class GenerateFlashcardsUseCase {
       throw new Error('Unauthorized access to topic');
     }
 
+    const existingCards = this.cardRepository
+      ? await this.cardRepository.findByTopicId(input.topicId)
+      : [];
+
     const generated = await this.geminiService.generateFlashcards({
       text: input.text,
       fileBuffer: input.fileBuffer,
       mimeType: input.mimeType,
       theme: input.theme,
       count: input.count,
+      existingCards: existingCards.map(c => ({ front: c.front })),
     });
 
     if (!generated.length) {

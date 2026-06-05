@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
-import { Trophy, RotateCw, CheckCircle, X, SkipForward, GraduationCap, PenLine, ListChecks } from 'lucide-react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Trophy, RotateCw, CheckCircle, X, SkipForward, GraduationCap, PenLine, ListChecks, Trash2, Clock, Star } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
-import type { QuizQuestion } from '../types';
+import type { QuizQuestion, ExamRecord } from '../types';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type Mode = 'multiple' | 'essay';
@@ -31,10 +31,14 @@ interface EssayAnswer {
   evaluation: EssayEvaluation | null;
 }
 
-function scoreColor(score: number) {
-  if (score >= 8) return 'var(--color-success)';
-  if (score >= 5) return 'var(--color-warning)';
+function scoreColor(pct: number) {
+  if (pct >= 70) return 'var(--color-success)';
+  if (pct >= 45) return 'var(--color-warning)';
   return 'var(--color-danger)';
+}
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 export default function ExamSession() {
@@ -62,12 +66,58 @@ export default function ExamSession() {
   const [evaluating,     setEvaluating]     = useState(false);
   const [currentEval,    setCurrentEval]    = useState<EssayEvaluation | null>(null);
 
+  // History state
+  const [examRecordId,  setExamRecordId]  = useState<string | null>(null);
+  const [examHistory,   setExamHistory]   = useState<ExamRecord[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
   const topicCards = cards.filter(c => c.topicId === topicId);
   const cardCount  = topicCards.length;
+
+  // Load exam history on mount
+  useEffect(() => {
+    const load = async () => {
+      setHistoryLoading(true);
+      try {
+        const records = await apiCall('/exams', { method: 'GET' }) as ExamRecord[];
+        setExamHistory(records);
+      } catch { /* non-critical */ }
+      finally { setHistoryLoading(false); }
+    };
+    load();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Save attempt when exam finishes
+  useEffect(() => {
+    if (!finished || !examRecordId) return;
+    const save = async () => {
+      let score: number;
+      if (mode === 'multiple') {
+        score = questions.length > 0
+          ? Math.round((answers.filter(Boolean).length / questions.length) * 100)
+          : 0;
+      } else {
+        const evaled = essayAnswers.filter(a => a.evaluation);
+        score = evaled.length
+          ? Math.round(evaled.reduce((s, a) => s + (a.evaluation!.score), 0) / evaled.length * 10)
+          : 0;
+      }
+      try {
+        await apiCall(`/exams/${examRecordId}/attempts`, {
+          method: 'POST',
+          body: JSON.stringify({ score }),
+        });
+        const updated = await apiCall('/exams', { method: 'GET' }) as ExamRecord[];
+        setExamHistory(updated);
+      } catch { /* non-critical */ }
+    };
+    save();
+  }, [finished]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const resetAll = () => {
     setQuestions([]); setMcIndex(0); setSelected(null); setAnswers([]); setFinished(false); setRevealed(false);
     setEssayQuestions([]); setEssayAnswers([]); setEssayIndex(0); setEssayText(''); setCurrentEval(null);
+    setExamRecordId(null);
   };
 
   // ── Start ─────────────────────────────────────────────────────────────────
@@ -76,24 +126,73 @@ export default function ExamSession() {
     resetAll();
     setLoading(true);
     try {
+      const topic = visibleTopics.find(t => t.id === topicId);
+      const subj  = subjects.find(s => s.id === topic?.subjectId);
+      const topicLabel = topic ? `${subj?.name ?? ''} › ${topic.name}` : 'Prova';
+
+      let questionsToSave: unknown;
+
       if (mode === 'multiple') {
         const qs = await apiCall('/ai/quiz', {
           method: 'POST',
           body: JSON.stringify({ topicId, difficulty, count }),
         }) as QuizQuestion[];
         setQuestions(qs);
+        questionsToSave = qs;
       } else {
-        // Essay: shuffle topic cards and pick `count`
         const shuffled = [...topicCards].sort(() => Math.random() - 0.5).slice(0, count);
-        setEssayQuestions(shuffled.map(c => ({ question: c.front, expectedAnswer: c.back })));
-        setEssayAnswers(shuffled.map(() => ({ userAnswer: '', evaluation: null })));
+        const essayQs = shuffled.map(c => ({ question: c.front, expectedAnswer: c.back }));
+        setEssayQuestions(essayQs);
+        setEssayAnswers(essayQs.map(() => ({ userAnswer: '', evaluation: null })));
         setEssayIndex(0);
         setEssayText('');
         setCurrentEval(null);
+        questionsToSave = essayQs;
       }
+
+      // Persist exam record (non-critical)
+      try {
+        const savedRecord = await apiCall('/exams', {
+          method: 'POST',
+          body: JSON.stringify({
+            topicId: topicId || undefined,
+            topicName: topicLabel,
+            mode,
+            questions: questionsToSave,
+          }),
+        }) as ExamRecord;
+        setExamRecordId(savedRecord.id);
+        setExamHistory(prev => [savedRecord, ...prev]);
+      } catch { /* ignore */ }
     } catch (e) { showError((e as Error).message); }
     finally { setLoading(false); }
-  }, [topicId, difficulty, count, mode, topicCards, apiCall, showError]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [topicId, difficulty, count, mode, topicCards, visibleTopics, subjects, apiCall, showError]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Retry an existing exam without calling AI
+  const retry = useCallback((record: ExamRecord) => {
+    setQuestions([]); setMcIndex(0); setSelected(null); setAnswers([]); setFinished(false); setRevealed(false);
+    setEssayQuestions([]); setEssayAnswers([]); setEssayIndex(0); setEssayText(''); setCurrentEval(null);
+
+    setExamRecordId(record.id);
+    setMode(record.mode);
+    if (record.topicId) setTopicId(record.topicId);
+
+    if (record.mode === 'multiple') {
+      setQuestions(record.questions as QuizQuestion[]);
+    } else {
+      const qs = record.questions as EssayQuestion[];
+      setEssayQuestions(qs);
+      setEssayAnswers(qs.map(() => ({ userAnswer: '', evaluation: null })));
+    }
+  }, []);
+
+  const deleteRecord = useCallback(async (id: string) => {
+    if (!window.confirm('Excluir este histórico de prova?')) return;
+    try {
+      await apiCall(`/exams/${id}`, { method: 'DELETE' });
+      setExamHistory(prev => prev.filter(r => r.id !== id));
+    } catch (e) { showError((e as Error).message); }
+  }, [apiCall, showError]);
 
   // ── Multiple-choice helpers ───────────────────────────────────────────────
   const answer = (idx: number) => {
@@ -231,6 +330,101 @@ export default function ExamSession() {
               </p>
             )}
           </div>
+
+          {/* ── History section ──────────────────────────────────────────── */}
+          <div style={{ marginTop: 32 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Clock size={16} style={{ color: 'var(--color-primary-light)' }} />
+              Histórico de Provas
+            </h2>
+
+            {historyLoading && (
+              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)', fontSize: 14 }}>
+                <RotateCw size={18} className="animate-spin" style={{ marginBottom: 8 }} />
+                <p>Carregando histórico...</p>
+              </div>
+            )}
+
+            {!historyLoading && examHistory.length === 0 && (
+              <div className="glass-card" style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
+                Nenhuma prova realizada ainda. Inicie sua primeira sessão acima!
+              </div>
+            )}
+
+            {!historyLoading && examHistory.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {examHistory.map(record => {
+                  const attempts = record.attempts ?? [];
+                  const scores = attempts.map(a => a.score);
+                  const best = scores.length ? Math.max(...scores) : null;
+                  const last = scores.length ? scores[0] : null;
+                  const modeLabel = record.mode === 'multiple' ? 'Múltipla Escolha' : 'Dissertativo';
+
+                  return (
+                    <div key={record.id} className="glass-card" style={{ padding: '16px 20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+                            <span style={{
+                              fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+                              background: record.mode === 'multiple' ? 'rgba(73,75,214,0.15)' : 'rgba(255,180,171,0.15)',
+                              color: record.mode === 'multiple' ? 'var(--color-primary-light)' : 'var(--color-danger)',
+                              textTransform: 'uppercase', letterSpacing: '0.06em',
+                            }}>
+                              {modeLabel}
+                            </span>
+                            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{fmtDate(record.createdAt)}</span>
+                          </div>
+                          <p style={{ fontSize: 14, fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {record.topicName}
+                          </p>
+                          {scores.length > 0 && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <Star size={11} style={{ color: 'var(--color-warning)' }} />
+                                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Melhor: </span>
+                                <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor(best!) }}>{best}%</span>
+                              </div>
+                              {last !== best && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Último: </span>
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor(last!) }}>{last}%</span>
+                                </div>
+                              )}
+                              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{scores.length} tentativa{scores.length !== 1 ? 's' : ''}</span>
+                            </div>
+                          )}
+                          {scores.length === 0 && (
+                            <span style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>Sem tentativas ainda</span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                          <button
+                            onClick={() => retry(record)}
+                            style={{
+                              padding: '7px 14px', borderRadius: 8, border: '1px solid var(--color-primary)',
+                              background: 'rgba(73,75,214,0.1)', color: 'var(--color-primary-light)',
+                              cursor: 'pointer', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
+                            }}>
+                            <RotateCw size={13} /> Refazer
+                          </button>
+                          <button
+                            onClick={() => deleteRecord(record.id)}
+                            style={{
+                              padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border-subtle)',
+                              background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
+                              display: 'flex', alignItems: 'center',
+                            }}>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -256,7 +450,7 @@ export default function ExamSession() {
     if (mode === 'multiple') {
       const correct = answers.filter(Boolean).length;
       const pct = Math.round((correct / questions.length) * 100);
-      const color = pct >= 80 ? 'var(--color-success)' : pct >= 60 ? 'var(--color-warning)' : 'var(--color-danger)';
+      const color = scoreColor(pct);
       return (
         <div className="page">
           <div className="page-header"><div><h1 className="page-title">Resultado</h1></div></div>
@@ -291,7 +485,7 @@ export default function ExamSession() {
     const avgScore = evaluated.length
       ? Math.round(evaluated.reduce((sum, a) => sum + (a.evaluation?.score ?? 0), 0) / evaluated.length * 10) / 10
       : 0;
-    const avgColor = scoreColor(avgScore);
+    const avgColor = scoreColor(avgScore * 10);
 
     return (
       <div className="page">
@@ -312,10 +506,11 @@ export default function ExamSession() {
             {essayQuestions.map((q, i) => {
               const a = essayAnswers[i];
               const ev = a?.evaluation;
+              const evColor = ev ? scoreColor(ev.score * 10) : 'var(--bg-overlay)';
               return (
                 <div key={i} className="glass-card" style={{ padding: 20 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: ev ? scoreColor(ev.score) : 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, color: 'white', flexShrink: 0 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: evColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, color: 'white', flexShrink: 0 }}>
                       {ev ? ev.score : '?'}
                     </div>
                     <p style={{ fontWeight: 600, fontSize: 14, margin: 0 }}>Q{i + 1}: {q.question}</p>
@@ -475,7 +670,7 @@ export default function ExamSession() {
             <div style={{ marginTop: 20 }}>
               {/* Score badge */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <div className="score-badge-anim" style={{ width: 48, height: 48, borderRadius: '50%', background: scoreColor(currentEval.score), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'white', flexShrink: 0 }}>
+                <div className="score-badge-anim" style={{ width: 48, height: 48, borderRadius: '50%', background: scoreColor(currentEval.score * 10), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'white', flexShrink: 0 }}>
                   {currentEval.score}
                 </div>
                 <p style={{ fontWeight: 600, fontSize: 15, margin: 0 }}>{currentEval.feedback}</p>

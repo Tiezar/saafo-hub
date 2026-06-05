@@ -53,6 +53,24 @@ export interface Metrics {
   }[];
 }
 
+export interface ExamAttempt {
+  id: string;
+  examRecordId: string;
+  score: number;
+  completedAt: string;
+}
+
+export interface ExamRecord {
+  id: string;
+  userId: string;
+  topicId: string | null;
+  topicName: string;
+  mode: 'multiple' | 'essay';
+  questions: unknown;
+  createdAt: string;
+  attempts: ExamAttempt[];
+}
+
 export interface EventDraft {
   id: string | null; title: string; type: string;
   startAt: string; endAt: string; allDay: boolean;

@@ -79,7 +79,7 @@ export class AiController {
     private geminiService: GeminiService,
   ) {
     this.useCase = new GenerateFlashcardsUseCase(
-      topicRepository, subjectRepository, geminiService,
+      topicRepository, subjectRepository, geminiService, cardRepository,
     );
   }
 
