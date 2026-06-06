@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Trash2, RotateCw, Pencil, Check, X, Plus, BookOpen, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
+import CustomSelect from '../components/CustomSelect';
 
 export default function MyCards() {
   const navigate = useNavigate();
@@ -139,22 +140,24 @@ export default function MyCards() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
             <div>
               <label className="form-label" style={{ marginBottom: 4 }}>Matéria *</label>
-              <select className="form-input" value={createSubjectId}
-                onChange={e => setCreateSubjectId(e.target.value)}>
-                <option value="">Selecione a matéria...</option>
-                {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+              <CustomSelect
+                variant="form-input"
+                value={createSubjectId}
+                onChange={setCreateSubjectId}
+                placeholder="Selecione a matéria..."
+                options={subjects.map(s => ({ value: s.id, label: s.name }))}
+              />
             </div>
             <div>
               <label className="form-label" style={{ marginBottom: 4 }}>Tópico *</label>
-              <select className="form-input" value={createTopicId}
-                onChange={e => setCreateTopicId(e.target.value)}
-                disabled={!createSubjectId}>
-                <option value="">
-                  {createSubjectId ? 'Selecione o tópico...' : 'Selecione a matéria primeiro'}
-                </option>
-                {createTopics.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
+              <CustomSelect
+                variant="form-input"
+                value={createTopicId}
+                onChange={setCreateTopicId}
+                disabled={!createSubjectId}
+                placeholder={createSubjectId ? 'Selecione o tópico...' : 'Selecione a matéria primeiro'}
+                options={createTopics.map(t => ({ value: t.id, label: t.name }))}
+              />
             </div>
           </div>
 
@@ -208,24 +211,39 @@ export default function MyCards() {
               value={search} onChange={e => setSearch(e.target.value)} />
           </div>
 
-          <select className="form-input" style={{ flex: '0 1 180px' }}
-            value={filterSubjectId} onChange={e => setFilterSubjectId(e.target.value)}>
-            <option value="">Todas as matérias</option>
-            {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+          <CustomSelect
+            variant="form-input"
+            style={{ flex: '0 1 180px' }}
+            value={filterSubjectId}
+            onChange={setFilterSubjectId}
+            options={[
+              { value: '', label: 'Todas as matérias' },
+              ...subjects.map(s => ({ value: s.id, label: s.name })),
+            ]}
+          />
 
-          <select className="form-input" style={{ flex: '0 1 180px' }}
-            value={filterTopicId} onChange={e => setFilterTopicId(e.target.value)}
-            disabled={!filterSubjectId}>
-            <option value="">{filterSubjectId ? 'Todos os tópicos' : 'Todos os tópicos'}</option>
-            {filterTopics.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
+          <CustomSelect
+            variant="form-input"
+            style={{ flex: '0 1 180px' }}
+            value={filterTopicId}
+            onChange={setFilterTopicId}
+            disabled={!filterSubjectId}
+            options={[
+              { value: '', label: 'Todos os tópicos' },
+              ...filterTopics.map(t => ({ value: t.id, label: t.name })),
+            ]}
+          />
 
-          <select className="form-input" style={{ flex: '0 1 160px' }}
-            value={sortBy} onChange={e => setSortBy(e.target.value as 'review' | 'az')}>
-            <option value="review">Próxima revisão</option>
-            <option value="az">A–Z</option>
-          </select>
+          <CustomSelect
+            variant="form-input"
+            style={{ flex: '0 1 160px' }}
+            value={sortBy}
+            onChange={v => setSortBy(v as 'review' | 'az')}
+            options={[
+              { value: 'review', label: 'Próxima revisão' },
+              { value: 'az', label: 'A–Z' },
+            ]}
+          />
 
           <button
             className={onlyDue ? 'btn-primary' : 'btn-secondary'}

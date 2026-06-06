@@ -9,6 +9,7 @@ import { getCalendarDays, eventOccursOn, formatEventTime } from '../lib/utils';
 import { EventIcon, AVAILABLE_EVENT_ICONS } from '../components/EventIcon';
 import type { UserEventType } from '../types';
 import './Calendar.css';
+import CustomSelect from '../components/CustomSelect';
 
 
 export default function CalendarPage() {
@@ -404,19 +405,27 @@ export default function CalendarPage() {
                     )}
                     <div style={{ gridColumn: 'span 6', marginBottom: 20 }}>
                       <label className="academic-label">Área</label>
-                      <select className="academic-input" value={eventDraft.spaceId || ''}
-                        onChange={e => setEventDraft(d => ({ ...d, spaceId: e.target.value || undefined }))}>
-                        <option value="">Sem área</option>
-                        {spaces.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                      </select>
+                      <CustomSelect
+                        variant="academic"
+                        value={eventDraft.spaceId || ''}
+                        onChange={v => setEventDraft(d => ({ ...d, spaceId: v || undefined }))}
+                        options={[
+                          { value: '', label: 'Sem área' },
+                          ...spaces.map(s => ({ value: s.id, label: s.name })),
+                        ]}
+                      />
                     </div>
                     <div style={{ gridColumn: 'span 6', marginBottom: 20 }}>
                       <label className="academic-label">Matéria</label>
-                      <select className="academic-input" value={eventDraft.subjectId || ''}
-                        onChange={e => setEventDraft(d => ({ ...d, subjectId: e.target.value || undefined }))}>
-                        <option value="">Sem matéria</option>
-                        {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                      </select>
+                      <CustomSelect
+                        variant="academic"
+                        value={eventDraft.subjectId || ''}
+                        onChange={v => setEventDraft(d => ({ ...d, subjectId: v || undefined }))}
+                        options={[
+                          { value: '', label: 'Sem matéria' },
+                          ...subjects.map(s => ({ value: s.id, label: s.name })),
+                        ]}
+                      />
                     </div>
                     <div style={{ gridColumn: 'span 12', marginBottom: 20 }}>
                       <label className="academic-label">Anotações Marginais</label>
@@ -466,15 +475,23 @@ export default function CalendarPage() {
                       </div>
                       {eventDraft.reminders.map((r, i) => (
                         <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                          <select className="academic-input" style={{ flex: 2, padding: '4px 28px 4px 0' }} value={r.minutesBefore}
-                            onChange={e => updateReminder(i, { minutesBefore: Number(e.target.value) })}>
-                            {REMINDER_PRESETS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-                          </select>
-                          <select className="academic-input" style={{ flex: 1, padding: '4px 28px 4px 0' }} value={r.method}
-                            onChange={e => updateReminder(i, { method: e.target.value })}>
-                            <option value="WHATSAPP">WhatsApp</option>
-                            <option value="EMAIL">Email</option>
-                          </select>
+                          <CustomSelect
+                            variant="academic"
+                            style={{ flex: 2 }}
+                            value={String(r.minutesBefore)}
+                            onChange={v => updateReminder(i, { minutesBefore: Number(v) })}
+                            options={REMINDER_PRESETS.map(p => ({ value: String(p.value), label: p.label }))}
+                          />
+                          <CustomSelect
+                            variant="academic"
+                            style={{ flex: 1 }}
+                            value={r.method}
+                            onChange={v => updateReminder(i, { method: v })}
+                            options={[
+                              { value: 'WHATSAPP', label: 'WhatsApp' },
+                              { value: 'EMAIL', label: 'Email' },
+                            ]}
+                          />
                           <button type="button" onClick={() => removeReminder(i)}
                             style={{ background: 'none', border: 'none', color: 'var(--color-danger)', cursor: 'pointer' }}>
                             <X size={16} />

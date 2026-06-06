@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, SkipForward, RotateCw, Clock, Coffee, Settings, ChevronDown } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import './Pomodoro.css';
+import CustomSelect from '../components/CustomSelect';
 
 type Phase = 'focus' | 'short-break' | 'long-break';
 
@@ -365,19 +366,19 @@ export default function Pomodoro() {
           {/* Study Selector */}
           <div>
             <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 8 }}>Contexto de Estudo</label>
-            <select
-              className="input-notebook"
+            <CustomSelect
+              variant="notebook"
+              style={{ width: '100%' }}
               value={topicId}
-              onChange={e => setTopicId(e.target.value)}
-              style={{ width: '100%', padding: '10px 28px 10px 0', borderBottom: '1px solid var(--border-color)', outline: 'none' }}
-            >
-              <option value="">Sessão livre</option>
-              {visibleTopics.map(t => (
-                <option key={t.id} value={t.id}>
-                  {subjects.find(s => s.id === t.subjectId)?.name} › {t.name}
-                </option>
-              ))}
-            </select>
+              onChange={setTopicId}
+              options={[
+                { value: '', label: 'Sessão livre' },
+                ...visibleTopics.map(t => ({
+                  value: t.id,
+                  label: `${subjects.find(s => s.id === t.subjectId)?.name ?? ''} › ${t.name}`,
+                })),
+              ]}
+            />
             {topicId && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)', marginTop: 16, borderRadius: '6px' }}>
                 <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Cards pendentes nesta matéria</span>

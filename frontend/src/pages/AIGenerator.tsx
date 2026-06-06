@@ -6,6 +6,7 @@ import {
 import { useApp } from '../contexts/AppContext';
 import { API_URL } from '../lib/constants';
 import './AIGenerator.css';
+import CustomSelect from '../components/CustomSelect';
 
 
 interface PreviewCard { front: string; back: string; selected: boolean }
@@ -193,23 +194,25 @@ export default function AIGenerator() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 12, alignItems: 'end' }}>
           <div>
             <label className="form-label">Matéria *</label>
-            <select className="form-input" value={filterSubjectId}
-              onChange={e => setFilterSubjectId(e.target.value)}>
-              <option value="">Selecione a matéria...</option>
-              {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+            <CustomSelect
+              variant="form-input"
+              value={filterSubjectId}
+              onChange={setFilterSubjectId}
+              placeholder="Selecione a matéria..."
+              options={subjects.map(s => ({ value: s.id, label: s.name }))}
+            />
           </div>
 
           <div>
             <label className="form-label">Tópico *</label>
-            <select className="form-input" value={aiTopicId}
-              onChange={e => setAiTopicId(e.target.value)}
-              disabled={!filterSubjectId}>
-              <option value="">
-                {filterSubjectId ? 'Selecione o tópico...' : 'Selecione a matéria primeiro'}
-              </option>
-              {cascadeTopics.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
+            <CustomSelect
+              variant="form-input"
+              value={aiTopicId}
+              onChange={setAiTopicId}
+              disabled={!filterSubjectId}
+              placeholder={filterSubjectId ? 'Selecione o tópico...' : 'Selecione a matéria primeiro'}
+              options={cascadeTopics.map(t => ({ value: t.id, label: t.name }))}
+            />
           </div>
 
           <div>

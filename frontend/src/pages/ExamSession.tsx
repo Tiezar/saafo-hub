@@ -8,6 +8,7 @@ import {
 import { useApp } from '../contexts/AppContext';
 import type { QuizQuestion, ExamRecord } from '../types';
 import './ExamSession.css';
+import CustomSelect from '../components/CustomSelect';
 
 
 // ── Profile definitions ───────────────────────────────────────────────────────
@@ -388,10 +389,13 @@ export default function ExamSession() {
           {/* Scope */}
           <div className="form-group">
             <label className="form-label">Matéria *</label>
-            <select className="form-input" value={subjectId} onChange={e => handleSubjectChange(e.target.value)}>
-              <option value="">Selecione uma matéria...</option>
-              {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+            <CustomSelect
+              variant="form-input"
+              value={subjectId}
+              onChange={handleSubjectChange}
+              placeholder="Selecione uma matéria..."
+              options={subjects.map(s => ({ value: s.id, label: s.name }))}
+            />
           </div>
 
           {subjectId && subjectTopics.length > 0 && (
