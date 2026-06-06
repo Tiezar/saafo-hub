@@ -46,11 +46,10 @@ export default function Profile() {
   const [nickname,     setNickname]     = useState(currentUser?.nickname ?? '');
   const [phoneDisplay, setPhoneDisplay] = useState(() => initPhoneDisplay(currentUser?.phone ?? ''));
   const [password,     setPassword]     = useState('');
-  const [instSearch,    setInstSearch]    = useState('');
   const [selectedInst,  setSelectedInst]  = useState<Institution | null>(null);
-  const [showDropdown,  setShowDropdown]  = useState(false);
+  const [instSelection, setInstSelection] = useState<'IFRO' | 'UNIR' | 'OTHER' | ''>('');
+  const [customInstName, setCustomInstName] = useState('');
   const [saving,        setSaving]        = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Subscription details (only fetched when user is STUDENT)
   const [subDetails,     setSubDetails]     = useState<SubscriptionDetails | null>(null);
@@ -116,22 +115,91 @@ export default function Profile() {
     return type;
   };
 
-  // Init search label from existing institution
+  // Synchronize currentUser updates with form states (resolves intermittent loading issues)
   useEffect(() => {
-    if (currentUser?.institutionId && institutions.length) {
-      const inst = institutions.find(i => i.id === currentUser.institutionId);
-      if (inst) { setSelectedInst(inst); setInstSearch(`${inst.sigla} - ${inst.name}`); }
+    if (currentUser) {
+      setName(currentUser.name ?? '');
+      setNickname(currentUser.nickname ?? '');
+      setPhoneDisplay(initPhoneDisplay(currentUser.phone ?? ''));
+      
+      if (currentUser.institutionId && institutions.length > 0) {
+        const found = institutions.find(i => i.id === currentUser.institutionId);
+        if (found) {
+          setSelectedInst(found);
+          const siglaUpper = found.sigla?.toUpperCase();
+          if (siglaUpper === 'IFRO') {
+            setInstSelection('IFRO');
+          } else if (siglaUpper === 'UNIR') {
+            setInstSelection('UNIR');
+          } else {
+            setInstSelection('OTHER');
+            setCustomInstName(found.name);
+          }
+        }
+      } else if (!currentUser.institutionId) {
+        setSelectedInst(null);
+        setInstSelection('');
+        setCustomInstName('');
+      }
     }
   }, [currentUser, institutions]);
+
+  const handleInstSelectionChange = async (val: 'IFRO' | 'UNIR' | 'OTHER' | '') => {
+    setInstSelection(val);
+    if (val === 'IFRO') {
+      setCustomInstName('');
+      try {
+        const res = await apiCall('/institutions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: 'Instituto Federal de Rondônia', sigla: 'IFRO' })
+        }) as Institution;
+        setSelectedInst(res);
+      } catch (err) {
+        showError('Erro ao carregar instituição IFRO.');
+      }
+    } else if (val === 'UNIR') {
+      setCustomInstName('');
+      try {
+        const res = await apiCall('/institutions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: 'Universidade Federal de Rondônia', sigla: 'UNIR' })
+        }) as Institution;
+        setSelectedInst(res);
+      } catch (err) {
+        showError('Erro ao carregar instituição UNIR.');
+      }
+    } else if (val === 'OTHER') {
+      setSelectedInst(null);
+      setCustomInstName('');
+    } else {
+      setSelectedInst(null);
+      setCustomInstName('');
+    }
+  };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
+      let instId: string | undefined = undefined;
+      if (instSelection === 'IFRO' || instSelection === 'UNIR') {
+        instId = selectedInst?.id;
+      } else if (instSelection === 'OTHER' && customInstName.trim() !== '') {
+        const res = await apiCall('/institutions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: customInstName.trim() })
+        }) as Institution;
+        instId = res.id;
+      }
+
       await handleUpdateProfile({
-        name, nickname: nickname || undefined,
+        name,
+        nickname: nickname || undefined,
         password: password || undefined,
-        institutionId: selectedInst?.id || undefined,
+        institutionId: instId,
         phone: phoneDisplay ? toRawPhone(phoneDisplay) : undefined,
       });
       setPassword('');
@@ -405,35 +473,49 @@ export default function Profile() {
             </div>
 
             {/* Instituição de Ensino */}
-            <div style={{ position: 'relative' }}>
-              <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 4 }} htmlFor="instituicao">Instituição de Ensino</label>
-              <input
+            <div>
+              <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 4 }} htmlFor="instituicao-select">Instituição de Ensino</label>
+              <select
                 className="input-notebook"
-                id="instituicao"
-                type="text"
-                placeholder="Ex: USP, Unicamp..."
-                value={instSearch}
-                onChange={e => {
-                  setInstSearch(e.target.value);
-                  setShowDropdown(true);
-                  if (debounceRef.current) clearTimeout(debounceRef.current);
-                  debounceRef.current = setTimeout(() => fetchInstitutions(e.target.value), 300);
+                id="instituicao-select"
+                style={{
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  padding: '8px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-color)',
+                  width: '100%',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontFamily: 'var(--font-body)',
+                  outline: 'none',
+                  transition: 'border-color var(--transition)'
                 }}
-                onFocus={() => setShowDropdown(true)}
-                onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-              />
-              {showDropdown && institutions.length > 0 && (
-                <div className="autocomplete-dropdown">
-                  {institutions.map(inst => (
-                    <div key={inst.id} className="autocomplete-item"
-                      onClick={() => { setSelectedInst(inst); setInstSearch(`${inst.sigla} - ${inst.name}`); setShowDropdown(false); }}>
-                      <div className="autocomplete-item-name" style={{ color: 'var(--text-primary)' }}>{inst.sigla} - {inst.name}</div>
-                      <div className="autocomplete-item-meta">{inst.uf} | {inst.domains.join(', ')}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                value={instSelection}
+                onChange={e => handleInstSelectionChange(e.target.value as any)}
+              >
+                <option value="" style={{ background: 'var(--bg-card)', color: 'var(--text-muted)' }}>Selecione uma instituição...</option>
+                <option value="IFRO" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Instituto Federal de Rondônia (IFRO)</option>
+                <option value="UNIR" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Universidade Federal de Rondônia (UNIR)</option>
+                <option value="OTHER" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Outra...</option>
+              </select>
             </div>
+
+            {/* Custom Institution Name (Conditional) */}
+            {instSelection === 'OTHER' && (
+              <div style={{ marginTop: -8 }}>
+                <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 4 }} htmlFor="instituicao-custom">Nome da Instituição</label>
+                <input
+                  className="input-notebook"
+                  id="instituicao-custom"
+                  type="text"
+                  placeholder="Digite o nome da instituição"
+                  value={customInstName}
+                  onChange={e => setCustomInstName(e.target.value)}
+                  required
+                />
+              </div>
+            )}
 
             {/* Nova senha */}
             <div>
