@@ -1,16 +1,13 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  BookOpen, RotateCw, Flame, CheckCircle, Zap, RefreshCw,
-  Star, Calendar, ShieldAlert, Clock, AlertTriangle, CalendarDays,
-  Moon, Target, Lightbulb,
+  RotateCw, Star, Calendar, ShieldAlert, Clock, Zap, RefreshCw,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { getEventMeta } from '../lib/constants';
 import { EventIcon } from '../components/EventIcon';
 import GettingStartedCard from '../components/GettingStartedCard';
 import './Dashboard.css';
-
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -22,260 +19,331 @@ export default function Dashboard() {
     openEditEvent, startStudySession,
   } = useApp();
 
-  useEffect(() => { fetchInsights(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchInsights();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const dueCount = cards.filter(c => new Date(c.nextReview) <= new Date()).length;
 
   const streak = (() => {
     const days = [...(metrics?.dailyActivity ?? [])].reverse();
     let count = 0;
-    for (const d of days) { if (d.count > 0) count++; else break; }
+    for (const d of days) {
+      if (d.count > 0) count++;
+      else break;
+    }
     return count;
   })();
+
   const upcoming = calendarEvents
     .filter(e => new Date(e.startAt) >= new Date() || e.recurrenceDays.length > 0)
     .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
     .slice(0, 4);
 
   return (
-    <div className="page">
-      <div className="page-header">
+    <div className="page" style={{ padding: '24px 24px 48px' }}>
+      {/* Page Header */}
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40, borderBottom: '1px solid var(--border-color)', paddingBottom: 24, flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Acompanhe estatísticas e revisões pendentes</p>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 300, color: 'var(--text-primary)', margin: 0 }}>Dashboard</h2>
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, color: 'var(--text-muted)', marginTop: 8, maxWidth: 500, lineHeight: 1.5 }}>
+            Visão geral do seu progresso acadêmico. Mantenha o foco na retenção e revisão regular.
+          </p>
         </div>
-        <button className="btn-primary" onClick={() => startStudySession(undefined, true)}>
-          <RotateCw size={16} /> Estudar Pendentes
+        <button
+          className="btn-oxblood"
+          onClick={() => startStudySession(undefined, true)}
+          style={{ textTransform: 'uppercase', fontSize: 12, letterSpacing: '0.05em', fontFamily: 'var(--font-label)', gap: 8 }}
+        >
+          <RotateCw size={14} /> Estudar Pendentes
         </button>
-      </div>
+      </header>
 
       {/* Plan banners */}
       <PlanBanner planStatus={planStatus} onUpgrade={() => setUpgradeModalOpen(true)} />
 
       <GettingStartedCard />
 
-      {/* Stats */}
-      <div className="stats-grid">
-        <StatCard icon={<BookOpen size={22} />} value={cards.length} label="Total de Flashcards" />
-        <StatCard icon={<RotateCw size={22} />} value={dueCount} label="Pendentes Hoje" />
-        <StatCard icon={<Flame size={22} color="var(--color-warning)" />}
-          value={`${streak} dia${streak !== 1 ? 's' : ''}`} label="Sequência Atual" />
-        <StatCard icon={<CheckCircle size={22} color="var(--color-success)" />}
-          value={metrics ? `${(metrics.retentionRate ?? 0).toFixed(1)}%` : '—'}
-          label="Taxa de Retenção" />
-      </div>
+      {/* Stats Grid (Swiss Grid Pattern) */}
+      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', borderBottom: '1px solid var(--border-color)', marginBottom: 40, paddingBottom: 24, gap: 24 }}>
+        {/* Stat 1 */}
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: '1px solid var(--border-color)', paddingRight: 16 }}>
+          <span className="academic-label" style={{ marginBottom: 12 }}>Cards Totais</span>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 44, fontWeight: 300, color: 'var(--text-primary)' }}>
+            {cards.length}
+          </div>
+        </div>
+        {/* Stat 2 */}
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: '1px solid var(--border-color)', paddingRight: 16 }}>
+          <span className="academic-label" style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+            Agendados
+            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--color-primary)', display: 'inline-block' }}></span>
+          </span>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 44, fontWeight: 300, color: 'var(--text-primary)' }}>
+            {dueCount}
+          </div>
+        </div>
+        {/* Stat 3 */}
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: '1px solid var(--border-color)', paddingRight: 16 }}>
+          <span className="academic-label" style={{ marginBottom: 12 }}>Streak Atual</span>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 44, fontWeight: 300, color: 'var(--text-primary)' }}>
+            {streak} <span style={{ fontSize: 16, color: 'var(--text-muted)' }}>dias</span>
+          </div>
+        </div>
+        {/* Stat 4 */}
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <span className="academic-label" style={{ marginBottom: 12 }}>Retenção Média</span>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 44, fontWeight: 300, color: 'var(--text-primary)' }}>
+            {metrics ? (metrics.retentionRate ?? 0).toFixed(1) : '0.0'} <span style={{ fontSize: 16, color: 'var(--text-muted)' }}>%</span>
+          </div>
+        </div>
+      </section>
 
-      {/* Insights */}
-      <div className="glass-card" style={{ marginBottom: 24 }}>
-        <div className="card-header-flex" style={{ marginBottom: 16 }}>
-          <h3 className="card-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Zap size={18} style={{ color: '#f59e0b' }} /> Análise Inteligente
+      {/* Bento Grid: Middle Section */}
+      <section className="bento-grid">
+        {/* Heatmap (Span 8) */}
+        <div className="bento-col-8" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 24, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Atividade (28 dias)</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontFamily: 'var(--font-label)', color: 'var(--text-secondary)' }}>
+              <span>menos</span>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <div style={{ width: 12, height: 12, borderRadius: 2, border: '1px solid var(--border-color)', backgroundColor: 'transparent' }}></div>
+                <div style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: 'var(--color-primary)', opacity: 0.3 }}></div>
+                <div style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: 'var(--color-primary)', opacity: 0.6 }}></div>
+                <div style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: 'var(--color-primary)', opacity: 1 }}></div>
+              </div>
+              <span>mais</span>
+            </div>
+          </div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8, width: '100%', maxWidth: 360 }}>
+              {/* Week Days Headers */}
+              {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, idx) => (
+                <div key={idx} style={{ fontFamily: 'var(--font-label)', fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 4 }}>
+                  {day}
+                </div>
+              ))}
+              {/* Row cells */}
+              {(metrics?.dailyActivity ?? []).slice(-28).map((day, i) => {
+                const lv = day.count === 0 ? 0 : day.count < 3 ? 0.3 : day.count < 8 ? 0.6 : 1;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      aspectRatio: 1,
+                      borderRadius: 3,
+                      border: day.count === 0 ? '1px solid var(--border-color)' : 'none',
+                      backgroundColor: day.count === 0 ? 'transparent' : 'var(--color-primary)',
+                      opacity: day.count === 0 ? 1 : lv,
+                      transition: 'background-color var(--transition)',
+                    }}
+                    title={`${day.date}: ${day.count} revisões`}
+                  />
+                );
+              })}
+              {Array.from({ length: Math.max(0, 28 - (metrics?.dailyActivity.length ?? 0)) }).map((_, i) => (
+                <div
+                  key={`e${i}`}
+                  style={{
+                    aspectRatio: 1,
+                    borderRadius: 3,
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: 'transparent',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* AI Insights Panel (Span 4) */}
+        <div className="bento-col-4" style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 24, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+          <h3 className="academic-label" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)' }}>
+            <Zap size={14} style={{ color: 'var(--color-primary)' }} /> Insights da IA
           </h3>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {planStatus?.isActive && (
-              <>
+
+          {!planStatus?.isActive ? (
+            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Zap size={32} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
+              <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 4, color: 'var(--text-primary)' }}>Insights no Plano Estudante</p>
+              <p style={{ fontSize: 12, marginBottom: 16 }}>A IA analisa seu histórico e gera recomendações personalizadas.</p>
+              <button onClick={() => setUpgradeModalOpen(true)} className="btn-oxblood" style={{ width: '100%' }}>
+                <Star size={12} /> Assinar
+              </button>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 {insightsLastUpdated && !insightsLoading && (
                   <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                     atualizado às {insightsLastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
                 <button onClick={handleRefreshInsights} disabled={insightsLoading}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
-                  <RefreshCw size={13} className={insightsLoading ? 'animate-spin' : ''} /> Atualizar
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, marginLeft: 'auto' }}>
+                  <RefreshCw size={12} className={insightsLoading ? 'animate-spin' : ''} /> Atualizar
                 </button>
-              </>
-            )}
-            {!planStatus?.isActive && (
-              <button onClick={() => setUpgradeModalOpen(true)}
-                style={{ background: 'var(--grad-primary)', border: 'none', borderRadius: 8, padding: '4px 12px', fontSize: 12, color: 'white', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <Star size={12} /> Assinar
-              </button>
-            )}
-          </div>
+              </div>
+
+              {insightsLoading && !insights.length && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '24px 0', color: 'var(--text-secondary)' }}>
+                  <RotateCw size={16} className="animate-spin" />
+                  <span style={{ fontSize: 13 }}>Analisando estudos...</span>
+                </div>
+              )}
+
+              {!insightsLoading && !insights.length && (
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '16px 0', textAlign: 'center' }}>
+                  Nenhum insight ainda. Faça revisões regulares!
+                </p>
+              )}
+
+              {insights.length > 0 && (
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', borderTop: '1px solid var(--border-color)', overflowY: 'auto', maxH: '250px' }}>
+                  {insights.slice(0, 3).map((ins, i) => {
+                    return (
+                      <li key={i} style={{ padding: '12px 0', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'start', gap: 10 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: ins.priority === 'high' ? 'var(--color-danger)' : 'var(--color-primary)', marginTop: 8, flexShrink: 0 }}></span>
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 2px' }}>{ins.title}</p>
+                          <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>{ins.message}</p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </>
+          )}
         </div>
+      </section>
 
-        {!planStatus?.isActive && (
-          <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)' }}>
-            <Zap size={32} style={{ marginBottom: 8, opacity: 0.4 }} />
-            <p style={{ fontSize: 14, marginBottom: 4 }}>Insights disponíveis no Plano Estudante</p>
-            <p style={{ fontSize: 12 }}>A IA analisa seu histórico e gera recomendações personalizadas.</p>
+      {/* Bottom Section: Performance & Upcoming Events split layout */}
+      <div className="bento-grid" style={{ marginBottom: 0 }}>
+        {/* Performance Table Section (Span 8) */}
+        <div className="bento-col-8" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Desempenho por Matéria</h3>
+            <button
+              onClick={() => navigate('/materias')}
+              style={{
+                fontFamily: 'var(--font-label)', fontSize: 12, color: 'var(--text-muted)',
+                cursor: 'pointer', background: 'none', border: 'none', textDecoration: 'underline',
+                textUnderlineOffset: '4px'
+              }}
+            >
+              Ver Todas as Matérias
+            </button>
           </div>
-        )}
 
-        {planStatus?.isActive && insightsLoading && !insights.length && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 0', color: 'var(--text-secondary)' }}>
-            <RotateCw size={18} className="animate-spin" />
-            <span style={{ fontSize: 14 }}>Gemini está analisando seu histórico de estudos...</span>
-          </div>
-        )}
+          <div style={{ borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-md)' }}>
+            {/* Table Header */}
+            <div className="perf-table-header">
+              <div>Matéria / Disciplina</div>
+              <div style={{ textAlign: 'right' }}>Cards Totais</div>
+              <div style={{ textAlign: 'right' }}>Revisados</div>
+              <div style={{ textAlign: 'right' }}>Taxa de Retenção</div>
+            </div>
 
-        {planStatus?.isActive && !insightsLoading && !insights.length && (
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', padding: '8px 0' }}>
-            Nenhum insight ainda. Faça algumas revisões e volte amanhã!
-          </p>
-        )}
-
-        {insights.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-            {insights.map((ins, i) => {
-              const priorityColor = ins.priority === 'high'
-                ? 'var(--color-danger)'
-                : ins.priority === 'medium'
-                ? 'var(--color-warning)'
-                : 'var(--color-success)';
-              const insightIcon: Record<string, React.ReactNode> = {
-                streak:                <Flame size={14} color="var(--color-warning)" />,
-                weak_subject:          <AlertTriangle size={14} color="var(--color-danger)" />,
-                exam_alert:            <CalendarDays size={14} color="var(--color-primary-light)" />,
-                overdue_cards:         <Moon size={14} color="var(--color-tertiary)" />,
-                productivity_pattern:  <Clock size={14} color="var(--text-muted)" />,
-                focus_concentration:   <Target size={14} color="var(--color-success)" />,
-              };
+            {/* Rows */}
+            {metrics?.subjectsPerformance.map((s, i) => {
+              const retention = s.retentionRate ?? 0;
               return (
-                <div key={i} className="insight-card" style={{ borderLeftColor: priorityColor }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                    <span style={{ display: 'flex', alignItems: 'center' }}>{insightIcon[ins.type] ?? <Lightbulb size={14} color="var(--color-warning)" />}</span>
-                    <span style={{ fontWeight: 700, fontSize: 13 }}>{ins.title}</span>
+                <div key={i} className="perf-table-row">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: 'var(--color-primary)' }}></div>
+                    <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{s.subjectName}</span>
                   </div>
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>
-                    {ins.message}
-                  </p>
+                  <div style={{ textAlign: 'right', fontFamily: 'var(--font-label)', fontSize: 13 }}>{s.totalCards}</div>
+                  <div style={{ textAlign: 'right', fontFamily: 'var(--font-label)', fontSize: 13 }}>{s.reviewedCards}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
+                    <span style={{ fontFamily: 'var(--font-label)', fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                      {retention.toFixed(1)}%
+                    </span>
+                    <div style={{ width: 64, height: 4, backgroundColor: 'var(--border-subtle)', borderRadius: 2, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', backgroundColor: 'var(--color-primary)', width: `${Math.min(100, retention)}%` }}></div>
+                    </div>
+                  </div>
                 </div>
               );
             })}
-          </div>
-        )}
-      </div>
 
-      <div className="grid-2">
-        {/* Heatmap */}
-        <div className="glass-card">
-          <h3 className="card-title" style={{ marginBottom: 16 }}>Atividade Recente</h3>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            <div className="heatmap-grid" style={{ width: 120 }}>
-              {(metrics?.dailyActivity ?? []).slice(-28).map((day, i) => {
-                const lv = day.count === 0 ? '' : day.count < 3 ? 'lv1' : day.count < 8 ? 'lv2' : day.count < 15 ? 'lv3' : 'lv4';
-                return <div key={i} className={`heatmap-cell ${lv}`} title={`${day.date}: ${day.count} revisões`} />;
-              })}
-              {Array.from({ length: Math.max(0, 28 - (metrics?.dailyActivity.length ?? 0)) }).map((_, i) => (
-                <div key={`e${i}`} className="heatmap-cell" />
-              ))}
-            </div>
-            <div>
-              <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                Frequência de estudos (últimos 28 dias)
-              </p>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
-                {metrics ? `${metrics.totalReviewed} revisões totais` : 'Sem dados'}
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>
-                <span>Menos</span>
-                {(['', 'lv1', 'lv2', 'lv3', 'lv4'] as const).map(lv => (
-                  <div key={lv} className={`heatmap-cell ${lv}`} style={{ width: 10, height: 10 }} />
-                ))}
-                <span>Mais</span>
+            {(!metrics || !metrics.subjectsPerformance.length) && (
+              <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)', fontSize: 14 }}>
+                Nenhuma revisão registrada ainda.
               </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Upcoming events */}
-        <div className="glass-card">
-          <h3 className="card-title" style={{ marginBottom: 16 }}>Próximos Eventos</h3>
+        {/* Upcoming Events Section (Span 4) */}
+        <div className="bento-col-4" style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 24, display: 'flex', flexDirection: 'column' }}>
+          <h3 className="academic-label" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)' }}>
+            <Calendar size={14} style={{ color: 'var(--color-primary)' }} /> Próximos Eventos
+          </h3>
+
           {!upcoming.length ? (
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 12 }}>Nenhum evento próximo.</p>
-              <button className="btn-secondary" style={{ width: 'auto', padding: '8px 16px' }}
-                onClick={() => navigate('/calendario')}>
-                <Calendar size={14} /> Abrir Calendário
+            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 12 }}>
+              <p style={{ fontSize: 13, margin: 0 }}>Nenhum evento agendado.</p>
+              <button className="btn-outline-custom" style={{ width: '100%' }} onClick={() => navigate('/calendario')}>
+                Abrir Calendário
               </button>
             </div>
           ) : (
-            <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {upcoming.map(ev => {
                 const meta = getEventMeta(ev.type, eventTypes);
                 const d = new Date(ev.startAt);
                 return (
                   <div key={ev.id}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}
-                    onClick={() => { navigate('/calendario'); openEditEvent(ev); }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: meta.color, flexShrink: 0 }} />
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 10, borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer' }}
+                    onClick={() => { navigate('/calendario'); openEditEvent(ev); }}
+                    onMouseOver={e => e.currentTarget.style.opacity = '0.8'}
+                    onMouseOut={e => e.currentTarget.style.opacity = '1'}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: meta.color, flexShrink: 0 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                         {d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                        {!ev.allDay && ` ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
-                        {ev.recurrenceDays.length > 0 && ' · Recorrente'}
+                        {!ev.allDay && ` às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
                       </div>
                     </div>
                     <EventIcon name={meta.icon} size={13} color={meta.color} />
                   </div>
                 );
               })}
-              <button className="btn-secondary" style={{ width: '100%', marginTop: 12, padding: '8px', fontSize: 13 }}
+              <button className="btn-outline-custom" style={{ marginTop: 8, width: '100%' }}
                 onClick={() => navigate('/calendario')}>
-                Ver todos
+                Ver Calendário Completo
               </button>
-            </>
+            </div>
           )}
         </div>
       </div>
-
-      {/* Performance table */}
-      <div className="glass-card">
-        <div className="card-header-flex"><h3 className="card-title">Desempenho por Matéria</h3></div>
-        <div className="custom-table-wrapper">
-          <table className="custom-table">
-            <thead><tr><th>Matéria</th><th>Cards</th><th>Revisados</th><th>Média</th><th>Retenção</th></tr></thead>
-            <tbody>
-              {metrics?.subjectsPerformance.map((s, i) => (
-                <tr key={i}>
-                  <td style={{ fontWeight: 600 }}>{s.subjectName}</td>
-                  <td>{s.totalCards}</td>
-                  <td>{s.reviewedCards}</td>
-                  <td><span className="badge badge-cyan">★ {(s.averageRating ?? 0).toFixed(1)}</span></td>
-                  <td><strong style={{ color: 'var(--color-success)' }}>{(s.retentionRate ?? 0).toFixed(1)}%</strong></td>
-                </tr>
-              ))}
-              {(!metrics || !metrics.subjectsPerformance.length) && (
-                <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Nenhuma revisão registrada.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
     </div>
   );
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function StatCard({ icon, value, label }: { icon: React.ReactNode; value: string | number; label: string }) {
-  return (
-    <div className="stat-card">
-      <div className="stat-icon">{icon}</div>
-      <div>
-        <div className="stat-value">{value}</div>
-        <div className="stat-label">{label}</div>
-      </div>
-    </div>
-  );
-}
-
 function PlanBanner({ planStatus, onUpgrade }: { planStatus: ReturnType<typeof useApp>['planStatus']; onUpgrade: () => void }) {
   if (!planStatus) return null;
   if (!planStatus.isActive) {
     return (
-      <div className="plan-banner plan-banner-danger" style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <ShieldAlert size={18} style={{ color: 'var(--color-danger)', flexShrink: 0 }} />
+      <div style={{
+        marginBottom: 24, padding: '16px 24px', borderRadius: 'var(--radius-md)',
+        backgroundColor: 'rgba(186, 26, 26, 0.1)', border: '1px solid var(--color-danger)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <ShieldAlert size={20} style={{ color: 'var(--color-danger)', flexShrink: 0 }} />
           <div>
             <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-danger)' }}>Período gratuito encerrado</div>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Assine o Plano Estudante para continuar usando a IA, insights e WhatsApp.</div>
           </div>
         </div>
-        <button className="btn-primary" style={{ width: 'auto', padding: '8px 20px', flexShrink: 0 }} onClick={onUpgrade}>
+        <button className="btn-oxblood" style={{ backgroundColor: 'var(--color-danger)' }} onClick={onUpgrade}>
           <Star size={14} /> Assinar
         </button>
       </div>
@@ -283,15 +351,18 @@ function PlanBanner({ planStatus, onUpgrade }: { planStatus: ReturnType<typeof u
   }
   if (planStatus.plan === 'FREE_TRIAL' && planStatus.trialDaysLeft <= 3) {
     return (
-      <div className="plan-banner plan-banner-warning" style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Clock size={16} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />
-          <span style={{ fontSize: 13, color: 'var(--color-warning)' }}>
-            <strong>{planStatus.trialDaysLeft} dia{planStatus.trialDaysLeft !== 1 ? 's' : ''}</strong>{' '}
-            restante{planStatus.trialDaysLeft !== 1 ? 's' : ''} do seu período gratuito.
+      <div style={{
+        marginBottom: 24, padding: '16px 24px', borderRadius: 'var(--radius-md)',
+        backgroundColor: 'rgba(217, 119, 6, 0.1)', border: '1px solid var(--color-warning)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Clock size={20} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />
+          <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>
+            Restam <strong>{planStatus.trialDaysLeft} dia{planStatus.trialDaysLeft !== 1 ? 's' : ''}</strong> de período gratuito.
           </span>
         </div>
-        <button style={{ background: 'none', border: '1px solid var(--color-warning)', borderRadius: 8, padding: '6px 14px', fontSize: 12, color: 'var(--color-warning)', cursor: 'pointer', fontWeight: 600 }} onClick={onUpgrade}>
+        <button className="btn-outline-custom" onClick={onUpgrade}>
           Ver planos
         </button>
       </div>
@@ -299,4 +370,3 @@ function PlanBanner({ planStatus, onUpgrade }: { planStatus: ReturnType<typeof u
   }
   return null;
 }
-

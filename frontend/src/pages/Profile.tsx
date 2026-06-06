@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CreditCard, Search, Check, Star, RotateCw, AlertTriangle, RefreshCw, Pencil } from 'lucide-react';
+import { Search, Star, RotateCw, AlertTriangle, RefreshCw, Check } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import type { Institution } from '../types';
 import './Profile.css';
-
 
 interface SubscriptionDetails {
   status: string;
@@ -100,7 +99,8 @@ export default function Profile() {
   }, [currentUser, institutions]);
 
   const save = async (e: React.FormEvent) => {
-    e.preventDefault(); setSaving(true);
+    e.preventDefault();
+    setSaving(true);
     try {
       await handleUpdateProfile({
         name, nickname: nickname || undefined,
@@ -115,182 +115,195 @@ export default function Profile() {
   };
 
   return (
-    <div className="page">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Perfil</h1>
-          <p className="page-subtitle">Dados pessoais, instituição e WhatsApp</p>
-        </div>
-      </div>
+    <div className="page" style={{ padding: '24px 24px 48px' }}>
+      {/* Page Header */}
+      <header style={{ marginBottom: 40, borderBottom: '1px solid var(--border-color)', paddingBottom: 24 }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 300, color: 'var(--text-primary)', margin: 0 }}>Perfil</h2>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, color: 'var(--text-muted)', marginTop: 8 }}>
+          Gerencie suas informações pessoais e detalhes da sua assinatura.
+        </p>
+      </header>
 
-      <div style={{ maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {/* Plan card */}
-        {planStatus && (
-          <div className="glass-card" style={{ padding: 24 }}>
-            <h3 className="card-title" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <CreditCard size={18} /> Assinatura
-            </h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48 }}>
+        {/* Left Column: Painel de Assinatura */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <h3 className="academic-label" style={{ color: 'var(--text-secondary)' }}>Painel de Assinatura</h3>
 
-            {/* Status badge */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: planStatus.plan === 'STUDENT' ? 16 : 0 }}>
-              <div>
-                <span style={{
-                  padding: '4px 14px', borderRadius: 20, fontSize: 13, fontWeight: 700,
-                  background: planStatus.plan === 'STUDENT'
-                    ? 'rgba(47,217,244,0.1)'
-                    : planStatus.isActive ? 'rgba(255,209,102,0.1)' : 'rgba(255,180,171,0.1)',
-                  color: planStatus.plan === 'STUDENT'
-                    ? 'var(--color-success)'
-                    : planStatus.isActive ? 'var(--color-warning)' : 'var(--color-danger)',
-                }}>
-                  {planStatus.plan === 'STUDENT'
-                    ? '⭐ Plano Estudante'
-                    : planStatus.isActive
-                    ? `🕐 Trial — ${planStatus.trialDaysLeft} dias restantes`
-                    : '❌ Trial expirado'}
-                </span>
-                {planStatus.plan === 'FREE_TRIAL' && planStatus.isActive && (
-                  <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
-                    Acesso completo até{' '}
-                    {planStatus.trialEndsAt ? new Date(planStatus.trialEndsAt).toLocaleDateString('pt-BR') : '—'}.
-                  </p>
-                )}
+          {planStatus && (
+            <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 24 }}>
+              <span className="academic-label" style={{ display: 'block', marginBottom: 8, fontSize: 10 }}>Plano Ativo</span>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontStyle: 'italic', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 20 }}>
+                {planStatus.plan === 'STUDENT' ? 'Estudante' : planStatus.isActive ? 'Período de Experiência' : 'Assinatura Expirada'}
               </div>
+
               {planStatus.plan !== 'STUDENT' && (
-                <button className="btn-primary" style={{ width: 'auto', padding: '10px 20px' }}
-                  onClick={() => setCheckoutOpen(true)}>
-                  <Star size={14} /> {planStatus.isActive ? 'Assinar agora' : 'Renovar acesso'}
-                </button>
+                <div style={{ marginTop: 16 }}>
+                  <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.5 }}>
+                    {planStatus.isActive
+                      ? `Você possui ${planStatus.trialDaysLeft} dias restantes em seu período gratuito.`
+                      : 'Seu período de teste expirou. Assine o plano Estudante para reaver o acesso à IA, WhatsApp e flashcards ilimitados.'}
+                  </p>
+                  <button className="btn-oxblood" style={{ width: '100%' }} onClick={() => setUpgradeModalOpen(true)}>
+                    <Star size={12} style={{ marginRight: 6 }} /> Assinar Plano Estudante
+                  </button>
+                </div>
+              )}
+
+              {planStatus.plan === 'STUDENT' && (
+                <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {subLoading && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-muted)' }}>
+                      <RotateCw size={14} className="animate-spin" /> Carregando detalhes...
+                    </div>
+                  )}
+
+                  {subDetails && !subLoading && (
+                    <>
+                      <div>
+                        <span className="academic-label" style={{ display: 'block', fontSize: 10, marginBottom: 4 }}>Bloco de Cobrança</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Próximo Vencimento:</span>
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {subDetails.nextDueDate
+                              ? new Date(subDetails.nextDueDate + 'T12:00:00').toLocaleDateString('pt-BR')
+                              : '—'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Valor:</span>
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                            R$ {subDetails.value?.toFixed(2).replace('.', ',')}/mês
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, backgroundColor: 'var(--bg-surface)', padding: 12, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', marginTop: 8 }}>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+                          💳 {billingLabel(subDetails.billingType)}
+                          {subDetails.creditCardBrand && ` ${subDetails.creditCardBrand}`}
+                          {subDetails.creditCardLastFour && ` •••• ${subDetails.creditCardLastFour}`}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
+                        <button
+                          className="btn-outline-custom"
+                          style={{ width: '100%', padding: '10px' }}
+                          onClick={() => setCheckoutOpen(true)}>
+                          Atualizar cartão
+                        </button>
+                        <button
+                          className="btn-outline-custom"
+                          style={{ width: '100%', padding: '10px' }}
+                          onClick={fetchSubDetails}>
+                          <RefreshCw size={12} style={{ marginRight: 6, display: 'inline' }} /> Atualizar Informações
+                        </button>
+
+                        {!cancelConfirm ? (
+                          <button
+                            style={{
+                              width: '100%', padding: '10px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em',
+                              borderRadius: 'var(--radius-md)', border: '1px solid var(--color-danger)', background: 'transparent',
+                              color: 'var(--color-danger)', cursor: 'pointer', fontFamily: 'var(--font-label)', marginTop: 8
+                            }}
+                            onClick={() => setCancelConfirm(true)}>
+                            Cancelar assinatura
+                          </button>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, border: '1px solid var(--color-danger)', padding: 12, borderRadius: 'var(--radius-md)', marginTop: 8 }}>
+                            <span style={{ fontSize: 13, color: 'var(--color-danger)', textAlign: 'center', fontWeight: 600 }}>Tem certeza que deseja cancelar?</span>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <button
+                                style={{ flex: 1, padding: '8px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--color-danger)', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-label)', fontSize: 11, textTransform: 'uppercase' }}
+                                onClick={handleCancel} disabled={cancelling}>
+                                {cancelling ? <RotateCw size={12} className="animate-spin" /> : 'Sim, cancelar'}
+                              </button>
+                              <button
+                                className="btn-outline-custom"
+                                style={{ flex: 1, padding: '8px' }}
+                                onClick={() => setCancelConfirm(false)}>
+                                Voltar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
+          )}
+        </div>
 
-            {/* Subscription details — STUDENT only */}
-            {planStatus.plan === 'STUDENT' && (
-              <>
-                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
-                  100 cards/dia · 20 provas/semana · 3 estilos de questão
-                </p>
-
-                {subLoading && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-muted)' }}>
-                    <RotateCw size={14} className="animate-spin" /> Carregando detalhes…
-                  </div>
-                )}
-
-                {subDetails && !subLoading && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid var(--border-color)', paddingTop: 16 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Próxima cobrança</span>
-                      <span style={{ fontWeight: 600 }}>
-                        {subDetails.nextDueDate
-                          ? new Date(subDetails.nextDueDate + 'T12:00:00').toLocaleDateString('pt-BR')
-                          : '—'}
-                        {' '}· R$ {subDetails.value?.toFixed(2).replace('.', ',')}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Forma de pagamento</span>
-                      <span style={{ fontWeight: 600 }}>
-                        {billingLabel(subDetails.billingType)}
-                        {subDetails.creditCardBrand && ` ${subDetails.creditCardBrand}`}
-                        {subDetails.creditCardLastFour && ` ••••${subDetails.creditCardLastFour}`}
-                      </span>
-                    </div>
-
-                    {/* Actions */}
-                    <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-                      <button
-                        className="btn-ghost"
-                        style={{ fontSize: 13, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 6 }}
-                        onClick={() => setCheckoutOpen(true)}>
-                        <Pencil size={13} /> Atualizar cartão
-                      </button>
-                      <button
-                        className="btn-ghost"
-                        style={{ fontSize: 13, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 6 }}
-                        onClick={fetchSubDetails}>
-                        <RefreshCw size={13} /> Atualizar
-                      </button>
-                      {!cancelConfirm ? (
-                        <button
-                          style={{ fontSize: 13, padding: '8px 14px', borderRadius: 8, border: '1px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
-                          onClick={() => setCancelConfirm(true)}>
-                          <AlertTriangle size={13} /> Cancelar assinatura
-                        </button>
-                      ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 13, color: 'var(--color-danger)' }}>Tem certeza?</span>
-                          <button
-                            style={{ fontSize: 13, padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--color-danger)', color: '#fff', cursor: 'pointer' }}
-                            onClick={handleCancel} disabled={cancelling}>
-                            {cancelling ? <RotateCw size={13} className="animate-spin" /> : 'Sim, cancelar'}
-                          </button>
-                          <button className="btn-ghost" style={{ fontSize: 13, padding: '8px 14px' }}
-                            onClick={() => setCancelConfirm(false)}>
-                            Voltar
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Profile form */}
-        <div className="glass-card">
-          <h3 className="card-title" style={{ marginBottom: 24 }}>Dados da Conta</h3>
-          <form onSubmit={save}>
-            <div className="form-group">
-              <label className="form-label">Nome Completo</label>
-              <input type="text" className="form-input" value={name}
-                onChange={e => setName(e.target.value)} required />
+        {/* Right Column: Dados da Conta */}
+        <div>
+          <h3 className="academic-label" style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>Dados da Conta</h3>
+          <form onSubmit={save} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {/* Nome completo */}
+            <div>
+              <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 4 }} htmlFor="nome">Nome completo</label>
+              <input
+                className="input-notebook"
+                id="nome"
+                type="text"
+                placeholder="Seu nome completo"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                required
+              />
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Apelido (Nickname)</label>
-              <input type="text" className="form-input" value={nickname}
+            {/* Apelido */}
+            <div>
+              <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 4 }} htmlFor="apelido">Apelido</label>
+              <input
+                className="input-notebook"
+                id="apelido"
+                type="text"
+                placeholder="Como prefere ser chamado"
+                value={nickname}
                 onChange={e => setNickname(e.target.value)}
-                placeholder="Como gostaria de ser chamado" />
+              />
             </div>
 
-            <div className="form-group">
-              <label className="form-label">WhatsApp (para lembretes)</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1px solid var(--border-color)', borderRadius: 8, overflow: 'hidden', background: 'var(--bg-input, rgba(255,255,255,0.05))' }}>
-                <div style={{ padding: '0 14px', display: 'flex', alignItems: 'center', borderRight: '1px solid var(--border-color)', height: 44, flexShrink: 0, fontSize: 20 }}>
-                  🇧🇷
-                </div>
-                <input type="tel" value={phoneDisplay}
-                  onChange={e => setPhoneDisplay(formatBRPhone(e.target.value))}
-                  placeholder="(DDD) XXXXX-XXXX"
-                  style={{ flex: 1, background: 'none', border: 'none', outline: 'none', padding: '0 14px', height: 44, fontSize: 14, color: 'inherit' }} />
-              </div>
+            {/* WhatsApp */}
+            <div>
+              <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 4 }} htmlFor="whatsapp">WhatsApp</label>
+              <input
+                className="input-notebook"
+                id="whatsapp"
+                type="tel"
+                placeholder="(00) 00000-0000"
+                value={phoneDisplay}
+                onChange={e => setPhoneDisplay(formatBRPhone(e.target.value))}
+              />
             </div>
 
-            <div className="form-group" style={{ position: 'relative' }}>
-              <label className="form-label">Instituição de Ensino</label>
-              <div style={{ position: 'relative' }}>
-                <Search size={16} style={{ position: 'absolute', left: 14, top: 15, color: 'var(--text-muted)' }} />
-                <input type="text" className="form-input" style={{ paddingLeft: 40 }}
-                  value={instSearch}
-                  onChange={e => {
-                    setInstSearch(e.target.value);
-                    setShowDropdown(true);
-                    if (debounceRef.current) clearTimeout(debounceRef.current);
-                    debounceRef.current = setTimeout(() => fetchInstitutions(e.target.value), 300);
-                  }}
-                  onFocus={() => setShowDropdown(true)}
-                  onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-                  placeholder={selectedInst ? `${selectedInst.sigla} - ${selectedInst.name}` : 'Digite o nome da escola'} />
-              </div>
+            {/* Instituição de Ensino */}
+            <div style={{ position: 'relative' }}>
+              <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 4 }} htmlFor="instituicao">Instituição de Ensino</label>
+              <input
+                className="input-notebook"
+                id="instituicao"
+                type="text"
+                placeholder="Ex: USP, Unicamp..."
+                value={instSearch}
+                onChange={e => {
+                  setInstSearch(e.target.value);
+                  setShowDropdown(true);
+                  if (debounceRef.current) clearTimeout(debounceRef.current);
+                  debounceRef.current = setTimeout(() => fetchInstitutions(e.target.value), 300);
+                }}
+                onFocus={() => setShowDropdown(true)}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+              />
               {showDropdown && institutions.length > 0 && (
                 <div className="autocomplete-dropdown">
                   {institutions.map(inst => (
                     <div key={inst.id} className="autocomplete-item"
                       onClick={() => { setSelectedInst(inst); setInstSearch(`${inst.sigla} - ${inst.name}`); setShowDropdown(false); }}>
-                      <div className="autocomplete-item-name">{inst.sigla} - {inst.name}</div>
+                      <div className="autocomplete-item-name" style={{ color: 'var(--text-primary)' }}>{inst.sigla} - {inst.name}</div>
                       <div className="autocomplete-item-meta">{inst.uf} | {inst.domains.join(', ')}</div>
                     </div>
                   ))}
@@ -298,17 +311,31 @@ export default function Profile() {
               )}
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Nova Senha (deixe em branco para manter)</label>
-              <input type="password" className="form-input" value={password}
+            {/* Nova senha */}
+            <div>
+              <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 4 }} htmlFor="senha">Nova senha</label>
+              <input
+                className="input-notebook"
+                id="senha"
+                type="password"
+                placeholder="Mínimo de 6 caracteres (deixe em branco para manter)"
+                value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres" minLength={6} />
+                minLength={6}
+              />
             </div>
 
-            <button type="submit" className="btn-primary" style={{ width: 'auto', marginTop: 12 }} disabled={saving}>
-              {saving ? <RotateCw size={16} className="animate-spin" /> : <Check size={16} />}
-              Salvar Configurações
-            </button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+              <button
+                type="submit"
+                className="btn-oxblood"
+                disabled={saving}
+                style={{ width: 'auto', padding: '10px 24px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, textTransform: 'uppercase', fontFamily: 'var(--font-label)' }}
+              >
+                {saving ? <RotateCw size={14} className="animate-spin" /> : <Check size={14} />}
+                Salvar Configurações
+              </button>
+            </div>
           </form>
         </div>
       </div>

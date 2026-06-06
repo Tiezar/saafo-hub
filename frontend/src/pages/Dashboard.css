@@ -1,37 +1,64 @@
+/* ── Proposed SAAFO HUB Dashboard Layout Styles ─────────────────────────── */
+
 .dashboard-grid {
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
 }
 
-.heatmap-grid {
+.bento-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  margin-top: var(--sp-3);
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+  margin-bottom: 40px;
 }
 
-.heatmap-cell {
-  aspect-ratio: 1;
-  border-radius: 2px;
-  background: var(--border-subtle);
-  border: 1px solid var(--border-color);
-  transition: background var(--transition);
+.bento-col-8 {
+  grid-column: span 8;
 }
-.heatmap-cell.lv1 { background: rgba(163, 59, 58, 0.15); }
-.heatmap-cell.lv2 { background: rgba(163, 59, 58, 0.35); }
-.heatmap-cell.lv3 { background: rgba(163, 59, 58, 0.65); }
-.heatmap-cell.lv4 { background: var(--color-primary); }
 
-.dark-theme .heatmap-cell.lv1 { background: rgba(254, 128, 123, 0.15); }
-.dark-theme .heatmap-cell.lv2 { background: rgba(254, 128, 123, 0.35); }
-.dark-theme .heatmap-cell.lv3 { background: rgba(254, 128, 123, 0.65); }
-.dark-theme .heatmap-cell.lv4 { background: var(--color-primary); }
+.bento-col-4 {
+  grid-column: span 4;
+}
 
-.insight-card {
-  padding: var(--sp-4) var(--sp-5);
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-left: 4px solid var(--color-primary);
+.perf-table-header {
+  display: grid;
+  grid-template-columns: 5fr 2fr 2fr 3fr;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  font-family: var(--font-label);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.perf-table-row {
+  display: grid;
+  grid-template-columns: 5fr 2fr 2fr 3fr;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  align-items: center;
+  transition: background-color var(--transition);
+}
+
+.perf-table-row:hover {
+  background-color: var(--bg-surface);
+}
+
+@media (max-width: 768px) {
+  .bento-col-8 {
+    grid-column: span 12 !important;
+  }
+  .bento-col-4 {
+    grid-column: span 12 !important;
+  }
+  .perf-table-header {
+    display: none;
+  }
+  .perf-table-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
 }
