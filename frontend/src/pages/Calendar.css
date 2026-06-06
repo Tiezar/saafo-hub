@@ -1,70 +1,179 @@
-.calendar-container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-6);
+/* ── Proposed SAAFO HUB Calendar Design System Styles ────────────────────── */
+
+.hairline-b { border-bottom: 1px solid var(--border-color); }
+.hairline-t { border-top: 1px solid var(--border-color); }
+.hairline-l { border-left: 1px solid var(--border-color); }
+.hairline-r { border-right: 1px solid var(--border-color); }
+.hairline-all { border: 1px solid var(--border-color); }
+
+.swiss-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
 }
 
-.calendar-grid-header {
+.cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  background: var(--border-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  text-align: center;
-  font-family: var(--font-label);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
+  border-top: 1px solid var(--border-color);
+  border-left: 1px solid var(--border-color);
 }
 
-.calendar-grid-header-day {
-  background: var(--bg-surface);
-  padding: var(--sp-2) 0;
-}
-
-.calendar-grid-body {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  background: var(--border-color);
-  border: 1px solid var(--border-color);
-  border-top: none;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-}
-
-.calendar-day-cell {
-  background: var(--bg-card);
-  min-height: 100px;
-  padding: 6px;
+.cal-cell {
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  min-height: 120px;
+  padding: 8px;
+  background-color: var(--bg-base);
+  cursor: pointer;
+  transition: background-color var(--transition);
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  transition: background var(--transition);
+  gap: 6px;
 }
 
-.calendar-day-cell.current-month {
-  background: var(--bg-card);
+.cal-cell:hover {
+  background-color: var(--bg-surface);
 }
-.calendar-day-cell.other-month {
-  background: var(--bg-surface);
+
+.cal-cell.other-month {
+  background-color: var(--bg-overlay);
   color: var(--text-muted);
 }
-.calendar-day-cell.today {
-  background: var(--bg-base);
+
+.cal-cell.today {
+  border: 2px solid var(--color-primary);
+  position: relative;
+  background-color: var(--bg-card-high);
 }
 
-.calendar-day-cell-number {
+.cal-cell.today::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-top: 20px solid var(--color-primary);
+  border-left: 20px solid transparent;
+}
+
+.cal-cell-number {
   font-family: var(--font-label);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   align-self: flex-end;
 }
-.calendar-day-cell.today .calendar-day-cell-number {
+
+.cal-cell.today .cal-cell-number {
   color: var(--color-primary);
   font-weight: 700;
+  margin-top: 2px;
+  margin-right: 2px;
+  z-index: 1;
 }
+
+.cal-header-cell {
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px;
+  text-align: right;
+  font-family: 'Schibsted Grotesk', sans-serif;
+  font-variant: small-caps;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background-color: var(--bg-surface);
+}
+
+/* Modals and forms */
+.academic-input {
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 8px 0;
+  font-family: 'Schibsted Grotesk', sans-serif;
+  width: 100%;
+  color: var(--text-primary);
+}
+
+.academic-input:focus {
+  outline: none;
+  border-bottom-color: var(--color-primary);
+  box-shadow: none;
+}
+
+.academic-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.btn-oxblood {
+  background-color: var(--color-primary);
+  color: #ffffff !important;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-family: 'Schibsted Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-oxblood:hover:not(:disabled) {
+  background-color: var(--color-primary-dim);
+}
+
+.btn-oxblood:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-outline-custom {
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-outline-custom:hover {
+  background-color: var(--bg-surface);
+}
+
+.chip-event {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.chip-prova { border: 1px solid var(--color-primary); color: var(--color-primary); background-color: rgba(163, 59, 58, 0.1); }
+.chip-aula { border: 1px solid var(--text-primary); color: var(--text-primary); background-color: rgba(32, 27, 18, 0.1); }
+.chip-revisao { border: 1px solid var(--text-muted); color: var(--text-muted); background-color: rgba(124, 118, 110, 0.1); }
 
 .calendar-events-list {
   display: flex;
@@ -77,7 +186,7 @@
 .calendar-event-item {
   font-size: 11px;
   padding: 2px 6px;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
   cursor: pointer;
   white-space: nowrap;
@@ -88,6 +197,7 @@
   gap: 4px;
   transition: opacity var(--transition);
 }
+
 .calendar-event-item:hover {
   opacity: 0.85;
 }
@@ -96,6 +206,7 @@
   display: flex;
   gap: var(--sp-2);
   margin-top: var(--sp-2);
+  margin-bottom: var(--sp-2);
 }
 
 .calendar-recurrence-dot {
@@ -112,8 +223,9 @@
   background: var(--bg-card);
   color: var(--text-secondary);
 }
+
 .calendar-recurrence-dot.active {
   background: var(--color-primary);
-  color: var(--bg-base);
+  color: #ffffff;
   border-color: var(--color-primary);
 }
