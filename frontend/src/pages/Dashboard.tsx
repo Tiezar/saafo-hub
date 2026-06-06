@@ -8,6 +8,9 @@ import {
 import { useApp } from '../contexts/AppContext';
 import { getEventMeta } from '../lib/constants';
 import { EventIcon } from '../components/EventIcon';
+import GettingStartedCard from '../components/GettingStartedCard';
+import './Dashboard.css';
+
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -49,24 +52,7 @@ export default function Dashboard() {
       {/* Plan banners */}
       <PlanBanner planStatus={planStatus} onUpgrade={() => setUpgradeModalOpen(true)} />
 
-      {/* Welcome empty state */}
-      {cards.length === 0 && (
-        <div className="glass-card" style={{ textAlign: 'center', padding: '40px 32px', marginBottom: 24 }}>
-          <BookOpen size={48} style={{ color: 'var(--color-primary-light)', marginBottom: 16, opacity: 0.7 }} />
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', marginBottom: 8 }}>Bem-vindo ao SAAFO!</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24, maxWidth: 420, margin: '0 auto 24px' }}>
-            Crie sua primeira matéria ou use a IA para gerar flashcards a partir dos seus resumos.
-          </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="btn-primary" style={{ width: 'auto', padding: '10px 24px' }} onClick={() => navigate('/materiais')}>
-              <BookOpen size={16} /> Criar matéria
-            </button>
-            <button className="btn-secondary" style={{ width: 'auto', padding: '10px 24px' }} onClick={() => navigate('/ia')}>
-              <Zap size={16} /> Gerar com IA
-            </button>
-          </div>
-        </div>
-      )}
+      <GettingStartedCard />
 
       {/* Stats */}
       <div className="stats-grid">
@@ -146,10 +132,7 @@ export default function Dashboard() {
                 focus_concentration:   <Target size={14} color="var(--color-success)" />,
               };
               return (
-                <div key={i} style={{
-                  padding: '14px 16px', borderRadius: 10, background: 'var(--bg-surface)',
-                  border: '1px solid var(--border-color)', borderLeft: `4px solid ${priorityColor}`,
-                }}>
+                <div key={i} className="insight-card" style={{ borderLeftColor: priorityColor }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <span style={{ display: 'flex', alignItems: 'center' }}>{insightIcon[ins.type] ?? <Lightbulb size={14} color="var(--color-warning)" />}</span>
                     <span style={{ fontWeight: 700, fontSize: 13 }}>{ins.title}</span>
@@ -169,13 +152,13 @@ export default function Dashboard() {
         <div className="glass-card">
           <h3 className="card-title" style={{ marginBottom: 16 }}>Atividade Recente</h3>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            <div className="heatmap-container">
+            <div className="heatmap-grid" style={{ width: 120 }}>
               {(metrics?.dailyActivity ?? []).slice(-28).map((day, i) => {
-                const lv = day.count === 0 ? '' : day.count < 3 ? 'level-1' : day.count < 8 ? 'level-2' : day.count < 15 ? 'level-3' : 'level-4';
-                return <div key={i} className={`heatmap-day ${lv}`} title={`${day.date}: ${day.count} revisões`} />;
+                const lv = day.count === 0 ? '' : day.count < 3 ? 'lv1' : day.count < 8 ? 'lv2' : day.count < 15 ? 'lv3' : 'lv4';
+                return <div key={i} className={`heatmap-cell ${lv}`} title={`${day.date}: ${day.count} revisões`} />;
               })}
               {Array.from({ length: Math.max(0, 28 - (metrics?.dailyActivity.length ?? 0)) }).map((_, i) => (
-                <div key={`e${i}`} className="heatmap-day" />
+                <div key={`e${i}`} className="heatmap-cell" />
               ))}
             </div>
             <div>
@@ -187,8 +170,8 @@ export default function Dashboard() {
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>
                 <span>Menos</span>
-                {(['', 'level-1', 'level-2', 'level-3', 'level-4'] as const).map(lv => (
-                  <div key={lv} className={`heatmap-day ${lv}`} style={{ width: 10, height: 10 }} />
+                {(['', 'lv1', 'lv2', 'lv3', 'lv4'] as const).map(lv => (
+                  <div key={lv} className={`heatmap-cell ${lv}`} style={{ width: 10, height: 10 }} />
                 ))}
                 <span>Mais</span>
               </div>
