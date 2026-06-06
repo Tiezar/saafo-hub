@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Star, RotateCw, AlertTriangle, RefreshCw, Check } from 'lucide-react';
+import { Search, Star, RotateCw, AlertTriangle, RefreshCw, Check, Bot, FileText, CheckCircle } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import type { Institution } from '../types';
 import './Profile.css';
@@ -70,6 +70,32 @@ export default function Profile() {
   useEffect(() => {
     if (planStatus?.plan === 'STUDENT') fetchSubDetails();
   }, [planStatus?.plan, fetchSubDetails]);
+
+  // Usage credits and limits
+  interface UsageDetails {
+    cardsGeneratedToday: number;
+    maxCardsPerDay: number;
+    cardsRemaining: number;
+    examsThisWeek: number;
+    maxExamsPerWeek: number;
+    examsRemaining: number;
+  }
+  const [usage, setUsage] = useState<UsageDetails | null>(null);
+  const [usageLoading, setUsageLoading] = useState(false);
+
+  const fetchUsage = useCallback(async () => {
+    if (!planStatus?.isActive) return;
+    setUsageLoading(true);
+    try {
+      const data = await apiCall('/ai/usage') as UsageDetails;
+      setUsage(data);
+    } catch { /* silent */ }
+    finally { setUsageLoading(false); }
+  }, [apiCall, planStatus?.isActive]);
+
+  useEffect(() => {
+    fetchUsage();
+  }, [fetchUsage]);
 
   const handleCancel = async () => {
     setCancelling(true);
@@ -234,6 +260,104 @@ export default function Profile() {
               )}
             </div>
           )}
+
+          {planStatus?.isActive && (
+            <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 24 }}>
+              <h4 className="academic-label" style={{ color: 'var(--text-secondary)', marginBottom: 16 }}>Créditos e Uso da IA</h4>
+              
+              {usageLoading && !usage ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-muted)' }}>
+                  <RotateCw size={14} className="animate-spin" /> Carregando créditos...
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {/* Flashcards generator progress */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+                      <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Bot size={14} /> Flashcards Gerados hoje
+                      </span>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {usage?.cardsGeneratedToday ?? 0} / {usage?.maxCardsPerDay ?? 100}
+                      </span>
+                    </div>
+                    <div style={{ width: '100%', height: 6, backgroundColor: 'var(--border-subtle)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ 
+                        width: `${Math.min(100, (((usage?.cardsGeneratedToday ?? 0) / (usage?.maxCardsPerDay ?? 100)) * 100))}%`, 
+                        height: '100%', 
+                        backgroundColor: 'var(--color-primary)', 
+                        borderRadius: 3,
+                        transition: 'width 0.3s ease'
+                      }} />
+                    </div>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>
+                      Resta(m) {usage?.cardsRemaining ?? 100} hoje. Reinicia à meia-noite.
+                    </span>
+                  </div>
+
+                  {/* Exams generator progress */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+                      <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <FileText size={14} /> Provas Criadas esta semana
+                      </span>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {usage?.examsThisWeek ?? 0} / {usage?.maxExamsPerWeek ?? 20}
+                      </span>
+                    </div>
+                    <div style={{ width: '100%', height: 6, backgroundColor: 'var(--border-subtle)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ 
+                        width: `${Math.min(100, (((usage?.examsThisWeek ?? 0) / (usage?.maxExamsPerWeek ?? 20)) * 100))}%`, 
+                        height: '100%', 
+                        backgroundColor: 'var(--color-secondary)', 
+                        borderRadius: 3,
+                        transition: 'width 0.3s ease'
+                      }} />
+                    </div>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>
+                      Resta(m) {usage?.examsRemaining ?? 20} esta semana.
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 24 }}>
+            <h4 className="academic-label" style={{ color: 'var(--text-secondary)', marginBottom: 16 }}>
+              Benefícios do Plano {planStatus?.plan === 'STUDENT' ? 'Estudante' : 'Experiência'}
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <CheckCircle size={16} color="var(--color-success)" style={{ flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', display: 'block' }}>IA Ilimitada (SM-2)</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Pratique repetição espaçada à vontade e de forma personalizada sem bloqueios.</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <CheckCircle size={16} color="var(--color-success)" style={{ flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', display: 'block' }}>Integração com WhatsApp</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Receba lembretes acadêmicos automáticos diretamente em seu número de celular.</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <CheckCircle size={16} color="var(--color-success)" style={{ flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', display: 'block' }}>Insights de Aprendizado</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Nosso algoritmo de IA analisa seus gaps de conhecimento semanalmente de forma automática.</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <CheckCircle size={16} color="var(--color-success)" style={{ flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', display: 'block' }}>Geração Inteligente de Provas</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Gere provas mock baseadas nos flashcards já criados com análise e notas automáticas.</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Right Column: Dados da Conta */}

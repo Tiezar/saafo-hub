@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
   UseGuards,
   UseInterceptors,
@@ -14,6 +15,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { PrismaService } from '../../database/prisma.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { PlanGuard } from '../guards/plan.guard';
@@ -78,6 +80,7 @@ export class AiController {
     @Inject('ITopicRepository') private topicRepository: ITopicRepository,
     @Inject('ISubjectRepository') private subjectRepository: ISubjectRepository,
     private geminiService: GeminiService,
+    private prisma: PrismaService,
   ) {
     this.useCase = new GenerateFlashcardsUseCase(
       topicRepository, subjectRepository, geminiService, cardRepository,
@@ -89,6 +92,28 @@ export class AiController {
     if (msg === 'Topic not found')              throw new NotFoundException(msg);
     if (msg === 'Unauthorized access to topic') throw new ForbiddenException(msg);
     throw new BadRequestException(msg);
+  }
+
+  @Get('usage')
+  async getUsage(@Request() req: any) {
+    const todayCount = await this.cardRepository.countGeneratedToday(req.user.id);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const examsThisWeek = await this.prisma.examRecord.count({
+      where: {
+        userId: req.user.id,
+        createdAt: { gte: sevenDaysAgo },
+      },
+    });
+
+    return {
+      cardsGeneratedToday: todayCount,
+      maxCardsPerDay: MAX_CARDS_PER_DAY,
+      cardsRemaining: Math.max(0, MAX_CARDS_PER_DAY - todayCount),
+      examsThisWeek,
+      maxExamsPerWeek: 20,
+      examsRemaining: Math.max(0, 20 - examsThisWeek),
+    };
   }
 
   @Post('quiz')
