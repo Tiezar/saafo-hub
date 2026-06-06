@@ -10,6 +10,7 @@ import { MaterialsMemoryModule } from './infrastructure/http/modules/materials-m
 import { CalendarModule } from './infrastructure/http/modules/calendar.module';
 import { BillingModule } from './infrastructure/http/modules/billing.module';
 import { InsightsModule } from './infrastructure/http/modules/insights.module';
+import { AdminModule } from './infrastructure/http/modules/admin.module';
 import { LoggerModule } from './infrastructure/logger/logger.module';
 import { LoggingInterceptor } from './infrastructure/logger/logging.interceptor';
 
@@ -30,6 +31,7 @@ import { LoggingInterceptor } from './infrastructure/logger/logging.interceptor'
     CalendarModule,
     BillingModule,
     InsightsModule,
+    AdminModule,
     LoggerModule,
   ],
   providers: [
