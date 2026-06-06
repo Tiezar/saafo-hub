@@ -2,8 +2,10 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AppProvider, useApp } from './contexts/AppContext';
+import { useVersionCheck } from './hooks/useVersionCheck';
 
 import AppLayout from './components/layout/AppLayout';
+import UpdateBanner from './components/UpdateBanner';
 import UpgradeModal from './components/UpgradeModal';
 import CheckoutModal from './components/CheckoutModal';
 import PlanSelectionModal from './components/PlanSelectionModal';
@@ -32,6 +34,7 @@ export default function App() {
 
 function AppShell() {
   const { token, checkoutOpen, setCheckoutOpen, planSelectionOpen, setPlanSelectionOpen } = useApp();
+  const updateAvailable = useVersionCheck();
 
   if (!token) return <Auth />;
 
@@ -50,6 +53,7 @@ function AppShell() {
           <Route path="*"         element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
+      <UpdateBanner visible={updateAvailable} />
       <UpgradeModal />
       <CheckoutModal open={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
       <PlanSelectionModal

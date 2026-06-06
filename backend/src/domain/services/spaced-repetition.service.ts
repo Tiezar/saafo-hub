@@ -54,10 +54,8 @@ export class SpacedRepetitionService {
       easeFactor = 1.3;
     }
 
-    // Calculate nextReview date — normalized to start of target day
     const nextReview = new Date(now);
     nextReview.setDate(nextReview.getDate() + interval);
-    nextReview.setHours(0, 0, 0, 0);
 
     return {
       repetitions,

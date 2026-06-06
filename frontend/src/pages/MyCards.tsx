@@ -323,10 +323,12 @@ export default function MyCards() {
                         ) : (
                           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                             · {(() => {
-                              const diff = Math.floor((new Date(c.nextReview).getTime() - now.getTime()) / 86400000);
-                              if (diff <= 0) return 'Hoje';
-                              if (diff === 1) return 'Amanhã';
-                              return `Em ${diff} dias`;
+                              const reviewDate = new Date(c.nextReview);
+                              const diff = Math.floor((reviewDate.getTime() - now.getTime()) / 86400000);
+                              const time = reviewDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                              if (diff <= 0) return `Hoje às ${time}`;
+                              if (diff === 1) return `Amanhã às ${time}`;
+                              return `Em ${diff} dias às ${time}`;
                             })()}
                           </span>
                         )}
