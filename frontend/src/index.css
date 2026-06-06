@@ -1346,23 +1346,7 @@ select.form-input { cursor: pointer; appearance: none; }
 /* Input small */
 .input-sm { width: 100%; padding: 6px 10px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary); font-size: 12px; }
 
-/* Auth page extras */
-.auth-brand { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 24px; }
-.auth-brand-icon { width: 36px; height: 36px; background: var(--grad-primary); border-radius: 8px; display: grid; place-items: center; color: white; }
-.auth-brand-name { font-family: var(--font-display); font-weight: 800; font-size: 18px; background: linear-gradient(135deg, var(--color-primary-light), var(--color-tertiary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.auth-icon-ring { width: 56px; height: 56px; background: rgba(192,193,255,0.08); border-radius: 50%; display: grid; place-items: center; margin: 0 auto 20px; }
-.auth-pending-email { font-weight: 600; color: var(--color-primary-light); margin-bottom: 24px; font-size: 15px; }
-.auth-hint { color: var(--text-secondary); font-size: 13px; margin-bottom: 28px; line-height: 1.6; }
-.auth-pending-actions { display: flex; gap: 12px; justify-content: center; margin-top: 16px; }
-.auth-divider { display: flex; align-items: center; text-align: center; color: var(--text-muted); font-size: 13px; margin: 24px 0; }
-.auth-divider::before, .auth-divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border-color); }
-.auth-divider::before { margin-right: 12px; }
-.auth-divider::after  { margin-left: 12px; }
-.auth-switch { margin-top: 24px; font-size: 14px; color: var(--text-secondary); text-align: center; }
-.auth-switch-link { color: var(--color-primary-light); cursor: pointer; font-weight: 600; }
-.auth-alert { display: flex; align-items: center; gap: 8px; margin-top: 20px; padding: 12px; border-radius: 8px; font-size: 14px; }
-.auth-alert-error   { background: rgba(255,180,171,0.08); color: var(--color-danger); border: 1px solid rgba(255,180,171,0.2); }
-.auth-alert-success { background: rgba(47,217,244,0.08);  color: var(--color-success); border: 1px solid rgba(47,217,244,0.2);  }
+
 .theme-toggle-floating { position: fixed; top: 20px; right: 20px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; width: 36px; height: 36px; display: grid; place-items: center; cursor: pointer; color: var(--text-muted); z-index: 10; }
 
 /* Plan banners */

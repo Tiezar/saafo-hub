@@ -5,9 +5,10 @@ import {
   Sun, Moon, Mail,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import './Auth.css';
 
 export default function Auth() {
-  const { apiCall, storeAuth, emailPending, setEmailPending, theme, toggleTheme, showError, showSuccess } = useApp();
+  const { apiCall, storeAuth, emailPending, setEmailPending, theme, toggleTheme, showError, showSuccess, setPlanSelectionOpen } = useApp();
 
   const [isRegistering, setIsRegistering] = useState(false);
   const [authEmail,     setAuthEmail]     = useState('');
@@ -31,6 +32,7 @@ export default function Auth() {
       // Backend set httpOnly cookie; AppContext.tryRefresh() on mount will restore the session
       showSuccess('Email verificado! Bem-vindo.');
       window.history.replaceState({}, '', window.location.pathname);
+      setPlanSelectionOpen(true);
     } else if (authError) {
       const msgs: Record<string, string> = {
         expired_token: 'Link expirado. Crie uma nova conta.',
