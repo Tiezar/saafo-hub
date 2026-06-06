@@ -73,7 +73,7 @@ export class GeminiService {
 
   async generateFlashcards(options: GeminiGenerateOptions): Promise<GeneratedCard[]> {
     if (!this.apiKey) {
-      throw new InternalServerErrorException('GEMINI_API_KEY não configurado.');
+      throw new InternalServerErrorException('Serviço de IA não disponível.');
     }
 
     const parts = await this.buildParts(options);
@@ -129,12 +129,12 @@ export class GeminiService {
 
       if (!res.ok) {
         const errText = await res.text();
-        throw new Error(`Gemini API ${res.status}: ${errText}`);
+        throw new Error(`IA HTTP ${res.status}: ${errText}`);
       }
 
       const data = await res.json();
       const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) throw new Error('Resposta vazia da Gemini API');
+      if (!rawText) throw new Error('Resposta vazia do serviço de IA');
 
       const parsed = JSON.parse(rawText);
       if (!Array.isArray(parsed.cards)) throw new Error('Formato inválido retornado pela IA');
@@ -142,9 +142,7 @@ export class GeminiService {
       return parsed.cards as GeneratedCard[];
     } catch (err) {
       this.logger.error(`Gemini generation failed: ${(err as Error).message}`);
-      throw new InternalServerErrorException(
-        `Falha ao gerar flashcards: ${(err as Error).message}`,
-      );
+      throw new InternalServerErrorException('Falha ao gerar flashcards. Tente novamente.');
     }
   }
 
@@ -163,7 +161,7 @@ export class GeminiService {
     weakestRetention: number | null;
     totalSubjects: number;
   }): Promise<Insight[]> {
-    if (!this.apiKey) throw new InternalServerErrorException('GEMINI_API_KEY não configurado.');
+    if (!this.apiKey) throw new InternalServerErrorException('Serviço de IA não disponível.');
 
     const payload = {
       contents: [{
@@ -213,10 +211,10 @@ REGRAS RÍGIDAS:
         `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
       );
-      if (!res.ok) throw new Error(`Gemini API ${res.status}: ${await res.text()}`);
+      if (!res.ok) throw new Error(`IA HTTP ${res.status}: ${await res.text()}`);
       const resp = await res.json();
       const rawText = resp.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) throw new Error('Resposta vazia da Gemini API');
+      if (!rawText) throw new Error('Resposta vazia do serviço de IA');
       const parsed = JSON.parse(rawText);
       if (!Array.isArray(parsed.insights)) throw new Error('Formato inválido');
       return (parsed.insights as Insight[]).map(ins => ({
@@ -226,7 +224,7 @@ REGRAS RÍGIDAS:
       }));
     } catch (err) {
       this.logger.error(`Gemini insights failed: ${(err as Error).message}`);
-      throw new InternalServerErrorException(`Falha ao gerar insights: ${(err as Error).message}`);
+      throw new InternalServerErrorException('Falha ao gerar insights. Tente novamente.');
     }
   }
 
@@ -237,7 +235,7 @@ REGRAS RÍGIDAS:
     profileId: 'quick' | 'applied' | 'contextual',
     count: number,
   ): Promise<QuizQuestion[]> {
-    if (!this.apiKey) throw new InternalServerErrorException('GEMINI_API_KEY não configurado.');
+    if (!this.apiKey) throw new InternalServerErrorException('Serviço de IA não disponível.');
 
     const PROFILE_SYSTEM: Record<string, string> = {
       quick: `Você é um professor criando questões de REVISÃO RÁPIDA em português brasileiro.
@@ -309,17 +307,17 @@ PROIBIDO: pergunta que a resposta esteja explícita no texto-base.`,
       );
       if (!res.ok) {
         const errText = await res.text();
-        throw new Error(`Gemini API ${res.status}: ${errText}`);
+        throw new Error(`IA HTTP ${res.status}: ${errText}`);
       }
       const data = await res.json();
       const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) throw new Error('Resposta vazia da Gemini API');
+      if (!rawText) throw new Error('Resposta vazia do serviço de IA');
       const parsed = JSON.parse(rawText);
       if (!Array.isArray(parsed.questions)) throw new Error('Formato inválido retornado pela IA');
       return parsed.questions as QuizQuestion[];
     } catch (err) {
       this.logger.error(`Gemini exam generation failed: ${(err as Error).message}`);
-      throw new InternalServerErrorException(`Falha ao gerar prova: ${(err as Error).message}`);
+      throw new InternalServerErrorException('Falha ao gerar prova. Tente novamente.');
     }
   }
 
@@ -330,7 +328,7 @@ PROIBIDO: pergunta que a resposta esteja explícita no texto-base.`,
     expectedAnswer: string,
     userAnswer: string,
   ): Promise<EssayEvaluation> {
-    if (!this.apiKey) throw new InternalServerErrorException('GEMINI_API_KEY não configurado.');
+    if (!this.apiKey) throw new InternalServerErrorException('Serviço de IA não disponível.');
 
     const payload = {
       contents: [{
@@ -379,16 +377,16 @@ Escreva em português brasileiro.`,
         `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
       );
-      if (!res.ok) throw new Error(`Gemini API ${res.status}: ${await res.text()}`);
+      if (!res.ok) throw new Error(`IA HTTP ${res.status}: ${await res.text()}`);
       const data = await res.json();
       const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) throw new Error('Resposta vazia da Gemini API');
+      if (!rawText) throw new Error('Resposta vazia do serviço de IA');
       const parsed = JSON.parse(rawText) as EssayEvaluation;
       parsed.score = Math.max(0, Math.min(10, parsed.score));
       return parsed;
     } catch (err) {
       this.logger.error(`Gemini essay evaluation failed: ${(err as Error).message}`);
-      throw new InternalServerErrorException(`Falha ao avaliar resposta: ${(err as Error).message}`);
+      throw new InternalServerErrorException('Falha ao avaliar resposta. Tente novamente.');
     }
   }
 
@@ -435,7 +433,7 @@ Escreva em português brasileiro.`,
 
     if (!res.ok) {
       const t = await res.text();
-      throw new Error(`Gemini Files API upload failed ${res.status}: ${t}`);
+      throw new Error(`Upload do arquivo falhou (HTTP ${res.status}): ${t}`);
     }
 
     const data = await res.json();
@@ -455,8 +453,8 @@ Escreva em português brasileiro.`,
       if (!res.ok) continue;
       const data = await res.json();
       if (data.state === 'ACTIVE') return;
-      if (data.state === 'FAILED') throw new Error('File processing failed on Gemini.');
+      if (data.state === 'FAILED') throw new Error('Processamento do arquivo falhou.');
     }
-    throw new Error('Timeout waiting for file processing on Gemini.');
+    throw new Error('Timeout no processamento do arquivo.');
   }
 }
