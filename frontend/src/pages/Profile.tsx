@@ -3,6 +3,7 @@ import { Search, Star, RotateCw, AlertTriangle, RefreshCw, Check, Bot, FileText,
 import { useApp } from '../contexts/AppContext';
 import type { Institution } from '../types';
 import './Profile.css';
+import CustomSelect from '../components/CustomSelect';
 
 interface SubscriptionDetails {
   status: string;
@@ -474,31 +475,18 @@ export default function Profile() {
 
             {/* Instituição de Ensino */}
             <div>
-              <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 4 }} htmlFor="instituicao-select">Instituição de Ensino</label>
-              <select
-                className="input-notebook"
-                id="instituicao-select"
-                style={{
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-primary)',
-                  padding: '8px 12px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-color)',
-                  width: '100%',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontFamily: 'var(--font-body)',
-                  outline: 'none',
-                  transition: 'border-color var(--transition)'
-                }}
+              <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 4 }}>Instituição de Ensino</label>
+              <CustomSelect
                 value={instSelection}
-                onChange={e => handleInstSelectionChange(e.target.value as any)}
-              >
-                <option value="" style={{ background: 'var(--bg-card)', color: 'var(--text-muted)' }}>Selecione uma instituição...</option>
-                <option value="IFRO" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Instituto Federal de Rondônia (IFRO)</option>
-                <option value="UNIR" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Universidade Federal de Rondônia (UNIR)</option>
-                <option value="OTHER" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Outra...</option>
-              </select>
+                onChange={val => handleInstSelectionChange(val as any)}
+                options={[
+                  { value: 'IFRO', label: 'Instituto Federal de Rondônia (IFRO)' },
+                  { value: 'UNIR', label: 'Universidade Federal de Rondônia (UNIR)' },
+                  { value: 'OTHER', label: 'Outra...' }
+                ]}
+                placeholder="Selecione uma instituição..."
+                variant="notebook"
+              />
             </div>
 
             {/* Custom Institution Name (Conditional) */}
