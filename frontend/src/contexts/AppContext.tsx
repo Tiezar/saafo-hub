@@ -87,11 +87,16 @@ interface AppContextValue {
   closeEventModal: () => void;
   quickCreateEvent: (title: string, type: string, startAt: string, allDay: boolean) => Promise<void>;
 
-  // Upgrade modal
+  // Upgrade / checkout modals
   upgradeModalOpen: boolean;
   setUpgradeModalOpen: (v: boolean) => void;
+  checkoutOpen: boolean;
+  setCheckoutOpen: (v: boolean) => void;
+  planSelectionOpen: boolean;
+  setPlanSelectionOpen: (v: boolean) => void;
   checkoutLoading: boolean;
   handleCheckout: () => Promise<void>;
+  fetchPlanStatus: () => Promise<void>;
 
   // Fetchers
   fetchCalendarEvents: (year: number, month: number) => Promise<void>;
@@ -109,6 +114,7 @@ interface AppContextValue {
   handleDeleteSubject: (id: string) => Promise<void>;
   handleCreateTopic: (name: string) => Promise<void>;
   handleDeleteTopic: (id: string) => Promise<void>;
+  handleQuickSetup: (subjectName: string, topicName: string) => Promise<void>;
   handleCreateCard: (front: string, back: string, topicId?: string) => Promise<void>;
   handleDeleteCard: (id: string) => Promise<void>;
   handleUpdateCard: (id: string, front: string, back: string) => Promise<void>;
@@ -210,9 +216,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [eventDraft,     setEventDraft]     = useState<EventDraft>(blankDraft());
   const [draftSaving,    setDraftSaving]    = useState(false);
 
-  // ── Upgrade modal ─────────────────────────────────────────────────────────
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const [checkoutLoading,  setCheckoutLoading]  = useState(false);
+  // ── Upgrade / checkout modals ─────────────────────────────────────────────
+  const [upgradeModalOpen,  setUpgradeModalOpen]  = useState(false);
+  const [checkoutOpen,      setCheckoutOpen]      = useState(false);
+  const [planSelectionOpen, setPlanSelectionOpen] = useState(false);
+  const [checkoutLoading,   setCheckoutLoading]   = useState(false);
 
   // ── Logout ────────────────────────────────────────────────────────────────
   const handleLogout = useCallback(() => {
@@ -457,6 +465,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (e) { showError((e as Error).message); }
   }, [apiCall, selectedTopic, showSuccess, showError]);
 
+  const handleQuickSetup = useCallback(async (subjectName: string, topicName: string) => {
+    try {
+      const sub = await apiCall('/subjects', {
+        method: 'POST',
+        body: JSON.stringify({ name: subjectName, color: '#6366f1', spaceId: activeSpaceId ?? undefined }),
+      }) as Subject;
+      setSubjects(prev => [...prev, sub]);
+
+      const topic = await apiCall('/topics', {
+        method: 'POST',
+        body: JSON.stringify({ name: topicName, subjectId: sub.id }),
+      }) as Topic;
+      setTopics(prev => [...prev, topic]);
+      setSelectedSubject(sub);
+      setSelectedTopic(topic);
+
+      showSuccess(`"${subjectName} › ${topicName}" criados! Agora escolha o tópico e gere seus cards.`);
+    } catch (e) { showError((e as Error).message); }
+  }, [apiCall, activeSpaceId, showSuccess, showError]);
+
   // ── CRUD — Cards ──────────────────────────────────────────────────────────
   const handleCreateCard = useCallback(async (front: string, back: string, topicId?: string) => {
     const tid = topicId ?? selectedTopic?.id;
@@ -658,14 +686,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Billing ───────────────────────────────────────────────────────────────
   const handleCheckout = useCallback(async () => {
-    setCheckoutLoading(true);
-    try {
-      const { invoiceUrl } = await apiCall('/billing/checkout', { method: 'POST' }) as { invoiceUrl: string };
-      window.open(invoiceUrl, '_blank', 'noopener,noreferrer');
-      setUpgradeModalOpen(false);
-    } catch (e) { showError((e as Error).message); }
-    finally { setCheckoutLoading(false); }
-  }, [apiCall, showError]);
+    setUpgradeModalOpen(false);
+    setCheckoutOpen(true);
+  }, []);
 
   // ── Profile ───────────────────────────────────────────────────────────────
   const handleUpdateProfile = useCallback(async (data: Record<string, unknown>) => {
@@ -694,12 +717,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     calendarMonth, setCalendarMonth,
     eventModalOpen, eventDraft, setEventDraft, draftSaving,
     openCreateEvent, openCreateEventWithData, openEditEvent, handleSaveEvent, handleDeleteEvent, closeEventModal, quickCreateEvent,
-    upgradeModalOpen, setUpgradeModalOpen, checkoutLoading, handleCheckout,
+    upgradeModalOpen, setUpgradeModalOpen,
+    checkoutOpen, setCheckoutOpen,
+    planSelectionOpen, setPlanSelectionOpen,
+    checkoutLoading, handleCheckout, fetchPlanStatus,
     fetchCalendarEvents, fetchInsights, handleRefreshInsights,
     fetchInstitutions, fetchCardsForTopic, fetchTopicsForSubject, fetchMetrics,
     handleCreateSpace, handleDeleteSpace,
     handleCreateSubject, handleDeleteSubject,
-    handleCreateTopic, handleDeleteTopic,
+    handleCreateTopic, handleDeleteTopic, handleQuickSetup,
     handleCreateCard, handleDeleteCard, handleUpdateCard, fetchAllCards,
     handleUpdateProfile,
     fetchEventTypes, handleCreateEventType, handleUpdateEventType, handleDeleteEventType,

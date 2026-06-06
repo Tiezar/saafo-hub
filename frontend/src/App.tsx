@@ -5,6 +5,8 @@ import { AppProvider, useApp } from './contexts/AppContext';
 
 import AppLayout from './components/layout/AppLayout';
 import UpgradeModal from './components/UpgradeModal';
+import CheckoutModal from './components/CheckoutModal';
+import PlanSelectionModal from './components/PlanSelectionModal';
 
 import Auth        from './pages/Auth';
 import Dashboard   from './pages/Dashboard';
@@ -29,7 +31,7 @@ export default function App() {
 }
 
 function AppShell() {
-  const { token } = useApp();
+  const { token, checkoutOpen, setCheckoutOpen, planSelectionOpen, setPlanSelectionOpen } = useApp();
 
   if (!token) return <Auth />;
 
@@ -49,6 +51,12 @@ function AppShell() {
         </Route>
       </Routes>
       <UpgradeModal />
+      <CheckoutModal open={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
+      <PlanSelectionModal
+        open={planSelectionOpen}
+        onTrial={() => setPlanSelectionOpen(false)}
+        onSubscribe={() => { setPlanSelectionOpen(false); setCheckoutOpen(true); }}
+      />
     </BrowserRouter>
   );
 }

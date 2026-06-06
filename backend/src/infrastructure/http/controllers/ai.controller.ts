@@ -35,7 +35,7 @@ const SUPPORTED_TYPES = new Set([
 ]);
 
 const FILE_SIZE_LIMIT = 50 * 1024 * 1024; // 50 MB
-const MAX_CARDS_PER_DAY = parseInt(process.env.MAX_CARDS_PER_DAY ?? '50', 10);
+const MAX_CARDS_PER_DAY = parseInt(process.env.MAX_CARDS_PER_DAY ?? '100', 10);
 
 class GenerateQuizDto {
   @IsArray() @ArrayMinSize(1) @ArrayMaxSize(10) @IsString({ each: true })
@@ -92,7 +92,7 @@ export class AiController {
   }
 
   @Post('quiz')
-  @Throttle({ default: { limit: 10, ttl: 604_800_000 } }) // 10 exams per week
+  @Throttle({ default: { limit: 20, ttl: 604_800_000 } }) // 20 exams per week
   async generateQuiz(@Request() req: any, @Body() body: GenerateQuizDto) {
     const allCards: { front: string; back: string }[] = [];
 
@@ -226,7 +226,7 @@ export class AiController {
   }
 
   @Post('evaluate-essay')
-  @Throttle({ default: { limit: 30, ttl: 900_000 } })
+  @Throttle({ default: { limit: 100, ttl: 86_400_000 } }) // 100/day
   async evaluateEssay(@Body() body: EvaluateEssayDto) {
     try {
       return await this.geminiService.evaluateEssayAnswer(

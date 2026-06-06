@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, RotateCw, CreditCard, X, Bot, ClipboardList, Lightbulb, MessageCircle, FileUp, CalendarDays, Timer } from 'lucide-react';
+import { Star, RotateCw, CreditCard, X, Bot, ClipboardList, Lightbulb, MessageCircle, FileUp, CalendarDays, Timer, Layers } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 export default function UpgradeModal() {
@@ -28,11 +28,12 @@ export default function UpgradeModal() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {([
-              { icon: <Bot size={15} color="var(--color-primary-light)" />, text: 'Geração ilimitada de flashcards com IA' },
-              { icon: <ClipboardList size={15} color="var(--color-success)" />, text: 'Sessão de Provas com IA (múltipla escolha)' },
+              { icon: <Bot size={15} color="var(--color-primary-light)" />, text: 'Até 100 flashcards gerados por IA por dia' },
+              { icon: <FileUp size={15} color="var(--color-tertiary)" />, text: 'Geração via texto, PDF ou imagem (até 50 MB)' },
+              { icon: <ClipboardList size={15} color="var(--color-success)" />, text: '20 provas por semana — 3 estilos de questão' },
+              { icon: <Layers size={15} color="var(--color-success)" />, text: 'Estilos: Revisão Rápida, Aplicada e Vestibular' },
               { icon: <Lightbulb size={15} color="#f59e0b" />, text: 'Insights inteligentes automáticos' },
               { icon: <MessageCircle size={15} color="var(--color-success)" />, text: 'Lembretes via WhatsApp' },
-              { icon: <FileUp size={15} color="var(--color-tertiary)" />, text: 'Upload de documentos PDF e imagens' },
               { icon: <CalendarDays size={15} color="var(--color-primary-light)" />, text: 'Calendário com recorrência e alertas' },
               { icon: <Timer size={15} color="var(--color-danger)" />, text: 'Pomodoro + todos os recursos básicos' },
             ] as const).map(({ icon, text }) => (

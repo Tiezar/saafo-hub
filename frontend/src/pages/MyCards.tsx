@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Trash2, RotateCw, Pencil, Check, X, Plus } from 'lucide-react';
+import { Search, Trash2, RotateCw, Pencil, Check, X, Plus, BookOpen, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 
 export default function MyCards() {
+  const navigate = useNavigate();
   const {
     cards, topics, subjects,
     handleDeleteCard, handleUpdateCard, handleCreateCard, fetchAllCards,
@@ -342,17 +344,30 @@ export default function MyCards() {
           })}
 
           {!filtered.length && (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 16 }}>
-                {search || filterSubjectId || filterTopicId || onlyDue
-                  ? 'Nenhum card corresponde aos filtros.'
-                  : 'Você ainda não tem nenhum flashcard.'}
-              </p>
-              {!search && !filterSubjectId && !filterTopicId && !onlyDue && (
-                <button className="btn-primary" style={{ width: 'auto', padding: '10px 24px' }}
-                  onClick={openCreate}>
-                  <Plus size={16} /> Criar primeiro card
-                </button>
+            <div style={{ textAlign: 'center', padding: '40px 24px' }}>
+              {search || filterSubjectId || filterTopicId || onlyDue ? (
+                <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+                  Nenhum card corresponde aos filtros.
+                </p>
+              ) : (
+                <>
+                  <BookOpen size={40} style={{ color: 'var(--color-primary-light)', opacity: 0.6, marginBottom: 14 }} />
+                  <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 8 }}>Você ainda não tem flashcards</p>
+                  <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 20, maxWidth: 340, margin: '0 auto 20px' }}>
+                    Para criar cards, primeiro adicione uma <strong>Matéria</strong> e um <strong>Tópico</strong>,
+                    depois use a IA para gerar ou crie manualmente.
+                  </p>
+                  <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <button className="btn-primary" style={{ width: 'auto', padding: '10px 20px' }}
+                      onClick={() => navigate('/materiais')}>
+                      <BookOpen size={15} /> Ir para Matérias
+                    </button>
+                    <button className="btn-secondary" style={{ width: 'auto', padding: '10px 20px' }}
+                      onClick={() => navigate('/ia')}>
+                      <Sparkles size={15} /> Gerar com IA
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           )}

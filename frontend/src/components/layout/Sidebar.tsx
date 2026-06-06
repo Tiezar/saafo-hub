@@ -23,10 +23,11 @@ export default function Sidebar() {
     currentUser, handleLogout, theme, toggleTheme,
     spaces, activeSpaceId, setActiveSpaceId,
     handleCreateSpace, handleDeleteSpace,
-    cards,
+    cards, subjects,
   } = useApp();
 
   const dueCount = cards.filter(c => new Date(c.nextReview) <= new Date()).length;
+  const showOnboardingDot = subjects.length === 0 && localStorage.getItem('onboarding_dismissed') !== '1';
 
   const [spacesOpen,   setSpacesOpen]   = React.useState(false);
   const [spaceForm,    setSpaceForm]    = React.useState(false);
@@ -128,6 +129,9 @@ export default function Sidebar() {
             <span>{label}</span>
             {dueCount > 0 && (to === '/cards' || to === '/materiais') && (
               <span className="nav-item-badge">{dueCount}</span>
+            )}
+            {showOnboardingDot && to === '/materiais' && (
+              <span className="onboarding-dot" />
             )}
           </NavLink>
         ))}
