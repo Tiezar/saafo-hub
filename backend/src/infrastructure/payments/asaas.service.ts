@@ -1,4 +1,4 @@
-import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, Logger, InternalServerErrorException, BadRequestException } from '@nestjs/common';
 
 export interface AsaasCardData {
   holderName: string;
@@ -44,7 +44,17 @@ export class AsaasService {
     if (!res.ok) {
       const text = await res.text();
       this.logger.error(`Asaas ${method} ${path} → ${res.status}: ${text}`);
-      throw new InternalServerErrorException(`Erro no gateway de pagamento: ${res.status}`);
+      let userMessage = `Erro no gateway de pagamento (${res.status})`;
+      try {
+        const json = JSON.parse(text) as { errors?: { description: string }[] };
+        if (json.errors?.length) {
+          userMessage = json.errors.map(e => e.description).join('; ');
+        }
+      } catch { /* keep default message */ }
+      if (res.status >= 400 && res.status < 500) {
+        throw new BadRequestException(userMessage);
+      }
+      throw new InternalServerErrorException(userMessage);
     }
     return res.json() as Promise<T>;
   }
