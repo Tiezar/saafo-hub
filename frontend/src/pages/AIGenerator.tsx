@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { API_URL } from '../lib/constants';
+import './AIGenerator.css';
+
 
 interface PreviewCard { front: string; back: string; selected: boolean }
 
@@ -35,7 +37,25 @@ function wordHint(n: number): { text: string; color: string } | null {
 }
 
 export default function AIGenerator() {
-  const { apiCall, visibleTopics, subjects, selectedTopic, fetchCardsForTopic, showError, showSuccess } = useApp();
+  const { apiCall, visibleTopics, subjects, selectedTopic, fetchCardsForTopic, showError, showSuccess, handleQuickSetup } = useApp();
+
+  // ── Inline setup (when user has no topics yet) ────────────────────────────
+  const [showSetup,      setShowSetup]      = useState(false);
+  const [setupSubject,   setSetupSubject]   = useState('');
+  const [setupTopic,     setSetupTopic]     = useState('');
+  const [setupLoading,   setSetupLoading]   = useState(false);
+
+  const submitQuickSetup = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!setupSubject.trim() || !setupTopic.trim()) return;
+    setSetupLoading(true);
+    try {
+      await handleQuickSetup(setupSubject.trim(), setupTopic.trim());
+      setShowSetup(false);
+      setSetupSubject('');
+      setSetupTopic('');
+    } finally { setSetupLoading(false); }
+  }, [setupSubject, setupTopic, handleQuickSetup]);
 
   // ── Destination ───────────────────────────────────────────────────────────
   const [filterSubjectId, setFilterSubjectId] = useState('');
@@ -212,10 +232,63 @@ export default function AIGenerator() {
         </div>
 
         {visibleTopics.length === 0 && (
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 10 }}>
-            Nenhum tópico disponível.{' '}
-            <a href="/materiais" style={{ color: 'var(--color-primary-light)' }}>Crie uma matéria primeiro →</a>
-          </p>
+          <div style={{ marginTop: 16, borderTop: '1px solid var(--border-color)', paddingTop: 16 }}>
+            {!showSetup ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                  Nenhum tópico ainda.
+                </span>
+                <button
+                  className="btn-ghost btn-sm"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}
+                  onClick={() => setShowSetup(true)}
+                >
+                  <Sparkles size={13} /> Criar matéria e tópico agora
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={submitQuickSetup} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
+                  Crie uma matéria e um tópico para começar:
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Matéria</label>
+                    <input
+                      className="form-input"
+                      style={{ padding: '8px 12px', fontSize: 13 }}
+                      placeholder="Ex: Direito Civil"
+                      value={setupSubject}
+                      onChange={e => setSetupSubject(e.target.value)}
+                      autoFocus
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Tópico</label>
+                    <input
+                      className="form-input"
+                      style={{ padding: '8px 12px', fontSize: 13 }}
+                      placeholder="Ex: Contratos"
+                      value={setupTopic}
+                      onChange={e => setSetupTopic(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button type="submit" className="btn-primary btn-sm" disabled={setupLoading}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {setupLoading ? <RotateCw size={13} className="animate-spin" /> : <Check size={13} />}
+                    Criar e continuar
+                  </button>
+                  <button type="button" className="btn-ghost btn-sm" onClick={() => setShowSetup(false)}>
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         )}
       </div>
 

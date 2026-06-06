@@ -1,0 +1,30 @@
+.ai-dropzone,
+.dropzone {
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-10) var(--sp-6);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  background: var(--bg-card);
+  user-select: none;
+  text-align: center;
+}
+
+.ai-dropzone:hover,
+.ai-dropzone.dragover,
+.dropzone:hover,
+.dropzone.dragover {
+  border-color: var(--color-primary-light);
+  background: rgba(192, 193, 255, 0.04);
+}
+
+.ai-dropzone.has-file,
+.dropzone.has-file {
+  border-style: solid;
+  border-color: var(--color-tertiary);
+  background: rgba(47, 217, 244, 0.03);
+}

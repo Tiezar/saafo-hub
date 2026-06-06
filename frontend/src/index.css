@@ -824,30 +824,7 @@ select.form-input { cursor: pointer; appearance: none; }
 }
 
 
-/* ── AI dropzone ────────────────────────────────────────────────────────── */
-.dropzone {
-  border: 1px dashed var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: var(--sp-10) var(--sp-6);
-  cursor: pointer;
-  transition: var(--transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 160px;
-  background: var(--bg-card);
-  user-select: none;
-  text-align: center;
-}
-.dropzone:hover, .dropzone.dragover {
-  border-color: var(--color-primary-light);
-  background: rgba(192, 193, 255, 0.04);
-}
-.dropzone.has-file {
-  border-style: solid;
-  border-color: var(--color-tertiary);
-  background: rgba(47, 217, 244, 0.03);
-}
+
 
 
 /* ── Exam / Quiz ────────────────────────────────────────────────────────── */
@@ -944,14 +921,7 @@ select.form-input { cursor: pointer; appearance: none; }
   padding-left: calc(var(--sp-3) - 2px);
 }
 
-/* ── Insight card ───────────────────────────────────────────────────────── */
-.insight-card {
-  padding: 14px 16px;
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-left: 4px solid;
-}
+
 
 /* ── Tab strip ──────────────────────────────────────────────────────────── */
 .tab-strip {
@@ -1078,9 +1048,7 @@ select.form-input { cursor: pointer; appearance: none; }
 .quiz-difficulty-btn.active-easy   { border-color: var(--color-tertiary);  background: rgba(47,217,244,0.08);  color: var(--color-tertiary); }
 .quiz-difficulty-btn.active-medium { border-color: var(--color-warning);   background: rgba(255,209,102,0.08); color: var(--color-warning); }
 .quiz-difficulty-btn.active-hard   { border-color: var(--color-danger);    background: rgba(255,180,171,0.08); color: var(--color-danger); }
-.ai-dropzone         { border: 1px dashed var(--border-subtle); border-radius: var(--radius-lg); padding: var(--sp-10) var(--sp-6); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; min-height: 160px; background: var(--bg-card); user-select: none; text-align: center; }
-.ai-dropzone:hover, .ai-dropzone.dragover { border-color: var(--color-primary-light); background: rgba(192,193,255,0.04); }
-.ai-dropzone.has-file { border-style: solid; border-color: var(--color-tertiary); background: rgba(47,217,244,0.03); }
+
 
 .study-card-outer    { perspective: 1200px; width: 100%; max-width: 580px; height: 300px; margin: 0 auto 28px; cursor: pointer; }
 .study-card-inner    { position: relative; width: 100%; height: 100%; transition: transform 0.55s cubic-bezier(0.4,0,0.2,1); transform-style: preserve-3d; }
