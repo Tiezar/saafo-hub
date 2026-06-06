@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, SkipForward, RotateCw, CheckCircle, Clock, Timer, Settings, Target, Coffee, Zap } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import './Pomodoro.css';
+
 
 type Phase = 'focus' | 'short-break' | 'long-break';
 
