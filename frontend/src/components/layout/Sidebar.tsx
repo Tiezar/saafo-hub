@@ -44,8 +44,8 @@ export default function Sidebar() {
 
   return (
     <nav 
-      className="hidden md:flex h-screen w-[280px] flex-col fixed left-0 top-0 bg-[#F4F1EA] py-8 px-4 z-50 border-r border-outline-variant"
-      style={{ borderRight: '1px solid var(--border-color)' }}
+      className="hidden md:flex h-screen w-[280px] flex-col sticky top-0 bg-[#F4F1EA] py-8 px-4 z-50 border-r border-outline-variant"
+      style={{ borderRight: '1px solid var(--border-color)', flexShrink: 0 }}
     >
       {/* Header */}
       <div style={{ marginBottom: 32, paddingLeft: 12, paddingRight: 12 }}>
