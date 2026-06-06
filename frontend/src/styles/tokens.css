@@ -1,0 +1,102 @@
+/* ── Marginália Design System Tokens ────────────────────────────────────── */
+
+:root {
+  /* Typography */
+  --font-display: 'Literata', serif;
+  --font-body:    'Hanken Grotesk', sans-serif;
+  --font-label:   'JetBrains Mono', monospace;
+
+  /* Border radius (Academic minimal rounding: 6px) */
+  --radius-xs:   0.125rem;
+  --radius-sm:   0.25rem;
+  --radius-md:   0.375rem; /* 6px */
+  --radius-lg:   0.5rem;
+  --radius-xl:   0.75rem;
+  --radius-full: 9999px;
+
+  /* Spacing (4px base grid) */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* Layout */
+  --sidebar-w: 260px;
+
+  /* Transitions */
+  --transition: all 0.15s ease-in-out;
+  --transition-slow: all 0.3s ease-in-out;
+
+  /* LIGHT THEME — Marginália (Scholarly Paper) */
+  --bg-base:     #fff8f3;
+  --bg-deep:     #fff8f3;
+  --bg-surface:  #f8ecde;
+  --bg-card:     #fef2e4;
+  --bg-card-high:#f2e6d8;
+  --bg-overlay:  #ece1d3;
+
+  --text-primary:   #201b12;
+  --text-secondary: #4b463f;
+  --text-muted:     #7c766e;
+
+  /* Accent Palette - Oxblood */
+  --color-primary:        #a33b3a;
+  --color-primary-text:   #a33b3a;
+  --color-primary-light:  #a33b3a;
+  --color-primary-dim:    #832425;
+  --color-secondary:      #a33b3a;
+  --color-secondary-dim:  #73181b;
+  --color-tertiary:       #334d2f; /* Academic Green */
+  --color-success:        #334d2f;
+  --color-danger:         #ba1a1a;
+  --color-warning:        #d97706;
+
+  /* Hairline borders */
+  --border-color:  #cdc5bc;
+  --border-subtle: #ece1d3;
+  --border-active: #a33b3a;
+
+  --glow-primary: 0 0 0 1px #cdc5bc;
+  --glow-active:  0 0 0 2px #a33b3a;
+  --grad-primary: #a33b3a;
+}
+
+/* DARK THEME — Charcoal (Warm Charcoal & Ink) */
+.dark-theme, [data-theme='dark'] {
+  --bg-base:     #1a1714;
+  --bg-deep:     #141210;
+  --bg-surface:  #25221f;
+  --bg-card:     #2c2824;
+  --bg-card-high:#37332e;
+  --bg-overlay:  #443f39;
+
+  --text-primary:   #f5ede3;
+  --text-secondary: #cbc1b4;
+  --text-muted:     #9b9286;
+
+  /* Accent Palette - Soft Coral/Oxblood */
+  --color-primary:        #fe807b;
+  --color-primary-text:   #73181b;
+  --color-primary-light:  #73181b;
+  --color-primary-dim:    #ffdad7;
+  --color-secondary:      #fe807b;
+  --color-secondary-dim:  #73181b;
+  --color-tertiary:       #b0cfa7;
+  --color-success:        #b0cfa7;
+  --color-danger:         #ffdad6;
+  --color-warning:        #ffd166;
+
+  /* Hairline borders */
+  --border-color:  #443f39;
+  --border-subtle: #2c2824;
+  --border-active: #fe807b;
+
+  --glow-primary: 0 0 0 1px #443f39;
+  --glow-active:  0 0 0 2px #fe807b;
+  --grad-primary: #fe807b;
+}

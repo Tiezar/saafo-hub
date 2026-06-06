@@ -37,6 +37,7 @@ describe('CreateSubjectUseCase', () => {
       name: 'Constitucional',
       color: '#ff0000',
       userId: 'user-1',
+      spaceId: null,
     });
   });
 

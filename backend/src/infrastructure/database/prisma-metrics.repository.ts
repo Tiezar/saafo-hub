@@ -212,6 +212,7 @@ export class PrismaMetricsRepository implements IMetricsRepository {
       dailyActivity,
       forecast,
       subjectsPerformance,
+      totalReviews,
     );
   }
 }

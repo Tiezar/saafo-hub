@@ -11,7 +11,6 @@ describe('SpacedRepetitionService (SM-2 Algorithm)', () => {
     expect(result.interval).toBe(1);
     expect(result.easeFactor).toBe(2.5); // Remains unchanged
 
-    // nextReview should be +1 day
     const expectedDate = new Date(baseDate);
     expectedDate.setDate(expectedDate.getDate() + 1);
     expect(result.nextReview.getTime()).toBe(expectedDate.getTime());

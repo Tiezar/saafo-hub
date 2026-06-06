@@ -54,7 +54,6 @@ export class SpacedRepetitionService {
       easeFactor = 1.3;
     }
 
-    // Calculate nextReview date
     const nextReview = new Date(now);
     nextReview.setDate(nextReview.getDate() + interval);
 

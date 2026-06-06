@@ -34,5 +34,6 @@ export class StudyMetrics {
     public readonly dailyActivity: DailyActivity[],
     public readonly forecast: ForecastDay[],
     public readonly subjectsPerformance: SubjectPerformance[],
+    public readonly totalReviewed: number = 0,
   ) {}
 }

@@ -1,0 +1,66 @@
+/* ── Autocomplete ───────────────────────────────────────────────────────── */
+.autocomplete-container {
+  position: relative;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  z-index: 100;
+}
+
+.autocomplete-item {
+  padding: var(--sp-3) var(--sp-4);
+  cursor: pointer;
+  transition: var(--transition);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.autocomplete-item:last-child {
+  border-bottom: none;
+}
+
+.autocomplete-item:hover {
+  background: var(--bg-surface);
+}
+
+.autocomplete-item-name {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.autocomplete-item-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+/* Notebook line input style */
+.input-notebook {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px 0;
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--text-primary);
+  transition: border-color var(--transition);
+}
+
+.input-notebook:focus {
+  outline: none;
+  border-bottom-color: var(--color-primary);
+  box-shadow: none;
+}
+
+.input-notebook::placeholder {
+  color: var(--text-muted);
+}

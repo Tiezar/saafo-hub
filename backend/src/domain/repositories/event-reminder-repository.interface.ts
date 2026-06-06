@@ -12,7 +12,7 @@ export interface DueReminder {
     recurrenceDays: number[];
     recurrenceEndsAt: Date | null;
     userId: string;
-    user: { phone: string | null };
+    user: { phone: string | null; email: string; name: string };
   };
 }
 

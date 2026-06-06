@@ -34,3 +34,8 @@ lerna-debug.log*
 tsconfig.tsbuildinfo
 
 generated/prisma
+
+# Custom ignores
+saafo-design/
+.agents/
+docs/

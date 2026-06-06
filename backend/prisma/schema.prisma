@@ -7,14 +7,6 @@ generator client {
   engineType = "library"
 }
 
-enum EventType {
-  EXAM
-  DEADLINE
-  FIXED_BLOCK
-  REMINDER
-  STUDY_SESSION
-}
-
 enum ReminderMethod {
   WHATSAPP
   EMAIL
@@ -43,6 +35,9 @@ model User {
   studySpaces         StudySpace[]
   calendarEvents      CalendarEvent[]
   insightCache        InsightCache?
+  examRecords         ExamRecord[]
+  eventTypes          UserEventType[]
+  refreshTokens       RefreshToken[]
 
   @@map("users")
 }
@@ -100,6 +95,20 @@ model Subject {
   @@map("subjects")
 }
 
+model UserEventType {
+  id       String  @id @default(uuid())
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name     String
+  color    String  @default("#6366f1")
+  icon     String  @default("Calendar")
+  isSystem Boolean @default(false)
+  key      String?
+  order    Int     @default(0)
+
+  @@map("user_event_types")
+}
+
 model CalendarEvent {
   id               String          @id @default(uuid())
   userId           String
@@ -109,7 +118,7 @@ model CalendarEvent {
   subjectId        String?
   subject          Subject?        @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   title            String
-  type             EventType
+  type             String
   startAt          DateTime
   endAt            DateTime?
   allDay           Boolean         @default(false)
@@ -196,4 +205,47 @@ model CardReview {
   reviewedAt DateTime     @default(now())
 
   @@map("card_reviews")
+}
+
+model ExamRecord {
+  id         String        @id @default(uuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicId    String?
+  topicIds   String[]      @default([])
+  topicName  String
+  scopeLabel String?
+  profileId  String?
+  mode       String
+  questions  Json
+  createdAt  DateTime      @default(now())
+  attempts   ExamAttempt[]
+
+  @@map("exam_records")
+}
+
+model ExamAttempt {
+  id           String     @id @default(uuid())
+  examRecordId String
+  examRecord   ExamRecord @relation(fields: [examRecordId], references: [id], onDelete: Cascade)
+  score        Int
+  timeLimit    Int?
+  timeTaken    Int?
+  completedAt  DateTime   @default(now())
+
+  @@map("exam_attempts")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  family    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, family])
+  @@map("refresh_tokens")
 }

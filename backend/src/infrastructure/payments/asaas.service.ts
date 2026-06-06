@@ -1,5 +1,31 @@
 import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
 
+export interface AsaasCardData {
+  holderName: string;
+  number: string;
+  expiryMonth: string;
+  expiryYear: string;
+  ccv: string;
+}
+
+export interface AsaasHolderInfo {
+  name: string;
+  email?: string;
+  cpfCnpj: string;
+  postalCode: string;
+  addressNumber: string;
+  phone: string;
+}
+
+export interface AsaasSubscriptionDetails {
+  status: string;
+  nextDueDate: string;
+  value: number;
+  billingType: string;
+  creditCardBrand?: string;
+  creditCardLastFour?: string;
+}
+
 @Injectable()
 export class AsaasService {
   private readonly logger = new Logger(AsaasService.name);
@@ -37,29 +63,142 @@ export class AsaasService {
     return c.id;
   }
 
-  async createSubscription(
+  // ── Credit card tokenization (card data never stored, transits only to Asaas) ──
+
+  async tokenizeCard(
     customerId: string,
-    userId: string,
-  ): Promise<{ id: string; invoiceUrl: string }> {
-    const nextDue = new Date();
-    nextDue.setDate(nextDue.getDate() + 1);
-    const sub = await this.req<{ id: string; invoiceUrl: string }>(
+    card: AsaasCardData,
+    holder: AsaasHolderInfo,
+    remoteIp: string,
+  ): Promise<{ creditCardToken: string; creditCardBrand: string }> {
+    return this.req<{ creditCardToken: string; creditCardBrand: string }>(
       'POST',
-      '/subscriptions',
+      '/creditCards/tokenize',
       {
         customer: customerId,
-        billingType: 'UNDEFINED', // usuário escolhe: PIX / boleto / cartão
-        value: 19.0,
-        nextDueDate: nextDue.toISOString().split('T')[0],
-        cycle: 'MONTHLY',
-        description: 'SAAFO HUB — Plano Estudante',
-        externalReference: userId,
+        creditCard: {
+          holderName: card.holderName,
+          number: card.number.replace(/\s/g, ''),
+          expiryMonth: card.expiryMonth,
+          expiryYear: card.expiryYear,
+          ccv: card.ccv,
+        },
+        creditCardHolderInfo: {
+          name: holder.name,
+          email: holder.email,
+          cpfCnpj: holder.cpfCnpj.replace(/\D/g, ''),
+          postalCode: holder.postalCode.replace(/\D/g, ''),
+          addressNumber: holder.addressNumber,
+          phone: holder.phone.replace(/\D/g, ''),
+        },
+        remoteIp,
       },
     );
-    return { id: sub.id, invoiceUrl: sub.invoiceUrl ?? '' };
+  }
+
+  // ── Subscription creation ─────────────────────────────────────────────────
+
+  private subscriptionBase(customerId: string, userId: string, billingType: string) {
+    const nextDue = new Date();
+    nextDue.setDate(nextDue.getDate() + 1);
+    return {
+      customer: customerId,
+      billingType,
+      value: 19.0,
+      nextDueDate: nextDue.toISOString().split('T')[0],
+      cycle: 'MONTHLY',
+      description: 'SAAFO HUB — Plano Estudante',
+      externalReference: userId,
+    };
+  }
+
+  async createSubscriptionCard(
+    customerId: string,
+    userId: string,
+    creditCardToken: string,
+  ): Promise<{ id: string }> {
+    return this.req<{ id: string }>('POST', '/subscriptions', {
+      ...this.subscriptionBase(customerId, userId, 'CREDIT_CARD'),
+      creditCardToken,
+    });
+  }
+
+  async createSubscriptionPix(
+    customerId: string,
+    userId: string,
+  ): Promise<{ subscriptionId: string; pixQrCode: string; pixCopyPaste: string; paymentId: string }> {
+    const sub = await this.req<{ id: string }>('POST', '/subscriptions',
+      this.subscriptionBase(customerId, userId, 'PIX'),
+    );
+
+    const payments = await this.req<{ data: { id: string }[] }>(
+      'GET', `/payments?subscription=${sub.id}&limit=1`,
+    );
+    const paymentId = payments.data?.[0]?.id;
+    if (!paymentId) throw new InternalServerErrorException('Cobrança PIX não gerada.');
+
+    const pix = await this.req<{ encodedImage: string; payload: string }>(
+      'GET', `/payments/${paymentId}/pixQrCode`,
+    );
+
+    return { subscriptionId: sub.id, pixQrCode: pix.encodedImage, pixCopyPaste: pix.payload, paymentId };
+  }
+
+  async createSubscriptionBoleto(
+    customerId: string,
+    userId: string,
+  ): Promise<{ subscriptionId: string; boletoUrl: string; barCode: string }> {
+    const sub = await this.req<{ id: string }>('POST', '/subscriptions',
+      this.subscriptionBase(customerId, userId, 'BOLETO'),
+    );
+
+    const payments = await this.req<{ data: { id: string; bankSlipUrl: string; nossoNumero: string; identificationField: string }[] }>(
+      'GET', `/payments?subscription=${sub.id}&limit=1`,
+    );
+    const payment = payments.data?.[0];
+    if (!payment) throw new InternalServerErrorException('Boleto não gerado.');
+
+    return {
+      subscriptionId: sub.id,
+      boletoUrl: payment.bankSlipUrl ?? '',
+      barCode: payment.identificationField ?? '',
+    };
+  }
+
+  // ── Subscription management ───────────────────────────────────────────────
+
+  async getSubscriptionDetails(subscriptionId: string): Promise<AsaasSubscriptionDetails> {
+    const sub = await this.req<{
+      status: string;
+      nextDueDate: string;
+      value: number;
+      billingType: string;
+      creditCard?: { creditCardBrand: string; creditCardNumber: string };
+    }>('GET', `/subscriptions/${subscriptionId}`);
+
+    return {
+      status: sub.status,
+      nextDueDate: sub.nextDueDate,
+      value: sub.value,
+      billingType: sub.billingType,
+      creditCardBrand: sub.creditCard?.creditCardBrand,
+      creditCardLastFour: sub.creditCard?.creditCardNumber,
+    };
+  }
+
+  async updateSubscriptionCard(subscriptionId: string, creditCardToken: string): Promise<void> {
+    await this.req('POST', `/subscriptions/${subscriptionId}/creditCardToken`, { creditCardToken });
   }
 
   async cancelSubscription(subscriptionId: string): Promise<void> {
     await this.req('DELETE', `/subscriptions/${subscriptionId}`);
+  }
+
+  async cancelExistingSubscription(userId: string, subscriptionId: string): Promise<void> {
+    try {
+      await this.cancelSubscription(subscriptionId);
+    } catch (e) {
+      this.logger.warn(`Failed to cancel subscription ${subscriptionId} for user ${userId}: ${(e as Error).message}`);
+    }
   }
 }

@@ -1,13 +1,13 @@
-import { ICardRepository } from '../../domain/repositories/card-repository.interface';
 import { ITopicRepository } from '../../domain/repositories/topic-repository.interface';
 import { ISubjectRepository } from '../../domain/repositories/subject-repository.interface';
-import { GeminiService } from '../../infrastructure/ai/gemini.service';
-import { Card } from '../../domain/entities/card';
+import { ICardRepository } from '../../domain/repositories/card-repository.interface';
+import { GeminiService, GeneratedCard } from '../../infrastructure/ai/gemini.service';
 
 export interface GenerateFlashcardsInput {
   topicId: string;
   userId: string;
   theme?: string;
+  count?: number;
   // text-mode
   text?: string;
   // file-mode
@@ -17,13 +17,13 @@ export interface GenerateFlashcardsInput {
 
 export class GenerateFlashcardsUseCase {
   constructor(
-    private cardRepository: ICardRepository,
     private topicRepository: ITopicRepository,
     private subjectRepository: ISubjectRepository,
     private geminiService: GeminiService,
+    private cardRepository?: ICardRepository,
   ) {}
 
-  async execute(input: GenerateFlashcardsInput): Promise<Card[]> {
+  async execute(input: GenerateFlashcardsInput): Promise<GeneratedCard[]> {
     if (!input.text?.trim() && !input.fileBuffer) {
       throw new Error('Forneça um texto ou um arquivo para gerar flashcards.');
     }
@@ -36,32 +36,23 @@ export class GenerateFlashcardsUseCase {
       throw new Error('Unauthorized access to topic');
     }
 
+    const existingCards = this.cardRepository
+      ? await this.cardRepository.findByTopicId(input.topicId)
+      : [];
+
     const generated = await this.geminiService.generateFlashcards({
       text: input.text,
       fileBuffer: input.fileBuffer,
       mimeType: input.mimeType,
       theme: input.theme,
+      count: input.count,
+      existingCards: existingCards.map(c => ({ front: c.front })),
     });
 
     if (!generated.length) {
       throw new Error('A IA não conseguiu extrair flashcards do conteúdo fornecido.');
     }
 
-    const created: Card[] = [];
-    for (const card of generated) {
-      created.push(
-        await this.cardRepository.create({
-          front: card.front,
-          back: card.back,
-          topicId: input.topicId,
-          userId: input.userId,
-          repetitions: 0,
-          interval: 0,
-          easeFactor: 2.5,
-          nextReview: new Date(),
-        }),
-      );
-    }
-    return created;
+    return generated;
   }
 }

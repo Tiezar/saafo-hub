@@ -1,0 +1,176 @@
+/* ── CustomSelect — Marginália Design System ──────────────────────────────── */
+
+.cs-root {
+  position: relative;
+  display: block;
+}
+
+/* ── Trigger button ─────────────────────────────────────────────────────── */
+.cs-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  text-align: left;
+  transition: border-color var(--transition), color var(--transition);
+  outline: none;
+}
+
+.cs-trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cs-trigger--placeholder {
+  color: var(--text-muted);
+}
+
+/* Default variant — box with border */
+.cs-trigger--default {
+  background-color: var(--bg-base);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+}
+.cs-trigger--default:not(:disabled):hover,
+.cs-trigger--default.cs-trigger--open {
+  border-color: var(--color-primary);
+}
+
+/* form-input variant — same box, matches .form-input */
+.cs-trigger--form {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+.cs-trigger--form:not(:disabled):hover,
+.cs-trigger--form.cs-trigger--open {
+  border-color: var(--color-primary);
+}
+
+/* academic variant — underline only, no box */
+.cs-trigger--academic {
+  background-color: transparent;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 8px 4px 8px 0;
+}
+.cs-trigger--academic:not(:disabled):hover,
+.cs-trigger--academic.cs-trigger--open {
+  border-bottom-color: var(--color-primary);
+}
+
+/* notebook variant — same as academic */
+.cs-trigger--notebook {
+  background-color: transparent;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 10px 4px 10px 0;
+}
+.cs-trigger--notebook:not(:disabled):hover,
+.cs-trigger--notebook.cs-trigger--open {
+  border-bottom-color: var(--color-primary);
+}
+
+/* Label inside trigger */
+.cs-trigger-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* Chevron icon */
+.cs-chevron {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform 0.18s ease;
+}
+.cs-chevron--up {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown list ──────────────────────────────────────────────────────── */
+.cs-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  max-height: 260px;
+  overflow-y: auto;
+  animation: cs-open 0.12s ease;
+}
+
+@keyframes cs-open {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Dark mode shadow */
+.dark-theme .cs-dropdown {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.40);
+}
+
+/* Scrollbar */
+.cs-dropdown::-webkit-scrollbar { width: 4px; }
+.cs-dropdown::-webkit-scrollbar-track { background: transparent; }
+.cs-dropdown::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+/* ── Option items ───────────────────────────────────────────────────────── */
+.cs-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: calc(var(--radius-md) - 2px);
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 0.1s;
+  user-select: none;
+}
+
+.cs-option:hover:not(.cs-option--disabled) {
+  background-color: var(--bg-card-high);
+}
+
+.cs-option--selected {
+  background-color: var(--bg-surface);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.cs-option--selected:hover {
+  background-color: var(--bg-card-high);
+}
+
+.cs-option--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cs-option-check {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}

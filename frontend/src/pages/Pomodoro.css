@@ -1,0 +1,20 @@
+/* Pomodoro CSS */
+.pomodoro-ring-track {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 3;
+}
+
+.pomodoro-ring-progress {
+  fill: none;
+  stroke-width: 3;
+  transition: stroke-dashoffset 1s linear, stroke var(--transition);
+}
+
+/* Marginalia side note — hidden below 900px */
+.pomo-sidenote {
+  display: flex;
+}
+@media (max-width: 900px) {
+  .pomo-sidenote { display: none; }
+}

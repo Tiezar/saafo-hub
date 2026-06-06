@@ -5,7 +5,7 @@ import {
   CreateCalendarEventInput,
   UpdateCalendarEventInput,
 } from '../../domain/repositories/calendar-event-repository.interface';
-import { CalendarEvent, EventType, ReminderMethod } from '../../domain/entities/calendar-event';
+import { CalendarEvent, ReminderMethod } from '../../domain/entities/calendar-event';
 import { Prisma } from '@prisma/client';
 
 type PrismaEventWithReminders = Prisma.CalendarEventGetPayload<{
@@ -21,7 +21,7 @@ export class PrismaCalendarEventRepository implements ICalendarEventRepository {
       p.id,
       p.userId,
       p.title,
-      p.type as EventType,
+      p.type,
       p.startAt,
       p.endAt,
       p.allDay,
