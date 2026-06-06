@@ -1,0 +1,50 @@
+.admin-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.admin-table thead th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.admin-table tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table-row {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.admin-table-row:hover td {
+  background: var(--bg-surface);
+}
+
+.admin-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}

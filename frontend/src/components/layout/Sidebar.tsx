@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, BookOpen, Layers, Sparkles, Calendar,
   Timer, Trophy, User as UserIcon, LogOut, Sun, Moon,
-  ChevronDown, Plus, Trash2, History,
+  ChevronDown, Plus, Trash2, History, Shield,
 } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 
@@ -18,6 +18,9 @@ const NAV_ITEMS = [
   { to: '/perfil',    icon: UserIcon,        label: 'Perfil'      },
 ];
 
+const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS ?? '')
+  .split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+
 export default function Sidebar() {
   const {
     currentUser, handleLogout, theme, toggleTheme,
@@ -25,6 +28,8 @@ export default function Sidebar() {
     handleCreateSpace, handleDeleteSpace,
     cards, subjects, startStudySession,
   } = useApp();
+
+  const isAdmin = ADMIN_EMAILS.length === 0 || ADMIN_EMAILS.includes(currentUser?.email?.toLowerCase() ?? '');
 
   const dueCount = cards.filter(c => new Date(c.nextReview) <= new Date()).length;
   const showOnboardingDot = subjects.length === 0 && localStorage.getItem('onboarding_dismissed') !== '1';
@@ -100,6 +105,14 @@ export default function Sidebar() {
             )}
           </NavLink>
         ))}
+
+        {/* Admin link — only visible to admins */}
+        {isAdmin && (
+          <NavLink to="/admin" className="sidebar-nav-item" style={{ marginTop: 8, borderTop: '1px solid var(--border-color)', paddingTop: 12 }}>
+            <Shield size={18} />
+            <span>Admin</span>
+          </NavLink>
+        )}
 
         {/* Collapsible Areas Section */}
         <div className="sidebar-section">

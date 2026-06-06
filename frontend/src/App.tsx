@@ -19,6 +19,7 @@ import CalendarPage from './pages/CalendarPage';
 import Pomodoro    from './pages/Pomodoro';
 import ExamSession  from './pages/ExamSession';
 import Profile     from './pages/Profile';
+import Admin      from './pages/Admin';
 
 const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || '';
 
@@ -50,6 +51,7 @@ function AppShell() {
           <Route path="pomodoro"  element={<Pomodoro />}   />
           <Route path="provas"    element={<ExamSession />} />
           <Route path="perfil"    element={<Profile />}    />
+          <Route path="admin"     element={<Admin />}      />
           <Route path="*"         element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
