@@ -498,7 +498,7 @@ export default function ExamSession() {
           </button>
           {creating && (
             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
-              O Gemini 2.5 Flash está gerando as questões. Pode levar até 20 segundos.
+              A IA está gerando as questões. Pode levar até 20 segundos.
             </p>
           )}
         </div>

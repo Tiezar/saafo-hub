@@ -180,7 +180,7 @@ export default function AIGenerator() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Gerar Flashcards com IA</h1>
-          <p className="page-subtitle">Transforme qualquer conteúdo em cards de revisão com Gemini 2.5 Flash</p>
+          <p className="page-subtitle">Transforme qualquer conteúdo em cards de revisão com IA</p>
         </div>
       </div>
 
