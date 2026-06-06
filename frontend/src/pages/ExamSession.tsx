@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import type { QuizQuestion, ExamRecord } from '../types';
+import './ExamSession.css';
+
 
 // ── Profile definitions ───────────────────────────────────────────────────────
 
