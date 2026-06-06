@@ -2,13 +2,15 @@
 .study-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(26, 23, 20, 0.96);
+  background: var(--bg-deep);
+  opacity: 0.98;
   backdrop-filter: blur(8px);
   z-index: 500;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  color: var(--text-primary);
 }
 
 .study-overlay-inner {
@@ -131,9 +133,9 @@
   flex: 1;
   min-width: 100px;
   padding: 10px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-card);
   color: var(--rating-color, var(--text-primary));
   font-family: var(--font-display);
   font-size: 13px;
@@ -143,8 +145,8 @@
 }
 
 .study-rating-btn:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: var(--rating-color, var(--border-subtle));
+  background: var(--bg-card-high);
+  border-color: var(--rating-color, var(--border-active));
 }
 
 .study-rating-key {
@@ -154,7 +156,8 @@
   width: 16px;
   height: 16px;
   border-radius: var(--radius-xs);
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--border-color);
+  color: var(--text-secondary);
   font-size: 10px;
   font-weight: 700;
   margin-right: 4px;
