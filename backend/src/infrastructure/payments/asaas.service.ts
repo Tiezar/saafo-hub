@@ -123,48 +123,6 @@ export class AsaasService {
     });
   }
 
-  async createSubscriptionPix(
-    customerId: string,
-    userId: string,
-  ): Promise<{ subscriptionId: string; pixQrCode: string; pixCopyPaste: string; paymentId: string }> {
-    const sub = await this.req<{ id: string }>('POST', '/subscriptions',
-      this.subscriptionBase(customerId, userId, 'PIX'),
-    );
-
-    const payments = await this.req<{ data: { id: string }[] }>(
-      'GET', `/payments?subscription=${sub.id}&limit=1`,
-    );
-    const paymentId = payments.data?.[0]?.id;
-    if (!paymentId) throw new InternalServerErrorException('Cobrança PIX não gerada.');
-
-    const pix = await this.req<{ encodedImage: string; payload: string }>(
-      'GET', `/payments/${paymentId}/pixQrCode`,
-    );
-
-    return { subscriptionId: sub.id, pixQrCode: pix.encodedImage, pixCopyPaste: pix.payload, paymentId };
-  }
-
-  async createSubscriptionBoleto(
-    customerId: string,
-    userId: string,
-  ): Promise<{ subscriptionId: string; boletoUrl: string; barCode: string }> {
-    const sub = await this.req<{ id: string }>('POST', '/subscriptions',
-      this.subscriptionBase(customerId, userId, 'BOLETO'),
-    );
-
-    const payments = await this.req<{ data: { id: string; bankSlipUrl: string; nossoNumero: string; identificationField: string }[] }>(
-      'GET', `/payments?subscription=${sub.id}&limit=1`,
-    );
-    const payment = payments.data?.[0];
-    if (!payment) throw new InternalServerErrorException('Boleto não gerado.');
-
-    return {
-      subscriptionId: sub.id,
-      boletoUrl: payment.bankSlipUrl ?? '',
-      barCode: payment.identificationField ?? '',
-    };
-  }
-
   // ── Subscription management ───────────────────────────────────────────────
 
   async getSubscriptionDetails(subscriptionId: string): Promise<AsaasSubscriptionDetails> {

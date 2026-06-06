@@ -94,36 +94,6 @@ export class BillingController {
     return { ok: true };
   }
 
-  // ── Checkout — PIX ────────────────────────────────────────────────────────
-
-  @Post('checkout/pix')
-  @UseGuards(JwtAuthGuard)
-  async checkoutPix(@Req() req: any) {
-    const { user, customerId } = await this.ensureCustomer(req.user.id);
-
-    const { subscriptionId, pixQrCode, pixCopyPaste, paymentId } =
-      await this.asaasService.createSubscriptionPix(customerId, user.id);
-
-    await this.userRepository.update(user.id, { asaasSubscriptionId: subscriptionId });
-
-    return { pixQrCode, pixCopyPaste, paymentId };
-  }
-
-  // ── Checkout — Boleto ─────────────────────────────────────────────────────
-
-  @Post('checkout/boleto')
-  @UseGuards(JwtAuthGuard)
-  async checkoutBoleto(@Req() req: any) {
-    const { user, customerId } = await this.ensureCustomer(req.user.id);
-
-    const { subscriptionId, boletoUrl, barCode } =
-      await this.asaasService.createSubscriptionBoleto(customerId, user.id);
-
-    await this.userRepository.update(user.id, { asaasSubscriptionId: subscriptionId });
-
-    return { boletoUrl, barCode };
-  }
-
   // ── Subscription details ──────────────────────────────────────────────────
 
   @Get('subscription/details')

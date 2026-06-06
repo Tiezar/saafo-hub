@@ -24,7 +24,7 @@ export default function UpgradeModal() {
             <div style={{ fontSize: 48, fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--color-primary)', lineHeight: 1 }}>
               R$ 19<span style={{ fontSize: 18, fontWeight: 400 }}>/mês</span>
             </div>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>PIX · Boleto · Cartão de Crédito</p>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Cartão de Crédito</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {([

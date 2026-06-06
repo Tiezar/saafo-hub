@@ -69,7 +69,7 @@ export default function PlanSelectionModal({ open, onTrial, onSubscribe }: Props
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>
                   100 cards/dia · 20 provas/semana · 3 estilos de questão.<br />
-                  Cartão, PIX ou boleto. Cancele quando quiser.
+                  Cartão de crédito. Cancele quando quiser.
                 </div>
               </div>
             </div>
