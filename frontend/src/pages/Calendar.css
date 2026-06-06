@@ -1,0 +1,119 @@
+.calendar-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.calendar-grid-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--border-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  text-align: center;
+  font-family: var(--font-label);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.calendar-grid-header-day {
+  background: var(--bg-surface);
+  padding: var(--sp-2) 0;
+}
+
+.calendar-grid-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--border-color);
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.calendar-day-cell {
+  background: var(--bg-card);
+  min-height: 100px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: background var(--transition);
+}
+
+.calendar-day-cell.current-month {
+  background: var(--bg-card);
+}
+.calendar-day-cell.other-month {
+  background: var(--bg-surface);
+  color: var(--text-muted);
+}
+.calendar-day-cell.today {
+  background: var(--bg-base);
+}
+
+.calendar-day-cell-number {
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 600;
+  align-self: flex-end;
+}
+.calendar-day-cell.today .calendar-day-cell-number {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.calendar-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.calendar-event-item {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity var(--transition);
+}
+.calendar-event-item:hover {
+  opacity: 0.85;
+}
+
+.calendar-recurrence-row {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.calendar-recurrence-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-color);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-label);
+  font-size: 11px;
+  cursor: pointer;
+  transition: var(--transition);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+}
+.calendar-recurrence-dot.active {
+  background: var(--color-primary);
+  color: var(--bg-base);
+  border-color: var(--color-primary);
+}

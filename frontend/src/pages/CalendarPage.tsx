@@ -8,6 +8,8 @@ import { DAYS_PT_SHORT, MONTHS_PT, getEventMeta, REMINDER_PRESETS } from '../lib
 import { getCalendarDays, eventOccursOn, formatEventTime, blankDraft } from '../lib/utils';
 import { EventIcon, AVAILABLE_EVENT_ICONS } from '../components/EventIcon';
 import type { UserEventType } from '../types';
+import './Calendar.css';
+
 
 export default function CalendarPage() {
   const {
@@ -204,31 +206,37 @@ export default function CalendarPage() {
 
       {tab === 'month' ? (
         <>
-          <div className="calendar-grid">
-            {DAYS_PT_SHORT.map(d => <div key={d} className="calendar-day-header">{d}</div>)}
-            {days.map((day, i) => {
-              const isToday   = day.toDateString() === today.toDateString();
-              const isCurrent = day.getMonth() === month;
-              const dayEvts   = eventsForDay(day);
-              return (
-                <div key={i}
-                  className={`calendar-cell ${isToday ? 'today' : ''} ${!isCurrent ? 'other-month' : ''}`}
-                  onClick={() => handleDayClick(day)}>
-                  <div className="calendar-day-number">{day.getDate()}</div>
-                  {dayEvts.slice(0, 3).map((ev, ei) => {
-                    const meta = getEventMeta(ev.type, eventTypes);
-                    return (
-                      <div key={ei} className="event-pill"
-                        style={{ background: `${meta.color}22`, color: meta.color, borderLeft: `3px solid ${meta.color}` }}
-                        onClick={e => { e.stopPropagation(); openEditEvent(ev); }}>
-                        {ev.title}
-                      </div>
-                    );
-                  })}
-                  {dayEvts.length > 3 && <div style={{ fontSize: 10, color: 'var(--text-muted)', paddingLeft: 4 }}>+{dayEvts.length - 3} mais</div>}
-                </div>
-              );
-            })}
+          <div className="calendar-container">
+            <div className="calendar-grid-header">
+              {DAYS_PT_SHORT.map(d => <div key={d} className="calendar-grid-header-day">{d}</div>)}
+            </div>
+            <div className="calendar-grid-body">
+              {days.map((day, i) => {
+                const isToday   = day.toDateString() === today.toDateString();
+                const isCurrent = day.getMonth() === month;
+                const dayEvts   = eventsForDay(day);
+                return (
+                  <div key={i}
+                    className={`calendar-day-cell ${isCurrent ? 'current-month' : 'other-month'} ${isToday ? 'today' : ''}`}
+                    onClick={() => handleDayClick(day)}>
+                    <div className="calendar-day-cell-number">{day.getDate()}</div>
+                    <div className="calendar-events-list">
+                      {dayEvts.slice(0, 3).map((ev, ei) => {
+                        const meta = getEventMeta(ev.type, eventTypes);
+                        return (
+                          <div key={ei} className="calendar-event-item"
+                            style={{ background: `${meta.color}22`, color: meta.color, borderLeft: `2px solid ${meta.color}` }}
+                            onClick={e => { e.stopPropagation(); openEditEvent(ev); }}>
+                            {ev.title}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {dayEvts.length > 3 && <div style={{ fontSize: 10, color: 'var(--text-muted)', paddingLeft: 4 }}>+{dayEvts.length - 3} mais</div>}
+                  </div>
+                );
+              })}
+            </div>
           </div>
           {/* Legend */}
           <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
@@ -349,7 +357,7 @@ export default function CalendarPage() {
                     </label>
                     {eventDraft.recurrenceEnabled && (
                       <div>
-                        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                        <div className="calendar-recurrence-row">
                           {DAYS_PT_SHORT.map((day, idx) => (
                             <button key={idx} type="button"
                               onClick={() => setEventDraft(d => ({
@@ -358,12 +366,7 @@ export default function CalendarPage() {
                                   ? d.recurrenceDays.filter(x => x !== idx)
                                   : [...d.recurrenceDays, idx],
                               }))}
-                              style={{
-                                width: 36, height: 36, borderRadius: '50%',
-                                border: '1px solid var(--border-color)', cursor: 'pointer', fontSize: 11, fontWeight: 600,
-                                background: eventDraft.recurrenceDays.includes(idx) ? 'var(--color-primary)' : 'transparent',
-                                color: eventDraft.recurrenceDays.includes(idx) ? 'white' : 'var(--text-secondary)',
-                              }}>
+                              className={`calendar-recurrence-dot ${eventDraft.recurrenceDays.includes(idx) ? 'active' : ''}`}>
                               {day.charAt(0)}
                             </button>
                           ))}
