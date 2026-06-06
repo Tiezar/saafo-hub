@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, HelpCircle, RotateCw, Pencil, Check, X } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import './Materials.css';
+
 
 export default function Materials() {
   const {
@@ -76,7 +78,7 @@ export default function Materials() {
         </button>
       </div>
 
-      <div className="grid-2">
+      <div className="materials-grid">
         {/* Left — Subjects */}
         <div>
           <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
@@ -111,18 +113,15 @@ export default function Materials() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {visibleSubjects.map(sub => (
-              <div key={sub.id} className="subject-card"
+              <div key={sub.id} className={`materials-card ${selectedSubject?.id === sub.id ? 'selected' : ''}`}
                 style={{
                   '--subject-color': sub.color,
-                  border: selectedSubject?.id === sub.id ? '1px solid var(--color-primary)' : '1px solid var(--border-color)',
-                  background: selectedSubject?.id === sub.id ? 'rgba(73,75,214,0.06)' : 'var(--bg-card)',
-                  cursor: 'pointer',
                 } as React.CSSProperties}
                 onClick={() => { setSelectedSubject(sub); setSelectedTopic(null); }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div className="subject-name">{sub.name}</div>
+                      <div className="materials-card-title">{sub.name}</div>
                       {duePerSubject(sub.id) > 0 && (
                         <span className="badge-due">{duePerSubject(sub.id)}</span>
                       )}

@@ -1178,10 +1178,7 @@ select.form-input { cursor: pointer; appearance: none; }
 .stat-value { font-family: var(--font-display); font-size: 24px; font-weight: 700; line-height: 1.1; }
 .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--sp-5); }
-.subject-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--sp-5) var(--sp-6); cursor: pointer; position: relative; overflow: hidden; transition: var(--transition); }
-.subject-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--subject-color, var(--color-primary)); }
-.subject-card:hover   { border-color: var(--border-subtle); background: var(--bg-card); }
-.subject-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+
 .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: var(--radius-full); font-family: var(--font-label); font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
 .badge-success { background: rgba(47,217,244,0.1); color: var(--color-tertiary); }
 .badge-primary { background: rgba(192,193,255,0.1); color: var(--color-primary-light); }
