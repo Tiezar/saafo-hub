@@ -276,7 +276,7 @@ export default function MyCards() {
                         <X size={14} /> Cancelar
                       </button>
                       <button onClick={() => saveEdit(c.id)}
-                        style={{ background: 'none', border: 'none', color: 'var(--color-primary-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600 }}>
+                        style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600 }}>
                         <Check size={14} /> Salvar
                       </button>
                     </div>
@@ -351,7 +351,7 @@ export default function MyCards() {
                 </p>
               ) : (
                 <>
-                  <BookOpen size={40} style={{ color: 'var(--color-primary-text)', opacity: 0.6, marginBottom: 14 }} />
+                  <BookOpen size={40} style={{ color: 'var(--color-primary)', opacity: 0.6, marginBottom: 14 }} />
                   <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 8 }}>Você ainda não tem flashcards</p>
                   <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 20, maxWidth: 340, margin: '0 auto 20px' }}>
                     Para criar cards, primeiro adicione uma <strong>Matéria</strong> e um <strong>Tópico</strong>,

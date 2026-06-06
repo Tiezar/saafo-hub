@@ -21,20 +21,20 @@ export default function UpgradeModal() {
 
         <div className="modal-body">
           <div style={{ textAlign: 'center', padding: '8px 0 20px' }}>
-            <div style={{ fontSize: 48, fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--color-primary-text)', lineHeight: 1 }}>
+            <div style={{ fontSize: 48, fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--color-primary)', lineHeight: 1 }}>
               R$ 19<span style={{ fontSize: 18, fontWeight: 400 }}>/mês</span>
             </div>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>PIX · Boleto · Cartão de Crédito</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {([
-              { icon: <Bot size={15} color="var(--color-primary-text)" />, text: 'Até 100 flashcards gerados por IA por dia' },
+              { icon: <Bot size={15} color="var(--color-primary)" />, text: 'Até 100 flashcards gerados por IA por dia' },
               { icon: <FileUp size={15} color="var(--color-tertiary)" />, text: 'Geração via texto, PDF ou imagem (até 50 MB)' },
               { icon: <ClipboardList size={15} color="var(--color-success)" />, text: '20 provas por semana — 3 estilos de questão' },
               { icon: <Layers size={15} color="var(--color-success)" />, text: 'Estilos: Revisão Rápida, Aplicada e Vestibular' },
               { icon: <Lightbulb size={15} color="#f59e0b" />, text: 'Insights inteligentes automáticos' },
               { icon: <MessageCircle size={15} color="var(--color-success)" />, text: 'Lembretes via WhatsApp' },
-              { icon: <CalendarDays size={15} color="var(--color-primary-text)" />, text: 'Calendário com recorrência e alertas' },
+              { icon: <CalendarDays size={15} color="var(--color-primary)" />, text: 'Calendário com recorrência e alertas' },
               { icon: <Timer size={15} color="var(--color-danger)" />, text: 'Pomodoro + todos os recursos básicos' },
             ] as const).map(({ icon, text }) => (
               <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 14 }}>

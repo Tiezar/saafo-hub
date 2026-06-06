@@ -153,7 +153,7 @@ export default function Dashboard() {
         {/* AI Insights Panel (Span 4) */}
         <div className="bento-col-4" style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 24, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
           <h3 className="academic-label" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)' }}>
-            <Zap size={14} style={{ color: 'var(--color-primary-text)' }} /> Insights da IA
+            <Zap size={14} style={{ color: 'var(--color-primary)' }} /> Insights da IA
           </h3>
 
           {!planStatus?.isActive ? (
@@ -273,7 +273,7 @@ export default function Dashboard() {
         {/* Upcoming Events Section (Span 4) */}
         <div className="bento-col-4" style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 24, display: 'flex', flexDirection: 'column' }}>
           <h3 className="academic-label" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)' }}>
-            <Calendar size={14} style={{ color: 'var(--color-primary-text)' }} /> Próximos Eventos
+            <Calendar size={14} style={{ color: 'var(--color-primary)' }} /> Próximos Eventos
           </h3>
 
           {!upcoming.length ? (

@@ -176,8 +176,8 @@ export default function Pomodoro() {
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRight: '1px solid var(--border-color)', paddingRight: 32 }}>
           {/* Marginalia Note */}
           <div style={{ position: 'absolute', top: 0, left: 0, maxWidth: 140, display: 'flex', flexDirection: 'column', gap: 4 }} className="pomo-sidenote">
-            <span className="academic-label" style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{sideNoteTitle}</span>
-            <p className="academic-label" style={{ fontSize: 8, color: 'var(--text-muted)', textTransform: 'none', letterSpacing: 'normal', lineHeight: 1.4 }}>
+            <span className="academic-label" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{sideNoteTitle}</span>
+            <p className="academic-label" style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'none', letterSpacing: 'normal', lineHeight: 1.4 }}>
               {sideNoteDesc}
             </p>
           </div>
@@ -213,7 +213,7 @@ export default function Pomodoro() {
 
           {/* Timer Ring */}
           <div style={{ position: 'relative', width: 280, height: 280, display: 'flex', alignItems: 'center', justifyOrigin: 'center', justifyContent: 'center', marginBottom: 40 }}>
-            <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+            <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', transform: 'rotate(-90deg)' }} viewBox="0 0 100 100">
               <circle cx={50} cy={50} r={46} fill="none" stroke="var(--border-subtle)" strokeWidth="1.5" />
               <circle
                 cx={50}
@@ -381,7 +381,7 @@ export default function Pomodoro() {
             {topicId && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)', marginTop: 16, borderRadius: '6px' }}>
                 <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Cards pendentes nesta matéria</span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primary-text)' }}>{dueForTopic}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primary)' }}>{dueForTopic}</span>
               </div>
             )}
           </div>
