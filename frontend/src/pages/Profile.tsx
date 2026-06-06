@@ -1,7 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { CreditCard, Search, Check, Star, RotateCw } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { CreditCard, Search, Check, Star, RotateCw, AlertTriangle, RefreshCw, Pencil } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import type { Institution } from '../types';
+import './Profile.css';
+
+
+interface SubscriptionDetails {
+  status: string;
+  nextDueDate: string;
+  value: number;
+  billingType: string;
+  creditCardBrand?: string;
+  creditCardLastFour?: string;
+}
 
 function initPhoneDisplay(raw: string): string {
   const digits = raw.replace(/\D/g, '');
@@ -28,7 +39,8 @@ export default function Profile() {
   const {
     currentUser, planStatus, institutions,
     fetchInstitutions, handleUpdateProfile,
-    setUpgradeModalOpen, showSuccess, showError,
+    setUpgradeModalOpen, setCheckoutOpen, fetchPlanStatus,
+    apiCall, showSuccess, showError,
   } = useApp();
 
   const [name,         setName]         = useState(currentUser?.name ?? '');
@@ -40,6 +52,44 @@ export default function Profile() {
   const [showDropdown,  setShowDropdown]  = useState(false);
   const [saving,        setSaving]        = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Subscription details (only fetched when user is STUDENT)
+  const [subDetails,     setSubDetails]     = useState<SubscriptionDetails | null>(null);
+  const [subLoading,     setSubLoading]     = useState(false);
+  const [cancelConfirm,  setCancelConfirm]  = useState(false);
+  const [cancelling,     setCancelling]     = useState(false);
+
+  const fetchSubDetails = useCallback(async () => {
+    setSubLoading(true);
+    try {
+      const d = await apiCall('/billing/subscription/details') as SubscriptionDetails | null;
+      setSubDetails(d);
+    } catch { /* silent */ }
+    finally { setSubLoading(false); }
+  }, [apiCall]);
+
+  useEffect(() => {
+    if (planStatus?.plan === 'STUDENT') fetchSubDetails();
+  }, [planStatus?.plan, fetchSubDetails]);
+
+  const handleCancel = async () => {
+    setCancelling(true);
+    try {
+      await apiCall('/billing/subscription', { method: 'DELETE' });
+      await fetchPlanStatus();
+      setSubDetails(null);
+      setCancelConfirm(false);
+      showSuccess('Assinatura cancelada. Acesso encerra no fim do ciclo pago.');
+    } catch (err) { showError((err as Error).message); }
+    finally { setCancelling(false); }
+  };
+
+  const billingLabel = (type: string) => {
+    if (type === 'CREDIT_CARD') return 'Cartão de crédito';
+    if (type === 'PIX') return 'PIX';
+    if (type === 'BOLETO') return 'Boleto';
+    return type;
+  };
 
   // Init search label from existing institution
   useEffect(() => {
@@ -78,9 +128,11 @@ export default function Profile() {
         {planStatus && (
           <div className="glass-card" style={{ padding: 24 }}>
             <h3 className="card-title" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <CreditCard size={18} /> Plano Atual
+              <CreditCard size={18} /> Assinatura
             </h3>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+
+            {/* Status badge */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: planStatus.plan === 'STUDENT' ? 16 : 0 }}>
               <div>
                 <span style={{
                   padding: '4px 14px', borderRadius: 20, fontSize: 13, fontWeight: 700,
@@ -97,9 +149,6 @@ export default function Profile() {
                     ? `🕐 Trial — ${planStatus.trialDaysLeft} dias restantes`
                     : '❌ Trial expirado'}
                 </span>
-                {planStatus.plan === 'STUDENT' && (
-                  <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Acesso completo a todos os recursos.</p>
-                )}
                 {planStatus.plan === 'FREE_TRIAL' && planStatus.isActive && (
                   <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
                     Acesso completo até{' '}
@@ -109,11 +158,84 @@ export default function Profile() {
               </div>
               {planStatus.plan !== 'STUDENT' && (
                 <button className="btn-primary" style={{ width: 'auto', padding: '10px 20px' }}
-                  onClick={() => setUpgradeModalOpen(true)}>
+                  onClick={() => setCheckoutOpen(true)}>
                   <Star size={14} /> {planStatus.isActive ? 'Assinar agora' : 'Renovar acesso'}
                 </button>
               )}
             </div>
+
+            {/* Subscription details — STUDENT only */}
+            {planStatus.plan === 'STUDENT' && (
+              <>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
+                  100 cards/dia · 20 provas/semana · 3 estilos de questão
+                </p>
+
+                {subLoading && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-muted)' }}>
+                    <RotateCw size={14} className="animate-spin" /> Carregando detalhes…
+                  </div>
+                )}
+
+                {subDetails && !subLoading && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid var(--border-color)', paddingTop: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Próxima cobrança</span>
+                      <span style={{ fontWeight: 600 }}>
+                        {subDetails.nextDueDate
+                          ? new Date(subDetails.nextDueDate + 'T12:00:00').toLocaleDateString('pt-BR')
+                          : '—'}
+                        {' '}· R$ {subDetails.value?.toFixed(2).replace('.', ',')}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Forma de pagamento</span>
+                      <span style={{ fontWeight: 600 }}>
+                        {billingLabel(subDetails.billingType)}
+                        {subDetails.creditCardBrand && ` ${subDetails.creditCardBrand}`}
+                        {subDetails.creditCardLastFour && ` ••••${subDetails.creditCardLastFour}`}
+                      </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+                      <button
+                        className="btn-ghost"
+                        style={{ fontSize: 13, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 6 }}
+                        onClick={() => setCheckoutOpen(true)}>
+                        <Pencil size={13} /> Atualizar cartão
+                      </button>
+                      <button
+                        className="btn-ghost"
+                        style={{ fontSize: 13, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 6 }}
+                        onClick={fetchSubDetails}>
+                        <RefreshCw size={13} /> Atualizar
+                      </button>
+                      {!cancelConfirm ? (
+                        <button
+                          style={{ fontSize: 13, padding: '8px 14px', borderRadius: 8, border: '1px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                          onClick={() => setCancelConfirm(true)}>
+                          <AlertTriangle size={13} /> Cancelar assinatura
+                        </button>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 13, color: 'var(--color-danger)' }}>Tem certeza?</span>
+                          <button
+                            style={{ fontSize: 13, padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--color-danger)', color: '#fff', cursor: 'pointer' }}
+                            onClick={handleCancel} disabled={cancelling}>
+                            {cancelling ? <RotateCw size={13} className="animate-spin" /> : 'Sim, cancelar'}
+                          </button>
+                          <button className="btn-ghost" style={{ fontSize: 13, padding: '8px 14px' }}
+                            onClick={() => setCancelConfirm(false)}>
+                            Voltar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 

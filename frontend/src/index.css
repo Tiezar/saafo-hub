@@ -656,34 +656,7 @@ select.form-input { cursor: pointer; appearance: none; }
   color: var(--color-danger);
 }
 
-/* ── Autocomplete ───────────────────────────────────────────────────────── */
-.autocomplete-container { position: relative; }
 
-.autocomplete-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  width: 100%;
-  max-height: 220px;
-  overflow-y: auto;
-  background: var(--bg-overlay);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  z-index: 100;
-  box-shadow: var(--glow-primary);
-}
-
-.autocomplete-item {
-  padding: var(--sp-3) var(--sp-4);
-  cursor: pointer;
-  transition: var(--transition);
-  border-bottom: 1px solid var(--border-color);
-}
-.autocomplete-item:last-child { border-bottom: none; }
-.autocomplete-item:hover { background: rgba(192, 193, 255, 0.06); }
-
-.autocomplete-item-name  { font-weight: 500; font-size: 14px; }
-.autocomplete-item-meta  { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
 
 /* ── Subject card ───────────────────────────────────────────────────────── */
 .subject-card {
@@ -1025,13 +998,7 @@ select.form-input { cursor: pointer; appearance: none; }
 .rating-bar { display: flex; justify-content: center; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
 .rating-btn { padding: 8px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-surface); color: var(--text-primary); cursor: pointer; transition: var(--transition); font-family: var(--font-display); font-weight: 700; font-size: 14px; }
 .rating-btn:hover { border-color: var(--color-primary-light); background: rgba(192,193,255,0.06); }
-.autocomplete-container { position: relative; }
-.autocomplete-dropdown  { position: absolute; top: calc(100% + 4px); left: 0; width: 100%; max-height: 220px; overflow-y: auto; background: var(--bg-overlay); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); z-index: 100; box-shadow: var(--glow-primary); }
-.autocomplete-item      { padding: var(--sp-3) var(--sp-4); cursor: pointer; transition: var(--transition); border-bottom: 1px solid var(--border-color); }
-.autocomplete-item:last-child { border-bottom: none; }
-.autocomplete-item:hover{ background: rgba(192,193,255,0.06); }
-.autocomplete-item-name { font-weight: 500; font-size: 14px; }
-.autocomplete-item-meta { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
 
 /* ── Phase 1 new classes ────────────────────────────────────────────────── */
 
