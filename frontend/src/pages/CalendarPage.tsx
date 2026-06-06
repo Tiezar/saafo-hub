@@ -132,7 +132,7 @@ export default function CalendarPage() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span className="font-mono text-xs uppercase tracking-wider text-on-surface-variant" style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span className="academic-label" style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 0 }}>
                 <Clock size={14} /> Data:
               </span>
               <input

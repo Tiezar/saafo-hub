@@ -369,7 +369,7 @@ export default function Pomodoro() {
               className="input-notebook"
               value={topicId}
               onChange={e => setTopicId(e.target.value)}
-              style={{ width: '100%', padding: '10px 0', borderBottom: '1px solid var(--border-color)', outline: 'none' }}
+              style={{ width: '100%', padding: '10px 28px 10px 0', borderBottom: '1px solid var(--border-color)', outline: 'none' }}
             >
               <option value="">Sessão livre</option>
               {visibleTopics.map(t => (

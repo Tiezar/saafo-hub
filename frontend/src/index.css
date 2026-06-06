@@ -4,7 +4,14 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ── Base ───────────────────────────────────────────────────────────────── */
-html { height: 100%; }
+html {
+  height: 100%;
+  color-scheme: light;
+}
+
+html.dark-theme {
+  color-scheme: dark;
+}
 
 body {
   font-family: var(--font-body);
@@ -327,7 +334,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text-primary); }
 
 textarea.form-input { resize: vertical; }
 
-select.form-input { cursor: pointer; appearance: none; }
+/* select.form-input styling handled by the global select block below */
 
 /* ── Buttons ────────────────────────────────────────────────────────────── */
 .btn {
@@ -920,6 +927,79 @@ input[type="range"] { -webkit-appearance: none; appearance: none; height: 6px; b
 input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--color-primary); border: 2px solid var(--bg-surface); cursor: pointer; }
 input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--color-primary); border: 2px solid var(--bg-surface); cursor: pointer; }
 input[type="range"]::-ms-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--color-primary); border: 2px solid var(--bg-surface); cursor: pointer; }
+
+/* ── Select — custom Marginália arrow ──────────────────────────────────────── */
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--bg-base);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 9px 36px 9px 12px;
+  cursor: pointer;
+  transition: border-color var(--transition);
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237c766e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+}
+
+select:focus {
+  border-color: var(--color-primary);
+}
+
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dark-theme select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239b9286' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+}
+
+/* Inherit surrounding container style when nested inside form-input, academic-input etc. */
+select.form-input {
+  background-color: var(--bg-base);
+  padding: 10px 36px 10px 14px;
+}
+
+select.academic-input {
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 8px 28px 8px 0;
+}
+
+select.input-notebook {
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 8px 28px 8px 0;
+}
+
+/* ── Date / datetime-local inputs ──────────────────────────────────────────── */
+
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"] {
+  color-scheme: inherit;
+  color: var(--text-primary);
+}
+
+/* In dark mode the native calendar icon is dark — make it light */
+.dark-theme input[type="date"]::-webkit-calendar-picker-indicator,
+.dark-theme input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+.dark-theme input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.75);
+  cursor: pointer;
+}
 
 /* ── Marginália Global Utilities ──────────────────────────────────────────── */
 

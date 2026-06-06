@@ -97,6 +97,10 @@
   color: var(--text-primary);
 }
 
+select.academic-input {
+  padding-right: 24px;
+}
+
 .academic-input:focus {
   outline: none;
   border-bottom-color: var(--color-primary-text);
