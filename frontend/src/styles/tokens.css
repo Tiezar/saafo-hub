@@ -1,63 +1,20 @@
-/* ── Obsidian Deep Indigo — Design System Tokens ───────────────────────────
-   Source: saafo-design/obsidian_deep_indigo/DESIGN.md
-   8px base spacing unit. Tonal layering replaces shadows.
-────────────────────────────────────────────────────────────────────────── */
+/* ── Marginália Design System Tokens ────────────────────────────────────── */
 
 :root {
   /* Typography */
-  --font-display: 'Hanken Grotesk', system-ui, sans-serif;
-  --font-body:    'Inter', system-ui, sans-serif;
-  --font-label:   'Geist', 'JetBrains Mono', monospace;
+  --font-display: 'Literata', serif;
+  --font-body:    'Hanken Grotesk', sans-serif;
+  --font-label:   'JetBrains Mono', monospace;
 
-  /* Background tonal layers (deep → bright) */
-  --bg-base:     #010f1f;
-  --bg-deep:     #051424;
-  --bg-surface:  #0e1c2d;
-  --bg-card:     #122031;
-  --bg-card-high:#1d2b3c;
-  --bg-overlay:  #283647;
-
-  /* On-surface text */
-  --text-primary:   #d5e4fa;
-  --text-secondary: #c7c4d7;
-  --text-muted:     #908fa0;
-
-  /* Accent palette */
-  --color-primary:        #494bd6;   /* interactive / buttons */
-  --color-primary-light:  #c0c1ff;   /* Electric Indigo — text highlights */
-  --color-primary-dim:    #8083ff;   /* hover states */
-  --color-secondary:      #ddb7ff;   /* Soft Violet — active indicators */
-  --color-secondary-dim:  #6900b3;   /* secondary container */
-  --color-tertiary:       #2fd9f4;   /* Cyan/Teal — streaks, progress */
-  --color-success:        #2fd9f4;
-  --color-danger:         #ffb4ab;
-  --color-danger-dim:     #93000a;
-  --color-warning:        #ffd166;
-
-  /* Borders — tonal (no heavy shadows) */
-  --border-color:  rgba(255, 255, 255, 0.06);
-  --border-subtle: rgba(255, 255, 255, 0.10);
-  --border-active: #c0c1ff;
-
-  /* Gradients */
-  --grad-primary: linear-gradient(135deg, #494bd6 0%, #8083ff 100%);
-  --grad-secondary: linear-gradient(135deg, #6900b3 0%, #ddb7ff 40%);
-  --grad-tertiary: linear-gradient(135deg, #008395 0%, #2fd9f4 100%);
-  --grad-danger: linear-gradient(135deg, #93000a 0%, #ffb4ab 100%);
-
-  /* Glow — primary modal/popover indicator */
-  --glow-primary: 0 0 0 1px rgba(192, 193, 255, 0.15), 0 8px 32px rgba(73, 75, 214, 0.25);
-  --glow-active:  0 0 0 2px rgba(192, 193, 255, 0.3);
-
-  /* Border radius */
-  --radius-xs:   0.25rem;
-  --radius-sm:   0.5rem;
-  --radius-md:   0.75rem;
-  --radius-lg:   1rem;
-  --radius-xl:   1.5rem;
+  /* Border radius (Academic minimal rounding: 6px) */
+  --radius-xs:   0.125rem;
+  --radius-sm:   0.25rem;
+  --radius-md:   0.375rem; /* 6px */
+  --radius-lg:   0.5rem;
+  --radius-xl:   0.75rem;
   --radius-full: 9999px;
 
-  /* Spacing (8px grid) */
+  /* Spacing (4px base grid) */
   --sp-1:  4px;
   --sp-2:  8px;
   --sp-3:  12px;
@@ -69,39 +26,75 @@
   --sp-12: 48px;
 
   /* Layout */
-  --sidebar-w: 248px;
+  --sidebar-w: 260px;
 
   /* Transitions */
-  --transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: all 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.15s ease-in-out;
+  --transition-slow: all 0.3s ease-in-out;
+
+  /* LIGHT THEME — Marginália (Scholarly Paper) */
+  --bg-base:     #fff8f3;
+  --bg-deep:     #fff8f3;
+  --bg-surface:  #f8ecde;
+  --bg-card:     #fef2e4;
+  --bg-card-high:#f2e6d8;
+  --bg-overlay:  #ece1d3;
+
+  --text-primary:   #201b12;
+  --text-secondary: #4b463f;
+  --text-muted:     #7c766e;
+
+  /* Accent Palette - Oxblood */
+  --color-primary:        #a33b3a;
+  --color-primary-light:  #a33b3a;
+  --color-primary-dim:    #832425;
+  --color-secondary:      #a33b3a;
+  --color-secondary-dim:  #73181b;
+  --color-tertiary:       #334d2f; /* Academic Green */
+  --color-success:        #334d2f;
+  --color-danger:         #ba1a1a;
+  --color-warning:        #d97706;
+
+  /* Hairline borders */
+  --border-color:  #cdc5bc;
+  --border-subtle: #ece1d3;
+  --border-active: #a33b3a;
+
+  --glow-primary: 0 0 0 1px #cdc5bc, 0 4px 16px rgba(163, 59, 58, 0.08);
+  --glow-active:  0 0 0 2px #a33b3a;
+  --grad-primary: linear-gradient(135deg, #a33b3a 0%, #832425 100%);
 }
 
-/* ── Light theme overrides ─────────────────────────────────────────────── */
-.light-theme {
-  --bg-base:     #f0f4f8;
-  --bg-deep:     #f8fafc;
-  --bg-surface:  #ffffff;
-  --bg-card:     #f1f5f9;
-  --bg-card-high:#e8edf3;
-  --bg-overlay:  #dde3ea;
+/* DARK THEME — Charcoal (Warm Charcoal & Ink) */
+.dark-theme, [data-theme='dark'] {
+  --bg-base:     #1a1714;
+  --bg-deep:     #141210;
+  --bg-surface:  #25221f;
+  --bg-card:     #2c2824;
+  --bg-card-high:#37332e;
+  --bg-overlay:  #443f39;
 
-  --text-primary:   #0f172a;
-  --text-secondary: #475569;
-  --text-muted:     #94a3b8;
+  --text-primary:   #f5ede3;
+  --text-secondary: #cbc1b4;
+  --text-muted:     #9b9286;
 
-  --color-primary:       #3730a3;
-  --color-primary-light: #4f46e5;
-  --color-primary-dim:   #6366f1;
-  --color-secondary:     #7c3aed;
-  --color-tertiary:      #0284c7;
-  --color-success:       #0284c7;
-  --color-danger:        #dc2626;
-  --color-warning:       #d97706;
+  /* Accent Palette - Soft Coral/Oxblood */
+  --color-primary:        #fe807b;
+  --color-primary-light:  #ffb3ae;
+  --color-primary-dim:    #ffdad7;
+  --color-secondary:      #fe807b;
+  --color-secondary-dim:  #73181b;
+  --color-tertiary:       #b0cfa7;
+  --color-success:        #b0cfa7;
+  --color-danger:         #ffdad6;
+  --color-warning:        #ffd166;
 
-  --border-color:  rgba(0, 0, 0, 0.07);
-  --border-subtle: rgba(0, 0, 0, 0.12);
-  --border-active: #4f46e5;
+  /* Hairline borders */
+  --border-color:  #443f39;
+  --border-subtle: #2c2824;
+  --border-active: #fe807b;
 
-  --glow-primary: 0 0 0 1px rgba(79, 70, 229, 0.12), 0 8px 24px rgba(79, 70, 229, 0.12);
-  --glow-active:  0 0 0 2px rgba(79, 70, 229, 0.25);
+  --glow-primary: 0 0 0 1px #443f39, 0 4px 16px rgba(254, 128, 123, 0.08);
+  --glow-active:  0 0 0 2px #fe807b;
+  --grad-primary: linear-gradient(135deg, #fe807b 0%, #ffb3ae 100%);
 }
