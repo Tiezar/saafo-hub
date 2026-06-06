@@ -46,6 +46,7 @@
 
   /* Accent Palette - Oxblood */
   --color-primary:        #a33b3a;
+  --color-primary-text:   #a33b3a;
   --color-primary-light:  #a33b3a;
   --color-primary-dim:    #832425;
   --color-secondary:      #a33b3a;
@@ -80,7 +81,8 @@
 
   /* Accent Palette - Soft Coral/Oxblood */
   --color-primary:        #fe807b;
-  --color-primary-light:  #ffb3ae;
+  --color-primary-text:   #73181b;
+  --color-primary-light:  #73181b;
   --color-primary-dim:    #ffdad7;
   --color-secondary:      #fe807b;
   --color-secondary-dim:  #73181b;

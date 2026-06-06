@@ -220,7 +220,7 @@ export default function CheckoutModal({ open, onClose }: Props) {
         {/* Header */}
         <div className="modal-header">
           <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <CreditCard size={18} style={{ color: 'var(--color-primary-light)' }} />
+            <CreditCard size={18} style={{ color: 'var(--color-primary-text)' }} />
             Assinar — R$ 19<span style={{ fontSize: 13, fontWeight: 400 }}>/mês</span>
           </h3>
           <button onClick={handleClose} className="btn-ghost btn-icon"><X size={20} /></button>
@@ -307,7 +307,7 @@ export default function CheckoutModal({ open, onClose }: Props) {
               {!pixQr ? (
                 <>
                   <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                    <QrCode size={48} style={{ color: 'var(--color-primary-light)', marginBottom: 12 }} />
+                    <QrCode size={48} style={{ color: 'var(--color-primary-text)', marginBottom: 12 }} />
                     <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0 }}>
                       Gere o QR Code PIX e pague pelo app do seu banco.<br />
                       A ativação é automática e imediata.

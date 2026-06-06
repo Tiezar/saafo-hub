@@ -382,7 +382,7 @@ export default function ExamSession() {
         {/* ── Creation form ─────────────────────────────────────────── */}
         <div className="glass-card" style={{ marginBottom: 32, padding: '28px 28px 24px' }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <GraduationCap size={16} style={{ color: 'var(--color-primary-light)' }} /> Gerar Nova Prova
+            <GraduationCap size={16} style={{ color: 'var(--color-primary-text)' }} /> Gerar Nova Prova
           </h2>
 
           {/* Scope */}
@@ -409,7 +409,7 @@ export default function ExamSession() {
                     padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                     border: `1px solid ${allSelected ? 'var(--color-primary)' : 'var(--border-color)'}`,
                     background: allSelected ? 'rgba(73,75,214,0.15)' : 'transparent',
-                    color: allSelected ? 'var(--color-primary-light)' : 'var(--text-secondary)',
+                    color: allSelected ? 'var(--color-primary-text)' : 'var(--text-secondary)',
                   }}>
                   Todos
                 </button>
@@ -421,7 +421,7 @@ export default function ExamSession() {
                         padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                         border: `1px solid ${sel ? 'var(--color-primary)' : 'var(--border-color)'}`,
                         background: sel ? 'rgba(73,75,214,0.12)' : 'transparent',
-                        color: sel ? 'var(--color-primary-light)' : 'var(--text-secondary)',
+                        color: sel ? 'var(--color-primary-text)' : 'var(--text-secondary)',
                       }}>
                       {t.name}
                     </button>
@@ -501,7 +501,7 @@ export default function ExamSession() {
 
         {/* ── History ───────────────────────────────────────────────── */}
         <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Clock size={15} style={{ color: 'var(--color-primary-light)' }} /> Provas Salvas
+          <Clock size={15} style={{ color: 'var(--color-primary-text)' }} /> Provas Salvas
         </h2>
 
         {histLoading && (
@@ -569,7 +569,7 @@ export default function ExamSession() {
                           padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                           border: `1px solid var(--color-primary)`,
                           background: isOpen ? 'rgba(73,75,214,0.15)' : 'rgba(73,75,214,0.07)',
-                          color: 'var(--color-primary-light)',
+                          color: 'var(--color-primary-text)',
                         }}>
                         <Play size={12} /> Iniciar <ChevronDown size={12} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                       </button>
@@ -598,7 +598,7 @@ export default function ExamSession() {
                               padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                               border: `1px solid ${chosenLimit === opt.value ? 'var(--color-primary)' : 'var(--border-color)'}`,
                               background: chosenLimit === opt.value ? 'rgba(73,75,214,0.15)' : 'transparent',
-                              color: chosenLimit === opt.value ? 'var(--color-primary-light)' : 'var(--text-secondary)',
+                              color: chosenLimit === opt.value ? 'var(--color-primary-text)' : 'var(--text-secondary)',
                             }}>
                             {opt.label}
                           </button>
@@ -681,7 +681,7 @@ export default function ExamSession() {
                   background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)',
                   borderLeft: `4px solid ${activeProf?.color ?? 'var(--color-primary)'}`,
                 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: activeProf?.color ?? 'var(--color-primary-light)', marginBottom: 10 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: activeProf?.color ?? 'var(--color-primary-text)', marginBottom: 10 }}>
                     Texto-base
                   </div>
                   <p style={{ fontSize: 13.5, lineHeight: 1.75, color: 'var(--text-secondary)', margin: 0, whiteSpace: 'pre-wrap' }}>
@@ -726,7 +726,7 @@ export default function ExamSession() {
 
               {revealed && (
                 <div style={{ marginTop: 18, padding: '12px 16px', borderRadius: 8, background: 'var(--bg-surface)', border: '1px solid var(--border-color)' }}>
-                  <strong style={{ fontSize: 12, color: 'var(--color-primary-light)' }}>Explicação: </strong>
+                  <strong style={{ fontSize: 12, color: 'var(--color-primary-text)' }}>Explicação: </strong>
                   <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{q.explanation}</span>
                 </div>
               )}
@@ -828,7 +828,7 @@ export default function ExamSession() {
                   )}
                 </div>
                 <div style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--bg-surface)', borderLeft: '3px solid var(--color-primary)', marginBottom: 14 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary-light)', marginBottom: 4 }}>Gabarito</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary-text)', marginBottom: 4 }}>Gabarito</div>
                   <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>{eq?.expectedAnswer}</p>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -984,7 +984,7 @@ export default function ExamSession() {
                       )}
                     </div>
                     <div style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--bg-surface)', borderLeft: '3px solid var(--color-primary)' }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary-light)', marginBottom: 4 }}>Gabarito</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary-text)', marginBottom: 4 }}>Gabarito</div>
                       <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>{q.expectedAnswer}</p>
                     </div>
                   </>

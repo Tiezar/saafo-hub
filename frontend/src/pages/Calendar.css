@@ -66,7 +66,7 @@
 }
 
 .cal-cell.today .cal-cell-number {
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   font-weight: 700;
   margin-top: 2px;
   margin-right: 2px;
@@ -99,7 +99,7 @@
 
 .academic-input:focus {
   outline: none;
-  border-bottom-color: var(--color-primary);
+  border-bottom-color: var(--color-primary-text);
   box-shadow: none;
 }
 
@@ -114,7 +114,7 @@
 }
 
 .btn-oxblood {
-  background-color: var(--color-primary);
+  background-color: var(--color-primary-text);
   color: #ffffff !important;
   border: none;
   border-radius: 6px;
@@ -171,7 +171,7 @@
   cursor: pointer;
 }
 
-.chip-prova { border: 1px solid var(--color-primary); color: var(--color-primary); background-color: rgba(163, 59, 58, 0.1); }
+.chip-prova { border: 1px solid var(--color-primary); color: var(--color-primary-text); background-color: rgba(163, 59, 58, 0.1); }
 .chip-aula { border: 1px solid var(--text-primary); color: var(--text-primary); background-color: rgba(32, 27, 18, 0.1); }
 .chip-revisao { border: 1px solid var(--text-muted); color: var(--text-muted); background-color: rgba(124, 118, 110, 0.1); }
 
@@ -227,5 +227,5 @@
 .calendar-recurrence-dot.active {
   background: var(--color-primary);
   color: #ffffff;
-  border-color: var(--color-primary);
+  border-color: var(--color-primary-text);
 }

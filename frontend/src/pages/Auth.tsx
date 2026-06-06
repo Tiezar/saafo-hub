@@ -106,7 +106,7 @@ export default function Auth() {
         </button>
         <div className="auth-card" style={{ textAlign: 'center' }}>
           <div className="auth-icon-ring">
-            <Mail size={26} style={{ color: 'var(--color-primary-light)' }} />
+            <Mail size={26} style={{ color: 'var(--color-primary-text)' }} />
           </div>
           <h2 className="auth-title">Verifique seu email</h2>
           <p className="auth-subtitle">Enviamos um link de ativação para:</p>

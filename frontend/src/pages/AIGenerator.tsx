@@ -356,8 +356,8 @@ export default function AIGenerator() {
               {aiFile ? (
                 <div style={{ textAlign: 'center' }}>
                   {aiFile.type.startsWith('image/')
-                    ? <ImageIcon size={32} style={{ color: 'var(--color-primary-light)', marginBottom: 8 }} />
-                    : <FileText size={32} style={{ color: 'var(--color-primary-light)', marginBottom: 8 }} />}
+                    ? <ImageIcon size={32} style={{ color: 'var(--color-primary-text)', marginBottom: 8 }} />
+                    : <FileText size={32} style={{ color: 'var(--color-primary-text)', marginBottom: 8 }} />}
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{aiFile.name}</div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
                     {(aiFile.size / 1024 / 1024).toFixed(2)} MB · {aiFile.type}
@@ -431,7 +431,7 @@ export default function AIGenerator() {
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
               <button type="button"
                 onClick={() => setPreview(p => p?.map(c => ({ ...c, selected: true })) ?? p)}
-                style={{ background: 'none', border: 'none', color: 'var(--color-primary-light)', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>
+                style={{ background: 'none', border: 'none', color: 'var(--color-primary-text)', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>
                 Selecionar todos
               </button>
               <button type="button"
@@ -463,7 +463,7 @@ export default function AIGenerator() {
                           value={editFront} onChange={e => setEditFront(e.target.value)} autoFocus />
                       </div>
                       <div>
-                        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary-light)', marginBottom: 6 }}>Verso</div>
+                        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary-text)', marginBottom: 6 }}>Verso</div>
                         <textarea className="form-input" rows={3}
                           style={{ resize: 'vertical', fontFamily: 'var(--font-body)', fontSize: 14 }}
                           value={editBack} onChange={e => setEditBack(e.target.value)} />
@@ -475,7 +475,7 @@ export default function AIGenerator() {
                         <X size={14} /> Cancelar
                       </button>
                       <button onClick={() => saveEdit(i)}
-                        style={{ background: 'none', border: 'none', color: 'var(--color-primary-light)', fontWeight: 700, cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        style={{ background: 'none', border: 'none', color: 'var(--color-primary-text)', fontWeight: 700, cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
                         <Check size={14} /> Salvar edição
                       </button>
                     </div>
@@ -503,7 +503,7 @@ export default function AIGenerator() {
 
                     {/* Back */}
                     <div onClick={() => toggleCard(i)} style={{ cursor: 'pointer' }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary-light)', marginBottom: 5 }}>Verso</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary-text)', marginBottom: 5 }}>Verso</div>
                       <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{card.back}</div>
                     </div>
 

@@ -83,7 +83,7 @@ export default function Materials() {
               <h3 className="card-title" style={{ margin: 0 }}>
                 Matérias
                 {activeSpaceId && (
-                  <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--color-primary-light)', marginLeft: 8 }}>
+                  <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--color-primary-text)', marginLeft: 8 }}>
                     · {spaces.find(s => s.id === activeSpaceId)?.name}
                   </span>
                 )}
@@ -234,7 +234,7 @@ export default function Materials() {
                                 <X size={16} />
                               </button>
                               <button onClick={() => saveEditCard(c.id)}
-                                style={{ background: 'none', border: 'none', color: 'var(--color-primary-light)', cursor: 'pointer' }}>
+                                style={{ background: 'none', border: 'none', color: 'var(--color-primary-text)', cursor: 'pointer' }}>
                                 <Check size={16} />
                               </button>
                             </div>

@@ -60,12 +60,12 @@ export default function PlanSelectionModal({ open, onTrial, onSubscribe }: Props
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
               <div style={{ padding: 10, borderRadius: 6, background: 'var(--bg-card-high)', flexShrink: 0 }}>
-                <Star size={22} style={{ color: 'var(--color-primary-light)' }} />
+                <Star size={22} style={{ color: 'var(--color-primary-text)' }} />
               </div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>
                   Assinar agora{' '}
-                  <span style={{ color: 'var(--color-primary-light)', fontFamily: 'var(--font-display)' }}>R$ 19/mês</span>
+                  <span style={{ color: 'var(--color-primary-text)', fontFamily: 'var(--font-display)' }}>R$ 19/mês</span>
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>
                   100 cards/dia · 20 provas/semana · 3 estilos de questão.<br />

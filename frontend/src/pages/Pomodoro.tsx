@@ -381,7 +381,7 @@ export default function Pomodoro() {
             {topicId && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)', marginTop: 16, borderRadius: '6px' }}>
                 <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Cards pendentes nesta matéria</span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primary)' }}>{dueForTopic}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primary-text)' }}>{dueForTopic}</span>
               </div>
             )}
           </div>
