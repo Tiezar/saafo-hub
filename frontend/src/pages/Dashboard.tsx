@@ -50,13 +50,6 @@ export default function Dashboard() {
             Visão geral do seu progresso acadêmico. Mantenha o foco na retenção e revisão regular.
           </p>
         </div>
-        <button
-          className="btn-oxblood"
-          onClick={() => startStudySession(undefined, true)}
-          style={{ textTransform: 'uppercase', fontSize: 12, letterSpacing: '0.05em', fontFamily: 'var(--font-label)', gap: 8 }}
-        >
-          <RotateCw size={14} /> Estudar Pendentes
-        </button>
       </header>
 
       {/* Plan banners */}

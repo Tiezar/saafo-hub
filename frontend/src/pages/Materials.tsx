@@ -73,9 +73,6 @@ export default function Materials() {
           <h1 className="page-title">Estrutura de Estudos</h1>
           <p className="page-subtitle">Navegue por Matérias, Tópicos e Flashcards</p>
         </div>
-        <button className="btn-primary" onClick={startStudySession}>
-          <RotateCw size={16} /> Estudar Pendentes
-        </button>
       </div>
 
       <div className="materials-grid">

@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, SkipForward, RotateCw, CheckCircle, Clock, Timer, Settings, Target, Coffee, Zap } from 'lucide-react';
+import { Play, Pause, SkipForward, RotateCw, Clock, Coffee, Settings, ChevronDown } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import './Pomodoro.css';
 
-
 type Phase = 'focus' | 'short-break' | 'long-break';
 
-const CIRCUMFERENCE = 2 * Math.PI * 90;
+const CIRCUMFERENCE = 2 * Math.PI * 46;
 
 function playSound(phase: Phase, volume = 0.35) {
   try {
@@ -146,159 +145,324 @@ export default function Pomodoro() {
   const totalSecs  = phase === 'focus' ? focusMin * 60 : phase === 'short-break' ? breakMin * 60 : longMin * 60;
   const progress   = totalSecs > 0 ? seconds / totalSecs : 0;
   const dashOffset = CIRCUMFERENCE * (1 - progress);
-  const phaseColor = phase === 'focus' ? 'var(--color-primary)' : phase === 'short-break' ? 'var(--color-success)' : 'var(--color-tertiary)';
-  const phaseLabel = phase === 'focus' ? 'Foco' : phase === 'short-break' ? 'Pausa Curta' : 'Pausa Longa';
+
+  const activeColor = phase === 'focus' ? '#8E2C2C' : phase === 'short-break' ? '#4F6B4A' : '#6B6358';
+
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
   const ss = String(seconds % 60).padStart(2, '0');
 
   const dueForTopic = topicId ? cards.filter(c => c.topicId === topicId && new Date(c.nextReview) <= new Date()).length : 0;
 
+  // Marginalia side note texts dynamically computed
+  const sideNoteTitle = phase === 'focus' ? '01. Foco' : phase === 'short-break' ? '02. Pausa' : '03. Pausa Longa';
+  const sideNoteDesc = phase === 'focus'
+    ? 'Mantenha a concentração plena durante este período. Evite interrupções externas.'
+    : phase === 'short-break'
+    ? 'Hora de afastar-se da tela. Beba água, faça um alongamento leve ou relaxe a mente.'
+    : 'Um descanso maior para consolidação da memória após várias sessões intensas.';
+
   return (
-    <div className="page">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Pomodoro Timer</h1>
-          <p className="page-subtitle">Sessões de foco com a técnica Pomodoro (25/5/15)</p>
-        </div>
-      </div>
+    <div className="page" style={{ padding: '24px 24px 48px' }}>
+      {/* Page Header */}
+      <header style={{ marginBottom: 40, borderBottom: '1px solid var(--border-color)', paddingBottom: 24 }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 300, color: 'var(--text-primary)', margin: 0 }}>Pomodoro</h2>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, color: 'var(--text-muted)', marginTop: 8 }}>
+          Sessões de foco alternadas com intervalos para otimização da absorção e retenção.
+        </p>
+      </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 32, alignItems: 'start' }}>
-        {/* Timer */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 32px' }}>
-          <div style={{ position: 'relative', width: 220, height: 220 }}>
-            <svg width={220} height={220} style={{ transform: 'rotate(-90deg)' }}>
-              <circle cx={110} cy={110} r={90} className="pomodoro-ring-track" />
-              <circle cx={110} cy={110} r={90} className="pomodoro-ring-progress"
-                stroke={phaseColor}
-                strokeDasharray={CIRCUMFERENCE}
-                strokeDashoffset={dashOffset} />
-            </svg>
-            <div className="pomodoro-center" style={{ color: phaseColor }}>
-              <div className="pomodoro-time">{mm}:{ss}</div>
-              <div className="pomodoro-phase-label">{phaseLabel}</div>
-            </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48, alignItems: 'start' }}>
+        {/* Left Column: Timer & Controls */}
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRight: '1px solid var(--border-color)', paddingRight: 32 }}>
+          {/* Marginalia Note */}
+          <div style={{ position: 'absolute', top: 0, left: 0, maxWidth: 140, display: 'flex', flexDirection: 'column', gap: 4 }} className="hidden lg:flex">
+            <span className="academic-label" style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{sideNoteTitle}</span>
+            <p className="academic-label" style={{ fontSize: 8, color: 'var(--text-muted)', textTransform: 'none', letterSpacing: 'normal', lineHeight: 1.4 }}>
+              {sideNoteDesc}
+            </p>
           </div>
 
-          <div className="pomodoro-round-dots">
-            {[1, 2, 3, 4].map(r => (
-              <div key={r}
-                className={`pomodoro-dot ${r < round ? 'done' : r === round ? 'active' : ''}`}
-                style={r === round ? { background: phaseColor } : {}} />
-            ))}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
-            Sessão {round} de 4 · {sessions} concluída{sessions !== 1 ? 's' : ''}
-          </div>
-
-          <div className="pomodoro-controls">
-            <button className="pomodoro-btn-icon" title="Reiniciar" onClick={reset}><RotateCw size={16} /></button>
-            <button className="pomodoro-btn-main" onClick={() => setRunning(r => !r)}>
-              {running ? <Pause size={26} /> : <Play size={26} style={{ marginLeft: 3 }} />}
-            </button>
-            <button className="pomodoro-btn-icon" title="Pular fase" onClick={skip}><SkipForward size={16} /></button>
-          </div>
-
-          <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
+          {/* Segmented Control */}
+          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)', padding: 2, marginBottom: 48, marginTop: 8, borderRadius: '6px' }}>
             {([
-              { phase: 'focus'       as Phase, label: 'Foco',        color: 'var(--color-primary)'  },
-              { phase: 'short-break' as Phase, label: 'Pausa',       color: 'var(--color-success)'  },
-              { phase: 'long-break'  as Phase, label: 'Pausa Longa', color: 'var(--color-tertiary)' },
-            ]).map(({ phase: p, label, color }) => (
-              <button key={p} onClick={() => switchPhase(p)}
+              { phase: 'focus' as Phase, label: 'Foco' },
+              { phase: 'short-break' as Phase, label: 'Pausa' },
+              { phase: 'long-break' as Phase, label: 'Pausa Longa' }
+            ]).map(p => (
+              <button
+                key={p.phase}
+                onClick={() => switchPhase(p.phase)}
                 style={{
-                  padding: '6px 14px', borderRadius: 20,
-                  border: `1px solid ${phase === p ? color : 'var(--border-color)'}`,
-                  background: phase === p ? `${color}22` : 'transparent',
-                  color: phase === p ? color : 'var(--text-secondary)',
-                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                }}>
-                {label}
+                  padding: '8px 20px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: 10,
+                  fontFamily: 'var(--font-label)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  borderRadius: '6px',
+                  backgroundColor: phase === p.phase ? activeColor : 'transparent',
+                  color: phase === p.phase ? '#fff' : 'var(--text-secondary)',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {p.label}
               </button>
             ))}
           </div>
 
-          <button onClick={() => setShowSettings(s => !s)}
-            style={{ marginTop: 16, background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-            <Settings size={14} /> Configurações
-          </button>
+          {/* Timer Ring */}
+          <div style={{ position: 'relative', width: 280, height: 280, display: 'flex', alignItems: 'center', justifyOrigin: 'center', justifyContent: 'center', marginBottom: 40 }}>
+            <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+              <circle cx={50} cy={50} r={46} fill="none" stroke="var(--border-subtle)" strokeWidth="1.5" />
+              <circle
+                cx={50}
+                cy={50}
+                r={46}
+                fill="none"
+                stroke={activeColor}
+                strokeWidth="2.5"
+                strokeDasharray={CIRCUMFERENCE}
+                strokeDashoffset={dashOffset}
+                strokeLinecap="square"
+                style={{ transition: 'stroke-dashoffset 1s linear' }}
+              />
+            </svg>
 
-          {showSettings && (
-            <div className="pomodoro-settings-panel" style={{ width: '100%', maxWidth: 360, marginTop: 16 }}>
-              {([
-                { label: 'Foco (min)',    value: focusMin, setter: applyFocus, min: 5,  max: 90 },
-                { label: 'Pausa (min)',   value: breakMin, setter: applyBreak, min: 1,  max: 30 },
-                { label: 'Pausa Longa',  value: longMin,  setter: applyLong,  min: 5,  max: 60 },
-              ] as { label: string; value: number; setter: (n: number) => void; min: number; max: number }[]).map(({ label, value, setter, min, max }) => (
-                <div key={label}>
-                  <div className="pomodoro-setting-label">{label}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input type="range" min={min} max={max} value={value}
-                      onChange={e => setter(Number(e.target.value))}
-                      style={{ flex: 1 }} />
-                    <span style={{ fontSize: 14, fontWeight: 700, minWidth: 24, textAlign: 'center' }}>{value}</span>
-                  </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10, textAlign: 'center' }}>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontFamily: 'var(--font-label)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.15em',
+                  color: activeColor,
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginBottom: 8
+                }}
+              >
+                <span style={{ width: 6, height: 6, backgroundColor: activeColor, marginRight: 8, display: 'inline-block' }} />
+                {phase === 'focus' ? 'Foco' : phase === 'short-break' ? 'Pausa' : 'Pausa Longa'}
+              </span>
+              <h2 style={{ fontSize: 72, fontFamily: 'var(--font-label)', fontWeight: 500, color: 'var(--text-primary)', margin: '0 0 16px', fontFeatureSettings: "'tnum'" }}>
+                {mm}:{ss}
+              </h2>
+
+              {/* Round indicators */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                  {[1, 2, 3, 4].map(r => (
+                    <div
+                      key={r}
+                      style={{
+                        width: 8,
+                        height: 8,
+                        border: `1px solid ${r <= round ? activeColor : 'var(--border-color)'}`,
+                        backgroundColor: r < round ? activeColor : r === round ? `${activeColor}55` : 'transparent',
+                        borderRadius: '1px'
+                      }}
+                    />
+                  ))}
                 </div>
-              ))}
-              {running && (
-                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
-                  Alterações terão efeito na próxima fase.
-                </p>
-              )}
-              {'Notification' in window && Notification.permission !== 'granted' && (
-                <button type="button"
-                  onClick={() => Notification.requestPermission()}
-                  style={{ marginTop: 12, background: 'none', border: '1px solid var(--color-primary)', borderRadius: 8, padding: '7px 14px', fontSize: 12, color: 'var(--color-primary-light)', cursor: 'pointer', fontWeight: 600, width: '100%' }}>
-                  Permitir notificações do browser
-                </button>
-              )}
+                <span className="academic-label" style={{ fontSize: 9, color: 'var(--text-muted)' }}>
+                  Sessão {round} de 4
+                </span>
+              </div>
             </div>
-          )}
+          </div>
+
+          {/* Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 32, marginBottom: 48 }}>
+            <button
+              onClick={reset}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              title="Reiniciar"
+            >
+              <RotateCw size={20} />
+            </button>
+            <button
+              onClick={() => setRunning(r => !r)}
+              style={{
+                width: 56,
+                height: 56,
+                backgroundColor: activeColor,
+                color: '#fff',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                borderRadius: '6px',
+                boxShadow: 'none',
+              }}
+            >
+              {running ? <Pause size={24} /> : <Play size={24} style={{ marginLeft: 2 }} />}
+            </button>
+            <button
+              onClick={skip}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              title="Pular fase"
+            >
+              <SkipForward size={20} />
+            </button>
+          </div>
+
+          {/* Retractable Settings */}
+          <div style={{ width: '100%', borderTop: '1px solid var(--border-color)', paddingTop: 24 }}>
+            <button
+              onClick={() => setShowSettings(s => !s)}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-label)',
+                fontSize: 11,
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em'
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Settings size={14} /> Configurações de tempo
+              </span>
+              <ChevronDown size={14} style={{ transform: showSettings ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+            </button>
+
+            {showSettings && (
+              <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {([
+                  { label: 'Foco (min)',    value: focusMin, setter: applyFocus, min: 5,  max: 90 },
+                  { label: 'Pausa (min)',   value: breakMin, setter: applyBreak, min: 1,  max: 30 },
+                  { label: 'Pausa Longa',  value: longMin,  setter: applyLong,  min: 5,  max: 60 },
+                ] as { label: string; value: number; setter: (n: number) => void; min: number; max: number }[]).map(({ label, value, setter, min, max }) => (
+                  <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label className="academic-label" style={{ fontSize: 9 }}>{label}</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <input
+                        type="range"
+                        min={min}
+                        max={max}
+                        value={value}
+                        onChange={e => setter(Number(e.target.value))}
+                        style={{ flex: 1, accentColor: activeColor }}
+                      />
+                      <span style={{ fontSize: 13, fontWeight: 600, minWidth: 24, textAlign: 'center' }}>{value}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Side panel */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="glass-card" style={{ padding: 20 }}>
-            <div className="sidebar-section-label" style={{ marginBottom: 10 }}>Estudando</div>
-            <select className="form-input" value={topicId} onChange={e => setTopicId(e.target.value)}>
+        {/* Right Column: Context & Stats */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+          {/* Study Selector */}
+          <div>
+            <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 8 }}>Contexto de Estudo</label>
+            <select
+              className="input-notebook"
+              value={topicId}
+              onChange={e => setTopicId(e.target.value)}
+              style={{ width: '100%', padding: '10px 0', borderBottom: '1px solid var(--border-color)', outline: 'none' }}
+            >
               <option value="">Sessão livre</option>
               {visibleTopics.map(t => (
-                <option key={t.id} value={t.id}>{subjects.find(s => s.id === t.subjectId)?.name} › {t.name}</option>
+                <option key={t.id} value={t.id}>
+                  {subjects.find(s => s.id === t.subjectId)?.name} › {t.name}
+                </option>
               ))}
             </select>
             {topicId && (
-              <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-muted)' }}>
-                Cards pendentes: <strong style={{ color: 'var(--color-primary-light)' }}>{dueForTopic}</strong>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)', marginTop: 16, borderRadius: '6px' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Cards pendentes nesta matéria</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: '#8E2C2C' }}>{dueForTopic}</span>
               </div>
             )}
           </div>
 
-          <div className="glass-card" style={{ padding: 20 }}>
-            <div className="sidebar-section-label" style={{ marginBottom: 16 }}>Hoje</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {[
-                { label: 'Sessões concluídas', value: sessions,                     icon: <CheckCircle size={16} style={{ color: 'var(--color-success)' }} /> },
-                { label: 'Tempo de foco',      value: `${sessions * focusMin} min`, icon: <Clock size={16} style={{ color: 'var(--color-primary-light)' }} /> },
-                { label: 'Próxima pausa',       value: phase === 'focus' ? `em ${mm}:${ss}` : 'Em andamento', icon: <Timer size={16} style={{ color: 'var(--color-warning)' }} /> },
-              ].map(({ label, value, icon }) => (
-                <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}>{icon} {label}</div>
-                  <div style={{ fontWeight: 700, fontSize: 15 }}>{value}</div>
+          {/* Daily Activity Metrics */}
+          <div>
+            <h3 className="academic-label" style={{ fontSize: 10, color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)', paddingBottom: 8, marginBottom: 16 }}>
+              Atividade Diária
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Metric 1 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                <div>
+                  <span className="academic-label" style={{ fontSize: 9, display: 'block', marginBottom: 4 }}>Sessões concluídas</span>
+                  <span style={{ fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-label)' }}>
+                    {sessions} <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>/ 8</span>
+                  </span>
                 </div>
-              ))}
+                {/* Visual blocks */}
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
+                    <div
+                      key={s}
+                      style={{
+                        width: 10,
+                        height: 20,
+                        backgroundColor: s <= sessions ? activeColor : 'var(--border-color)',
+                        borderRadius: '2px'
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div style={{ height: 1, backgroundColor: 'var(--border-subtle)' }} />
+
+              {/* Metric 2 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span className="academic-label" style={{ fontSize: 9, display: 'block', marginBottom: 4 }}>Tempo de foco acumulado</span>
+                  <span style={{ fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-label)' }}>
+                    {sessions * focusMin} <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>min</span>
+                  </span>
+                </div>
+                <Clock size={20} style={{ color: 'var(--text-muted)' }} />
+              </div>
+              <div style={{ height: 1, backgroundColor: 'var(--border-subtle)' }} />
+
+              {/* Metric 3 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span className="academic-label" style={{ fontSize: 9, display: 'block', marginBottom: 4 }}>Próxima pausa em</span>
+                  <span style={{ fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-label)' }}>
+                    {phase === 'focus' ? `${mm}:${ss}` : 'Em pausa'}
+                  </span>
+                </div>
+                <Coffee size={20} style={{ color: 'var(--text-muted)' }} />
+              </div>
             </div>
           </div>
 
-          <div className="glass-card" style={{ padding: 20 }}>
-            <div className="sidebar-section-label" style={{ marginBottom: 10 }}>Técnica Pomodoro</div>
-            {[
-              { icon: <Target size={14} color="var(--color-primary-light)" />, text: `${focusMin} min de foco total` },
-              { icon: <Coffee size={14} color="var(--color-success)" />,       text: `${breakMin} min de pausa curta` },
-              { icon: <Zap size={14} color="var(--color-tertiary)" />,         text: `${longMin} min após 4 sessões` },
-            ].map(({ icon, text }) => (
-              <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-                {icon} {text}
-              </div>
-            ))}
+          {/* Explanatory Panel */}
+          <div style={{ padding: 24, backgroundColor: '#EBE7E0', border: '1px solid var(--border-color)', marginTop: 'auto', borderRadius: '6px' }}>
+            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, margin: '0 0 12px' }}>Resumo do Ciclo</h4>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 16px' }}>
+              Seu método atual baseia-se em blocos de <strong>{focusMin} minutos</strong> de foco intenso, seguidos por breves pausas de <strong>{breakMin} minutos</strong> para assimilação.
+            </p>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <li style={{ display: 'flex', alignItems: 'center', fontSize: 10, fontFamily: 'var(--font-label)', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
+                <span style={{ width: 8, height: 8, backgroundColor: '#8E2C2C', marginRight: 12, borderRadius: '1px' }} />
+                Foco: {focusMin} min
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', fontSize: 10, fontFamily: 'var(--font-label)', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
+                <span style={{ width: 8, height: 8, backgroundColor: '#4F6B4A', marginRight: 12, borderRadius: '1px' }} />
+                Pausa Curta: {breakMin} min
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', fontSize: 10, fontFamily: 'var(--font-label)', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
+                <span style={{ width: 8, height: 8, backgroundColor: '#6B6358', marginRight: 12, borderRadius: '1px' }} />
+                Pausa Longa (após 4 sessões): {longMin} min
+              </li>
+            </ul>
           </div>
         </div>
       </div>
