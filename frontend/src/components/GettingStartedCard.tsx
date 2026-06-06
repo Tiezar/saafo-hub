@@ -93,8 +93,8 @@ export default function GettingStartedCard() {
               display: 'flex', alignItems: 'center', gap: 10,
               padding: isActive ? '8px 10px' : '4px 10px',
               borderRadius: 8,
-              background: isActive ? 'rgba(99,102,241,0.08)' : 'transparent',
-              border: isActive ? '1px solid rgba(99,102,241,0.2)' : '1px solid transparent',
+              background: isActive ? 'var(--bg-card)' : 'transparent',
+              border: isActive ? '1px solid var(--color-primary)' : '1px solid transparent',
               transition: 'all 0.2s',
             }}>
               {/* Icon */}
@@ -102,7 +102,7 @@ export default function GettingStartedCard() {
                 width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: step.done
-                  ? 'rgba(47,217,244,0.15)'
+                  ? 'var(--bg-card-high)'
                   : isActive
                   ? 'var(--color-primary)'
                   : 'var(--border-color)',

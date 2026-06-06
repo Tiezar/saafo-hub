@@ -696,7 +696,7 @@ export default function ExamSession() {
                 {q.options.map((opt, idx) => {
                   let bg = 'transparent', color = 'var(--text-primary)', border = 'var(--border-subtle)';
                   if (revealed) {
-                    if (idx === q.correctIndex)    { bg = 'rgba(47,217,244,0.08)'; color = 'var(--color-success)'; border = 'var(--color-success)'; }
+                    if (idx === q.correctIndex)    { bg = 'var(--bg-surface)'; color = 'var(--color-success)'; border = 'var(--color-success)'; }
                     else if (idx === selected)     { bg = 'rgba(255,100,100,0.08)'; color = 'var(--color-danger)'; border = 'var(--color-danger)'; }
                   }
                   return (
@@ -815,7 +815,7 @@ export default function ExamSession() {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: currentEval.correct.length && currentEval.missing.length ? '1fr 1fr' : '1fr', gap: 12, marginBottom: 14 }}>
                   {currentEval.correct.length > 0 && (
-                    <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(47,217,244,0.05)', border: '1px solid rgba(47,217,244,0.15)' }}>
+                    <div style={{ padding: '10px 12px', borderRadius: 8, background: 'var(--bg-surface)', border: '1px solid var(--color-success)' }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-success)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>✓ Acertos</div>
                       {currentEval.correct.map((c, i) => <div key={i} style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 3 }}>· {c}</div>)}
                     </div>
@@ -895,8 +895,8 @@ export default function ExamSession() {
               {questions.map((q, i) => (
                 <div key={i} style={{
                   display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 8,
-                  background: answers[i] ? 'rgba(47,217,244,0.05)' : 'rgba(255,100,100,0.05)',
-                  border: `1px solid ${answers[i] ? 'rgba(47,217,244,0.18)' : 'rgba(255,100,100,0.18)'}`,
+                  background: 'var(--bg-surface)',
+                  border: `1px solid ${answers[i] ? 'var(--color-success)' : 'var(--color-danger)'}`,
                 }}>
                   {answers[i]
                     ? <CheckCircle size={15} style={{ color: 'var(--color-success)', flexShrink: 0, marginTop: 1 }} />
@@ -971,7 +971,7 @@ export default function ExamSession() {
                     <p style={{ fontSize: 13, marginBottom: 10 }}>{ev.feedback}</p>
                     <div style={{ display: 'grid', gridTemplateColumns: ev.correct.length && ev.missing.length ? '1fr 1fr' : '1fr', gap: 10, marginBottom: 10 }}>
                       {ev.correct.length > 0 && (
-                        <div style={{ padding: '8px 10px', borderRadius: 8, background: 'rgba(47,217,244,0.05)', border: '1px solid rgba(47,217,244,0.15)' }}>
+                        <div style={{ padding: '8px 10px', borderRadius: 8, background: 'var(--bg-surface)', border: '1px solid var(--color-success)' }}>
                           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-success)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>✓ Acertos</div>
                           {ev.correct.map((c, ci) => <div key={ci} style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 2 }}>· {c}</div>)}
                         </div>

@@ -251,10 +251,10 @@ export default function CalendarPage() {
               onClick={() => setTab('month')}
               style={{
                 padding: '6px 16px', borderRadius: 'var(--radius-sm)', fontSize: 13, cursor: 'pointer', transition: 'all 0.2s',
-                fontFamily: 'Schibsted Grotesk, sans-serif',
+                fontFamily: 'var(--font-body)',
                 backgroundColor: tab === 'month' ? 'var(--bg-card-high)' : 'transparent',
                 color: tab === 'month' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                boxShadow: tab === 'month' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                boxShadow: 'none',
                 fontWeight: tab === 'month' ? 600 : 500,
               }}
             >
@@ -264,10 +264,10 @@ export default function CalendarPage() {
               onClick={() => setTab('agenda')}
               style={{
                 padding: '6px 16px', borderRadius: 'var(--radius-sm)', fontSize: 13, cursor: 'pointer', transition: 'all 0.2s',
-                fontFamily: 'Schibsted Grotesk, sans-serif',
+                fontFamily: 'var(--font-body)',
                 backgroundColor: tab === 'agenda' ? 'var(--bg-card-high)' : 'transparent',
                 color: tab === 'agenda' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                boxShadow: tab === 'agenda' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                boxShadow: 'none',
                 fontWeight: tab === 'agenda' ? 600 : 500,
               }}
             >

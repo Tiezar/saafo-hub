@@ -313,7 +313,7 @@ export default function CheckoutModal({ open, onClose }: Props) {
                       A ativação é automática e imediata.
                     </p>
                   </div>
-                  <div style={{ width: '100%', background: 'rgba(47,217,244,0.06)', borderRadius: 10, padding: 12, fontSize: 13, color: 'var(--text-muted)' }}>
+                  <div style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 6, padding: 12, fontSize: 13, color: 'var(--text-muted)' }}>
                     <strong>Como funciona:</strong> após o pagamento, a assinatura renova automaticamente todo mês via PIX.
                   </div>
                 </>

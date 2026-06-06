@@ -32,7 +32,7 @@ export default function Sidebar() {
   const [spacesOpen,   setSpacesOpen]   = React.useState(false);
   const [spaceForm,    setSpaceForm]    = React.useState(false);
   const [newName,      setNewName]      = React.useState('');
-  const [newColor,     setNewColor]     = React.useState('#8E2C2C');
+  const [newColor,     setNewColor]     = React.useState('var(--color-primary)');
   const [newIcon,      setNewIcon]      = React.useState('📚');
 
   async function submitSpace(e: React.FormEvent) {
@@ -60,7 +60,7 @@ export default function Sidebar() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#8E2C2C',
+            backgroundColor: 'var(--color-primary)',
             color: 'white',
             fontFamily: 'var(--font-label)',
             fontSize: 11,
@@ -91,12 +91,12 @@ export default function Sidebar() {
             <Icon size={18} />
             <span>{label}</span>
             {dueCount > 0 && (to === '/cards' || to === '/materiais') && (
-              <span style={{ marginLeft: 'auto', backgroundColor: '#8E2C2C', color: 'white', fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
+              <span style={{ marginLeft: 'auto', backgroundColor: 'var(--color-primary)', color: 'white', fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
                 {dueCount}
               </span>
             )}
             {showOnboardingDot && to === '/materiais' && (
-              <span style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', backgroundColor: '#8E2C2C' }} />
+              <span style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-primary)' }} />
             )}
           </NavLink>
         ))}
@@ -127,7 +127,7 @@ export default function Sidebar() {
                     onClick={() => setActiveSpaceId(s.id)}
                     className={`sidebar-space-item ${activeSpaceId === s.id ? 'active' : ''}`}
                   >
-                    <span className="sidebar-space-dot" style={{ background: s.color ?? '#8E2C2C' }} />
+                    <span className="sidebar-space-dot" style={{ background: s.color ?? 'var(--color-primary)' }} />
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.icon} {s.name}</span>
                   </button>
                   <button
@@ -153,7 +153,7 @@ export default function Sidebar() {
                       style={{ width: 24, height: 24, padding: 0, border: 'none', cursor: 'pointer' }} />
                     <input value={newIcon} onChange={e => setNewIcon(e.target.value)}
                       placeholder="Emoji" className="input-sm" style={{ width: 40, padding: '4px' }} />
-                    <button type="submit" style={{ padding: '4px 8px', fontSize: 10, background: '#8E2C2C', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>OK</button>
+                    <button type="submit" style={{ padding: '4px 8px', fontSize: 10, background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>OK</button>
                     <button type="button" style={{ padding: '4px', fontSize: 11, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setSpaceForm(false)}>✕</button>
                   </div>
                 </form>

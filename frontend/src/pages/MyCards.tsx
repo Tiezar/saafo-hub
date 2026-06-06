@@ -255,7 +255,7 @@ export default function MyCards() {
               <div key={c.id}
                 style={{
                   padding: 16, background: 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${editingCardId === c.id ? 'var(--color-primary)' : isDue ? 'rgba(192,193,255,0.25)' : 'var(--border-color)'}`,
+                  border: `1px solid ${editingCardId === c.id ? 'var(--color-primary)' : isDue ? 'var(--color-primary)' : 'var(--border-color)'}`,
                   borderRadius: 10, transition: 'border-color 0.15s',
                 }}>
                 {editingCardId === c.id ? (

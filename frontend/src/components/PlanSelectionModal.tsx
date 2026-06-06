@@ -47,7 +47,7 @@ export default function PlanSelectionModal({ open, onTrial, onSubscribe }: Props
             onClick={onSubscribe}
             style={{
               width: '100%', textAlign: 'left', padding: '20px', borderRadius: 12,
-              border: '1.5px solid var(--color-primary)', background: 'rgba(99,102,241,0.08)',
+              border: '1.5px solid var(--color-primary)', background: 'var(--bg-card)',
               cursor: 'pointer', color: 'inherit', position: 'relative', overflow: 'hidden',
             }}
           >
@@ -59,7 +59,7 @@ export default function PlanSelectionModal({ open, onTrial, onSubscribe }: Props
               MELHOR OPÇÃO
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-              <div style={{ padding: 10, borderRadius: 10, background: 'rgba(99,102,241,0.15)', flexShrink: 0 }}>
+              <div style={{ padding: 10, borderRadius: 6, background: 'var(--bg-card-high)', flexShrink: 0 }}>
                 <Star size={22} style={{ color: 'var(--color-primary-light)' }} />
               </div>
               <div>

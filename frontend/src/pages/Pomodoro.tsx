@@ -146,7 +146,7 @@ export default function Pomodoro() {
   const progress   = totalSecs > 0 ? seconds / totalSecs : 0;
   const dashOffset = CIRCUMFERENCE * (1 - progress);
 
-  const activeColor = phase === 'focus' ? '#8E2C2C' : phase === 'short-break' ? '#4F6B4A' : '#6B6358';
+  const activeColor = phase === 'focus' ? 'var(--color-primary)' : phase === 'short-break' ? 'var(--color-tertiary)' : 'var(--text-muted)';
 
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
   const ss = String(seconds % 60).padStart(2, '0');
@@ -175,7 +175,7 @@ export default function Pomodoro() {
         {/* Left Column: Timer & Controls */}
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRight: '1px solid var(--border-color)', paddingRight: 32 }}>
           {/* Marginalia Note */}
-          <div style={{ position: 'absolute', top: 0, left: 0, maxWidth: 140, display: 'flex', flexDirection: 'column', gap: 4 }} className="hidden lg:flex">
+          <div style={{ position: 'absolute', top: 0, left: 0, maxWidth: 140, display: 'flex', flexDirection: 'column', gap: 4 }} className="pomo-sidenote">
             <span className="academic-label" style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{sideNoteTitle}</span>
             <p className="academic-label" style={{ fontSize: 8, color: 'var(--text-muted)', textTransform: 'none', letterSpacing: 'normal', lineHeight: 1.4 }}>
               {sideNoteDesc}
@@ -381,7 +381,7 @@ export default function Pomodoro() {
             {topicId && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)', marginTop: 16, borderRadius: '6px' }}>
                 <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Cards pendentes nesta matéria</span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: '#8E2C2C' }}>{dueForTopic}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primary)' }}>{dueForTopic}</span>
               </div>
             )}
           </div>
@@ -444,22 +444,22 @@ export default function Pomodoro() {
           </div>
 
           {/* Explanatory Panel */}
-          <div style={{ padding: 24, backgroundColor: '#EBE7E0', border: '1px solid var(--border-color)', marginTop: 'auto', borderRadius: '6px' }}>
+          <div style={{ padding: 24, backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', marginTop: 'auto', borderRadius: '6px' }}>
             <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, margin: '0 0 12px' }}>Resumo do Ciclo</h4>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 16px' }}>
               Seu método atual baseia-se em blocos de <strong>{focusMin} minutos</strong> de foco intenso, seguidos por breves pausas de <strong>{breakMin} minutos</strong> para assimilação.
             </p>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
               <li style={{ display: 'flex', alignItems: 'center', fontSize: 10, fontFamily: 'var(--font-label)', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
-                <span style={{ width: 8, height: 8, backgroundColor: '#8E2C2C', marginRight: 12, borderRadius: '1px' }} />
+                <span style={{ width: 8, height: 8, backgroundColor: 'var(--color-primary)', marginRight: 12, borderRadius: '1px' }} />
                 Foco: {focusMin} min
               </li>
               <li style={{ display: 'flex', alignItems: 'center', fontSize: 10, fontFamily: 'var(--font-label)', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
-                <span style={{ width: 8, height: 8, backgroundColor: '#4F6B4A', marginRight: 12, borderRadius: '1px' }} />
+                <span style={{ width: 8, height: 8, backgroundColor: 'var(--color-tertiary)', marginRight: 12, borderRadius: '1px' }} />
                 Pausa Curta: {breakMin} min
               </li>
               <li style={{ display: 'flex', alignItems: 'center', fontSize: 10, fontFamily: 'var(--font-label)', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
-                <span style={{ width: 8, height: 8, backgroundColor: '#6B6358', marginRight: 12, borderRadius: '1px' }} />
+                <span style={{ width: 8, height: 8, backgroundColor: 'var(--text-muted)', marginRight: 12, borderRadius: '1px' }} />
                 Pausa Longa (após 4 sessões): {longMin} min
               </li>
             </ul>

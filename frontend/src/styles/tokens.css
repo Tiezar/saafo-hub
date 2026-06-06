@@ -60,9 +60,9 @@
   --border-subtle: #ece1d3;
   --border-active: #a33b3a;
 
-  --glow-primary: 0 0 0 1px #cdc5bc, 0 4px 16px rgba(163, 59, 58, 0.08);
+  --glow-primary: 0 0 0 1px #cdc5bc;
   --glow-active:  0 0 0 2px #a33b3a;
-  --grad-primary: linear-gradient(135deg, #a33b3a 0%, #832425 100%);
+  --grad-primary: #a33b3a;
 }
 
 /* DARK THEME — Charcoal (Warm Charcoal & Ink) */
@@ -94,7 +94,7 @@
   --border-subtle: #2c2824;
   --border-active: #fe807b;
 
-  --glow-primary: 0 0 0 1px #443f39, 0 4px 16px rgba(254, 128, 123, 0.08);
+  --glow-primary: 0 0 0 1px #443f39;
   --glow-active:  0 0 0 2px #fe807b;
-  --grad-primary: linear-gradient(135deg, #fe807b 0%, #ffb3ae 100%);
+  --grad-primary: #fe807b;
 }
