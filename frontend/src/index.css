@@ -658,143 +658,7 @@ select.form-input { cursor: pointer; appearance: none; }
 
 
 
-/* ── Subject card ───────────────────────────────────────────────────────── */
-.subject-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: var(--sp-5) var(--sp-6);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: var(--transition);
-}
 
-.subject-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--subject-color, var(--color-primary));
-}
-
-.subject-card:hover {
-  border-color: var(--border-subtle);
-  background: var(--bg-card);
-}
-
-.subject-card.selected {
-  border-color: var(--color-primary-light);
-  background: var(--bg-card);
-}
-
-.subject-name {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 600;
-}
-
-
-/* ── Study session overlay ──────────────────────────────────────────────── */
-.session-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--bg-deep);
-  z-index: 500;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--sp-6);
-  background-image:
-    radial-gradient(ellipse at 50% 0%, rgba(73, 75, 214, 0.08) 0px, transparent 60%);
-}
-
-.flashcard {
-  perspective: 1200px;
-  width: 100%;
-  max-width: 600px;
-  height: 300px;
-  margin: var(--sp-6) auto;
-  cursor: pointer;
-  user-select: none;
-}
-
-.flashcard-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-style: preserve-3d;
-}
-
-.flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
-
-.flashcard-face {
-  position: absolute;
-  inset: 0;
-  backface-visibility: hidden;
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border-subtle);
-  padding: var(--sp-8);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  background: var(--bg-card-high);
-}
-
-.flashcard-face.back { transform: rotateY(180deg); }
-
-.flashcard-text {
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.45;
-  color: var(--text-primary);
-}
-
-.flashcard-hint {
-  position: absolute;
-  bottom: var(--sp-5);
-  font-family: var(--font-label);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-}
-
-.rating-bar {
-  display: flex;
-  gap: var(--sp-2);
-  margin-top: var(--sp-6);
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.rating-btn {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 16px;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.rating-btn:hover {
-  border-color: var(--color-primary-light);
-  color: var(--color-primary-light);
-  background: rgba(192, 193, 255, 0.06);
-  transform: translateY(-2px);
-}
 
 
 
@@ -1063,27 +927,7 @@ select.form-input { cursor: pointer; appearance: none; }
 .toast-dismiss { background: none; border: none; cursor: pointer; color: currentColor; opacity: 0.6; display: grid; place-items: center; margin-left: auto; }
 .toast-dismiss:hover { opacity: 1; }
 
-/* Study session overlay */
-.study-overlay { position: fixed; inset: 0; background: rgba(1,15,31,0.95); backdrop-filter: blur(16px); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; }
-.study-overlay-inner { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 0; }
-.study-overlay-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-.study-overlay-progress-wrap { flex: 1; display: flex; align-items: center; gap: 12px; margin-right: 16px; }
-.study-overlay-progress-bar { flex: 1; height: 6px; background: var(--bg-card-high); border-radius: 3px; overflow: hidden; }
-.study-overlay-progress-fill { height: 100%; background: var(--grad-primary); border-radius: 3px; transition: width 0.3s ease; }
-.study-overlay-counter { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
 
-.study-card-flip { perspective: 1200px; width: 100%; height: 280px; cursor: pointer; margin-bottom: 24px; }
-.study-card-flip .study-card-front, .study-card-flip .study-card-back { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 16px; border: 1px solid var(--border-subtle); padding: 32px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-card-high); text-align: center; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); }
-.study-card-flip .study-card-back { transform: rotateY(180deg); }
-.study-card-flip.flipped .study-card-front { transform: rotateY(-180deg); }
-.study-card-flip.flipped .study-card-back  { transform: rotateY(0deg); }
-.study-card-side-label { font-family: var(--font-label); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 16px; }
-.study-card-text { font-family: var(--font-display); font-size: 20px; font-weight: 600; line-height: 1.45; }
-.study-card-hint { position: absolute; bottom: 16px; font-family: var(--font-label); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
-
-.study-rating-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-.study-rating-btn { flex: 1; min-width: 100px; padding: 10px 14px; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; background: rgba(255,255,255,0.03); color: var(--rating-color, var(--text-primary)); font-family: var(--font-display); font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); }
-.study-rating-btn:hover { background: rgba(255,255,255,0.07); border-color: var(--rating-color, var(--border-subtle)); }
 
 
 
@@ -1103,8 +947,7 @@ select.form-input { cursor: pointer; appearance: none; }
 /* glass-card compat */
 .glass-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--sp-6); }
 
-/* Study rating key badge */
-.study-rating-key { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 4px; background: rgba(255,255,255,0.1); font-size: 10px; font-weight: 700; margin-right: 4px; opacity: 0.7; }
+
 
 /* Due badge on topic chips / subject cards */
 .badge-due { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--color-danger); color: #fff; font-family: var(--font-label); font-size: 10px; font-weight: 700; line-height: 1; }

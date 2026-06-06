@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { X, RotateCcw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import './StudySessionOverlay.css';
+
 
 const RATINGS = [
   { value: 1, label: 'Não lembrei', key: '1', color: 'var(--color-danger)' },
