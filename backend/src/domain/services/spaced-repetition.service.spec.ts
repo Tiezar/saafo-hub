@@ -11,9 +11,10 @@ describe('SpacedRepetitionService (SM-2 Algorithm)', () => {
     expect(result.interval).toBe(1);
     expect(result.easeFactor).toBe(2.5); // Remains unchanged
 
-    // nextReview should be +1 day
+    // nextReview should be +1 day normalized to 00:00:00 local time
     const expectedDate = new Date(baseDate);
     expectedDate.setDate(expectedDate.getDate() + 1);
+    expectedDate.setHours(0, 0, 0, 0);
     expect(result.nextReview.getTime()).toBe(expectedDate.getTime());
   });
 
@@ -27,6 +28,7 @@ describe('SpacedRepetitionService (SM-2 Algorithm)', () => {
 
     const expectedDate = new Date(baseDate);
     expectedDate.setDate(expectedDate.getDate() + 1);
+    expectedDate.setHours(0, 0, 0, 0);
     expect(result.nextReview.getTime()).toBe(expectedDate.getTime());
   });
 
@@ -40,6 +42,7 @@ describe('SpacedRepetitionService (SM-2 Algorithm)', () => {
 
     const expectedDate = new Date(baseDate);
     expectedDate.setDate(expectedDate.getDate() + 6);
+    expectedDate.setHours(0, 0, 0, 0);
     expect(result.nextReview.getTime()).toBe(expectedDate.getTime());
   });
 
@@ -54,6 +57,7 @@ describe('SpacedRepetitionService (SM-2 Algorithm)', () => {
 
     const expectedDate = new Date(baseDate);
     expectedDate.setDate(expectedDate.getDate() + 16);
+    expectedDate.setHours(0, 0, 0, 0);
     expect(result.nextReview.getTime()).toBe(expectedDate.getTime());
   });
 

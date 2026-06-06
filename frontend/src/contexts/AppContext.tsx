@@ -602,7 +602,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setActiveSessionId(null); setSessionCards([]);
     setSessionDone(false); setSessionStats(null);
     setRequeuedCardIds(new Set());
-  }, []);
+    fetchAllCards();
+  }, [fetchAllCards]);
 
   // ── Calendar modal ────────────────────────────────────────────────────────
   const openCreateEvent = useCallback((date?: Date) => {

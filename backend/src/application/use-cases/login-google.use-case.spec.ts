@@ -13,6 +13,7 @@ describe('LoginGoogleUseCase', () => {
       findByGoogleId: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      verifyEmail: jest.fn(),
     };
     useCase = new LoginGoogleUseCase(mockUserRepository);
   });
@@ -25,6 +26,10 @@ describe('LoginGoogleUseCase', () => {
       null,
       'google-123',
       null,
+      null,
+      null,
+      null,
+      true,
     );
     mockUserRepository.findByGoogleId.mockResolvedValue(existingUser);
 
@@ -49,6 +54,10 @@ describe('LoginGoogleUseCase', () => {
       null,
       null,
       null,
+      null,
+      null,
+      null,
+      false,
     );
     const updatedUser = new User(
       '1',
@@ -57,6 +66,10 @@ describe('LoginGoogleUseCase', () => {
       null,
       'google-123',
       null,
+      null,
+      null,
+      null,
+      true,
     );
     mockUserRepository.findByGoogleId.mockResolvedValue(null);
     mockUserRepository.findByEmail.mockResolvedValue(existingUser);
@@ -76,6 +89,7 @@ describe('LoginGoogleUseCase', () => {
     );
     expect(mockUserRepository.update).toHaveBeenCalledWith('1', {
       googleId: 'google-123',
+      emailVerified: true,
     });
     expect(result).toEqual(updatedUser);
   });
@@ -88,6 +102,10 @@ describe('LoginGoogleUseCase', () => {
       null,
       'google-123',
       null,
+      null,
+      null,
+      null,
+      true,
     );
     mockUserRepository.findByGoogleId.mockResolvedValue(null);
     mockUserRepository.findByEmail.mockResolvedValue(null);
@@ -109,6 +127,9 @@ describe('LoginGoogleUseCase', () => {
       email: 'new@example.com',
       name: 'New User',
       googleId: 'google-123',
+      emailVerified: true,
+      plan: 'FREE_TRIAL',
+      trialEndsAt: expect.any(Date),
     });
     expect(result).toEqual(newUser);
   });
