@@ -1,16 +1,20 @@
 import {
-  Controller, Get, Param, Query, UseGuards, NotFoundException,
+  Controller, Get, Post, Param, Query, Req, UseGuards, NotFoundException, BadRequestException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { AdminGuard } from '../guards/admin.guard';
 import { PrismaService } from '../../database/prisma.service';
+import { EvoApiService } from '../../notifications/evo-api.service';
 
 const PAGE_SIZE = 50;
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly evoApi: EvoApiService,
+  ) {}
 
   // ── GET /admin/users ───────────────────────────────────────────────────────
 
@@ -177,5 +181,34 @@ export class AdminController {
         lastActivityAt:      lastSession?.startedAt ?? null,
       },
     };
+  }
+
+  // ── POST /admin/test-whatsapp ──────────────────────────────────────────────
+
+  @Post('test-whatsapp')
+  async testWhatsApp(@Req() req: any) {
+    if (!this.evoApi.isConfigured) {
+      throw new BadRequestException(
+        'Evolution API não configurada. Verifique EVOLUTION_API_URL, EVOLUTION_API_KEY e EVOLUTION_API_INSTANCE.',
+      );
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { phone: true, name: true },
+    });
+
+    if (!user?.phone) {
+      throw new BadRequestException(
+        'Seu usuário não tem número de WhatsApp cadastrado. Adicione em Perfil → WhatsApp.',
+      );
+    }
+
+    await this.evoApi.sendWhatsApp(
+      user.phone,
+      `✅ *SAAFO HUB — Teste de integração*\n\nOlá, ${user.name}! A conexão com o WhatsApp está funcionando corretamente.`,
+    );
+
+    return { ok: true, sentTo: user.phone };
   }
 }

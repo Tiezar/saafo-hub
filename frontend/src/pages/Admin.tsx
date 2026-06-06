@@ -3,7 +3,7 @@ import {
   Search, Users, CreditCard, Clock, AlertTriangle,
   X, ChevronLeft, ChevronRight, Shield, RefreshCw,
   CheckCircle2, XCircle, Layers, BookOpen, Trophy,
-  MessageCircle, RotateCw,
+  MessageCircle, RotateCw, Send,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -163,8 +163,23 @@ export default function Admin() {
   const [plan, setPlan]       = useState('');
   const [page, setPage]       = useState(1);
   const [selected, setSelected] = useState<AdminUser | null>(null);
+  const [waSending, setWaSending] = useState(false);
+  const [waResult, setWaResult]   = useState<{ ok: boolean; msg: string } | null>(null);
 
   const isAdmin = ADMIN_EMAILS.length === 0 || ADMIN_EMAILS.includes(currentUser?.email?.toLowerCase() ?? '');
+
+  async function testWhatsApp() {
+    setWaSending(true);
+    setWaResult(null);
+    try {
+      await apiCall('/admin/test-whatsapp', { method: 'POST' });
+      setWaResult({ ok: true, msg: 'Mensagem enviada! Verifique seu WhatsApp.' });
+    } catch (err) {
+      setWaResult({ ok: false, msg: (err as Error).message });
+    } finally {
+      setWaSending(false);
+    }
+  }
 
   const load = useCallback(async (p: number, s: string, pl: string) => {
     setLoading(true);
@@ -230,12 +245,30 @@ export default function Admin() {
             Usuários cadastrados e seus consumos
           </p>
         </div>
-        <button
-          onClick={() => load(page, search, plan)}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 'var(--radius)', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 13 }}
-        >
-          <RefreshCw size={14} /> Atualizar
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={testWhatsApp}
+              disabled={waSending}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 'var(--radius)', border: '1px solid var(--color-success)', background: 'transparent', color: 'var(--color-success)', cursor: waSending ? 'wait' : 'pointer', fontSize: 13, fontWeight: 600, opacity: waSending ? 0.7 : 1 }}
+            >
+              {waSending ? <RotateCw size={14} className="animate-spin" /> : <Send size={14} />}
+              Testar WhatsApp
+            </button>
+            <button
+              onClick={() => load(page, search, plan)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 'var(--radius)', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 13 }}
+            >
+              <RefreshCw size={14} /> Atualizar
+            </button>
+          </div>
+          {waResult && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: waResult.ok ? 'var(--color-success)' : 'var(--color-danger)' }}>
+              {waResult.ok ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
+              {waResult.msg}
+            </div>
+          )}
+        </div>
       </header>
 
       {/* Summary stats */}
