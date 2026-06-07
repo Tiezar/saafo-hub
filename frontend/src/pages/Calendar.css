@@ -233,3 +233,26 @@ select.academic-input {
   color: #ffffff;
   border-color: var(--color-primary);
 }
+
+@media (max-width: 768px) {
+  .cal-cell { min-height: 70px; padding: 4px; }
+  .cal-cell-number { font-size: 11px; }
+  .cal-header-cell { font-size: 11px; padding: 6px 4px; }
+  .calendar-event-item { font-size: 10px; padding: 1px 4px; }
+  .swiss-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .cal-cell { min-height: 48px; padding: 2px; }
+  .cal-cell-number { font-size: 10px; }
+  .cal-header-cell { font-size: 10px; padding: 4px 2px; }
+  .calendar-event-item { display: none; }
+  .cal-cell.has-events::after {
+    content: '•';
+    display: block;
+    font-size: 14px;
+    color: var(--color-primary);
+    line-height: 1;
+    margin-top: 2px;
+  }
+}

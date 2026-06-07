@@ -7,6 +7,11 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 
+interface Props {
+  mobileOpen?: boolean;
+  onClose?: () => void;
+}
+
 const NAV_ITEMS = [
   { to: '/',          icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/materiais', icon: BookOpen,        label: 'Matérias' },
@@ -21,7 +26,7 @@ const NAV_ITEMS = [
 const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS ?? '')
   .split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
 
-export default function Sidebar() {
+export default function Sidebar({ mobileOpen = false, onClose }: Props) {
   const {
     currentUser, handleLogout, theme, toggleTheme,
     spaces, activeSpaceId, setActiveSpaceId,
@@ -48,7 +53,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${mobileOpen ? ' sidebar-open' : ''}`}>
       {/* Brand Header */}
       <div className="sidebar-brand">
         <div className="sidebar-brand-icon">S</div>
@@ -58,7 +63,7 @@ export default function Sidebar() {
       {/* CTA Button */}
       <div style={{ padding: '0 8px', marginBottom: 24 }}>
         <button
-          onClick={() => startStudySession(undefined, true)}
+          onClick={() => { startStudySession(undefined, true); onClose?.(); }}
           style={{
             width: '100%',
             padding: '10px 16px',
@@ -92,6 +97,7 @@ export default function Sidebar() {
             to={to}
             end={to === '/'}
             className="sidebar-nav-item"
+            onClick={onClose}
           >
             <Icon size={18} />
             <span>{label}</span>
@@ -108,7 +114,7 @@ export default function Sidebar() {
 
         {/* Admin link — only visible to admins */}
         {isAdmin && (
-          <NavLink to="/admin" className="sidebar-nav-item" style={{ marginTop: 8, borderTop: '1px solid var(--border-color)', paddingTop: 12 }}>
+          <NavLink to="/admin" className="sidebar-nav-item" onClick={onClose} style={{ marginTop: 8, borderTop: '1px solid var(--border-color)', paddingTop: 12 }}>
             <Shield size={18} />
             <span>Admin</span>
           </NavLink>
@@ -127,7 +133,7 @@ export default function Sidebar() {
           {spacesOpen && (
             <div className="sidebar-space-list">
               <button
-                onClick={() => setActiveSpaceId(null)}
+                onClick={() => { setActiveSpaceId(null); onClose?.(); }}
                 className={`sidebar-space-item ${!activeSpaceId ? 'active' : ''}`}
               >
                 <span className="sidebar-space-dot" style={{ background: 'var(--text-muted)' }} />
@@ -137,7 +143,7 @@ export default function Sidebar() {
               {spaces.map(s => (
                 <div key={s.id} className="sidebar-space-row">
                   <button
-                    onClick={() => setActiveSpaceId(s.id)}
+                    onClick={() => { setActiveSpaceId(s.id); onClose?.(); }}
                     className={`sidebar-space-item ${activeSpaceId === s.id ? 'active' : ''}`}
                   >
                     <span className="sidebar-space-dot" style={{ background: s.color ?? 'var(--color-primary)' }} />

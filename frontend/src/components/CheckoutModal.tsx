@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { X, CreditCard, RotateCw } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 interface CardForm {
   number: string;
@@ -55,6 +56,7 @@ interface Props {
 
 export default function CheckoutModal({ open, onClose }: Props) {
   const { apiCall, showSuccess, showError } = useApp();
+  const isMobile = useIsMobile(480);
   const [loading, setLoading] = useState(false);
   const [card, setCard] = useState<CardForm>(BLANK_CARD);
 
@@ -147,7 +149,7 @@ export default function CheckoutModal({ open, onClose }: Props) {
                 onChange={e => setCard(p => ({ ...p, holderName: e.target.value.toUpperCase() }))}
                 autoComplete="cc-name" required />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
               <div>
                 <label style={labelStyle}>Validade</label>
                 <input style={inputStyle} placeholder="MM/AA" value={card.expiry}
@@ -169,7 +171,7 @@ export default function CheckoutModal({ open, onClose }: Props) {
                   onChange={e => setCard(p => ({ ...p, cpf: fmtCpf(e.target.value) }))}
                   inputMode="numeric" required />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
                 <div>
                   <label style={labelStyle}>CEP</label>
                   <input style={inputStyle} placeholder="00000-000" value={card.cep}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, Star, RotateCw, AlertTriangle, RefreshCw, Check, Bot, FileText, CheckCircle, Trash2 } from 'lucide-react';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { useApp } from '../contexts/AppContext';
 import type { Institution } from '../types';
 import './Profile.css';
@@ -212,6 +213,8 @@ export default function Profile() {
     finally { setSaving(false); }
   };
 
+  const isMobile = useIsMobile();
+
   const handleDeleteAccount = async () => {
     await apiCall('/profile', { method: 'DELETE' });
     handleLogout();
@@ -226,13 +229,13 @@ export default function Profile() {
       />
       {/* Page Header */}
       <header style={{ marginBottom: 40, borderBottom: '1px solid var(--border-color)', paddingBottom: 24 }}>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 300, color: 'var(--text-primary)', margin: 0 }}>Perfil</h2>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 26 : 36, fontWeight: 300, color: 'var(--text-primary)', margin: 0 }}>Perfil</h2>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, color: 'var(--text-muted)', marginTop: 8 }}>
           Gerencie suas informações pessoais e detalhes da sua assinatura.
         </p>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: isMobile ? 24 : 48 }}>
         {/* Left Column: Painel de Assinatura */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           <h3 className="academic-label" style={{ color: 'var(--text-secondary)' }}>Painel de Assinatura</h3>

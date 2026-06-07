@@ -8,6 +8,7 @@ import {
 import { useApp } from '../contexts/AppContext';
 import { useNavigate } from 'react-router-dom';
 import './Admin.css';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 interface Usage {
   subjects: number;
@@ -81,7 +82,7 @@ function UserModal({ user, onClose }: { user: AdminUser; onClose: () => void }) 
 
         <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Info Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
             <InfoCard label="Plano">
               <span style={{ color: plan.color, fontWeight: 700 }}>{plan.text}</span>
             </InfoCard>
@@ -107,7 +108,7 @@ function UserModal({ user, onClose }: { user: AdminUser; onClose: () => void }) 
           {/* Usage */}
           <div>
             <p className="academic-label" style={{ marginBottom: 10 }}>Consumo</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: 8 }}>
               <UsageTile icon={<BookOpen size={14} />} label="Matérias"   value={user.usage.subjects} />
               <UsageTile icon={<Layers size={14} />}   label="Cards"      value={user.usage.cards} />
               <UsageTile icon={<RotateCw size={14} />} label="Sessões"    value={user.usage.studySessions} />
@@ -152,6 +153,7 @@ function UsageTile({ icon, label, value, highlight }: { icon: React.ReactNode; l
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function Admin() {
+  const isMobile = useIsMobile();
   const { apiCall, currentUser } = useApp();
   const navigate = useNavigate();
 
@@ -239,7 +241,7 @@ export default function Admin() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
             <Shield size={20} style={{ color: 'var(--color-primary)' }} />
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 300, margin: 0 }}>Admin</h2>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 26 : 36, fontWeight: 300, margin: 0 }}>Admin</h2>
           </div>
           <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: 0 }}>
             Usuários cadastrados e seus consumos
@@ -281,7 +283,7 @@ export default function Admin() {
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flexGrow: 1, minWidth: 220 }}>
+        <div style={{ position: 'relative', flexGrow: 1, minWidth: isMobile ? 0 : 220, width: isMobile ? '100%' : undefined }}>
           <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
           <input
             value={search}

@@ -7,6 +7,7 @@ import { useApp } from '../contexts/AppContext';
 import { API_URL } from '../lib/constants';
 import './AIGenerator.css';
 import CustomSelect from '../components/CustomSelect';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 
 interface PreviewCard { front: string; back: string; selected: boolean }
@@ -38,6 +39,7 @@ function wordHint(n: number): { text: string; color: string } | null {
 }
 
 export default function AIGenerator() {
+  const isMobile = useIsMobile();
   const { apiCall, visibleTopics, subjects, selectedTopic, fetchCardsForTopic, showError, showSuccess, handleQuickSetup } = useApp();
 
   // ── Inline setup (when user has no topics yet) ────────────────────────────
@@ -191,7 +193,7 @@ export default function AIGenerator() {
           <span style={{ fontWeight: 700, fontSize: 15 }}>Onde salvar os cards?</span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 12, alignItems: 'end' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr auto', gap: 12, alignItems: 'end' }}>
           <div>
             <label className="form-label">Matéria *</label>
             <CustomSelect
@@ -458,7 +460,7 @@ export default function AIGenerator() {
                 {editIdx === i ? (
                   // ── Inline edit mode ────────────────────────────────────
                   <div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 12 }}>
                       <div>
                         <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 6 }}>Frente</div>
                         <textarea className="form-input" rows={3}
@@ -485,7 +487,7 @@ export default function AIGenerator() {
                   </div>
                 ) : (
                   // ── Display mode ────────────────────────────────────────
-                  <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 1fr auto', gap: 14, alignItems: 'start' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '28px 1fr auto' : '28px 1fr 1fr auto', gap: isMobile ? 10 : 14, alignItems: 'start' }}>
                     {/* Checkbox */}
                     <div onClick={() => toggleCard(i)} style={{ cursor: 'pointer', paddingTop: 2 }}>
                       <div style={{
@@ -504,11 +506,13 @@ export default function AIGenerator() {
                       <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.5 }}>{card.front}</div>
                     </div>
 
-                    {/* Back */}
-                    <div onClick={() => toggleCard(i)} style={{ cursor: 'pointer' }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary)', marginBottom: 5 }}>Verso</div>
-                      <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{card.back}</div>
-                    </div>
+                    {/* Back — hidden on mobile (edit mode shows both) */}
+                    {!isMobile && (
+                      <div onClick={() => toggleCard(i)} style={{ cursor: 'pointer' }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary)', marginBottom: 5 }}>Verso</div>
+                        <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{card.back}</div>
+                      </div>
+                    )}
 
                     {/* Actions */}
                     <div style={{ display: 'flex', gap: 4, paddingTop: 2 }}>

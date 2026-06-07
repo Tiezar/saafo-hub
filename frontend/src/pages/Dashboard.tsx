@@ -4,6 +4,7 @@ import {
   RotateCw, Star, Calendar, ShieldAlert, Clock, Zap, RefreshCw,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { getEventMeta } from '../lib/constants';
 import { EventIcon } from '../components/EventIcon';
 import GettingStartedCard from '../components/GettingStartedCard';
@@ -23,6 +24,7 @@ export default function Dashboard() {
     fetchInsights();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const isMobile = useIsMobile();
   const dueCount = cards.filter(c => new Date(c.nextReview) <= new Date()).length;
 
   const streak = (() => {
@@ -45,7 +47,7 @@ export default function Dashboard() {
       {/* Page Header */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40, borderBottom: '1px solid var(--border-color)', paddingBottom: 24, flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 300, color: 'var(--text-primary)', margin: 0 }}>Dashboard</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 26 : 36, fontWeight: 300, color: 'var(--text-primary)', margin: 0 }}>Dashboard</h2>
           <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, color: 'var(--text-muted)', marginTop: 8, maxWidth: 500, lineHeight: 1.5 }}>
             Visão geral do seu progresso acadêmico. Mantenha o foco na retenção e revisão regular.
           </p>
@@ -58,36 +60,36 @@ export default function Dashboard() {
       <GettingStartedCard />
 
       {/* Stats Grid (Swiss Grid Pattern) */}
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', borderBottom: '1px solid var(--border-color)', marginBottom: 40, paddingBottom: 24, gap: 24 }}>
+      <section style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(200px, 1fr))', borderBottom: '1px solid var(--border-color)', marginBottom: isMobile ? 24 : 40, paddingBottom: 24, gap: isMobile ? 12 : 24 }}>
         {/* Stat 1 */}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: '1px solid var(--border-color)', paddingRight: 16 }}>
-          <span className="academic-label" style={{ marginBottom: 12 }}>Cards Totais</span>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 44, fontWeight: 300, color: 'var(--text-primary)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: isMobile ? 'none' : '1px solid var(--border-color)', borderBottom: isMobile ? '1px solid var(--border-color)' : 'none', paddingRight: isMobile ? 0 : 16, paddingBottom: isMobile ? 12 : 0 }}>
+          <span className="academic-label" style={{ marginBottom: 8 }}>Cards Totais</span>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 32 : 44, fontWeight: 300, color: 'var(--text-primary)' }}>
             {cards.length}
           </div>
         </div>
         {/* Stat 2 */}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: '1px solid var(--border-color)', paddingRight: 16 }}>
-          <span className="academic-label" style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: isMobile ? 'none' : '1px solid var(--border-color)', borderBottom: isMobile ? '1px solid var(--border-color)' : 'none', paddingRight: isMobile ? 0 : 16, paddingBottom: isMobile ? 12 : 0 }}>
+          <span className="academic-label" style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
             Agendados
             <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--color-primary)', display: 'inline-block' }}></span>
           </span>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 44, fontWeight: 300, color: 'var(--text-primary)' }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 32 : 44, fontWeight: 300, color: 'var(--text-primary)' }}>
             {dueCount}
           </div>
         </div>
         {/* Stat 3 */}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: '1px solid var(--border-color)', paddingRight: 16 }}>
-          <span className="academic-label" style={{ marginBottom: 12 }}>Streak Atual</span>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 44, fontWeight: 300, color: 'var(--text-primary)' }}>
-            {streak} <span style={{ fontSize: 16, color: 'var(--text-muted)' }}>dias</span>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: isMobile ? 'none' : '1px solid var(--border-color)', paddingRight: isMobile ? 0 : 16 }}>
+          <span className="academic-label" style={{ marginBottom: 8 }}>Streak Atual</span>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 32 : 44, fontWeight: 300, color: 'var(--text-primary)' }}>
+            {streak} <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>dias</span>
           </div>
         </div>
         {/* Stat 4 */}
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <span className="academic-label" style={{ marginBottom: 12 }}>Retenção Média</span>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 44, fontWeight: 300, color: 'var(--text-primary)' }}>
-            {metrics ? (metrics.retentionRate ?? 0).toFixed(1) : '0.0'} <span style={{ fontSize: 16, color: 'var(--text-muted)' }}>%</span>
+          <span className="academic-label" style={{ marginBottom: 8 }}>Retenção Média</span>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 32 : 44, fontWeight: 300, color: 'var(--text-primary)' }}>
+            {metrics ? (metrics.retentionRate ?? 0).toFixed(1) : '0.0'} <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>%</span>
           </div>
         </div>
       </section>
