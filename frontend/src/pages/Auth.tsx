@@ -65,7 +65,13 @@ export default function Auth() {
   }, [emailPending, apiCall]);
 
   const handleAuth = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault(); setAuthLoading(true);
+    e.preventDefault();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(authEmail.trim())) {
+      flash('error', 'E-mail inválido. Use o formato nome@dominio.com');
+      return;
+    }
+    setAuthLoading(true);
     try {
       if (isRegistering) {
         const d = await apiCall('/auth/register', {

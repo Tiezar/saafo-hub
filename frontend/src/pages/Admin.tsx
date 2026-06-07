@@ -57,6 +57,7 @@ function fmtDateTime(iso: string | null | undefined) {
 // ── Detail Modal ─────────────────────────────────────────────────────────────
 
 function UserModal({ user, onClose }: { user: AdminUser; onClose: () => void }) {
+  const isMobile = useIsMobile();
   const plan = planLabel(user.plan, user.trialEndsAt);
 
   return (
