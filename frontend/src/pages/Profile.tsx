@@ -484,6 +484,9 @@ export default function Profile() {
                 value={phoneDisplay}
                 onChange={e => setPhoneDisplay(formatBRPhone(e.target.value))}
               />
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, lineHeight: 1.5 }}>
+                💬 Necessário para receber lembretes diários de flashcards pendentes e alertas do calendário via WhatsApp.
+              </p>
             </div>
 
             {/* Instituição de Ensino */}

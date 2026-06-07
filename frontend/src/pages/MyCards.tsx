@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Trash2, RotateCw, Pencil, Check, X, Plus, BookOpen, Sparkles } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import CustomSelect from '../components/CustomSelect';
 
 export default function MyCards() {
   const navigate = useNavigate();
   const {
-    cards, topics, subjects,
+    cards, topics, subjects, currentUser,
     handleDeleteCard, handleUpdateCard, handleCreateCard, fetchAllCards,
     startStudySession,
   } = useApp();
@@ -125,6 +125,24 @@ export default function MyCards() {
           </button>
         </div>
       </div>
+
+      {/* ── WhatsApp reminder hint ────────────────────────────────────────── */}
+      {dueCount > 0 && !currentUser?.phone && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          background: 'rgba(37,211,102,0.08)', border: '1px solid rgba(37,211,102,0.3)',
+          borderRadius: 'var(--radius-md)', padding: '12px 16px', marginBottom: 16,
+          fontSize: 13, color: 'var(--text-secondary)',
+        }}>
+          <span style={{ fontSize: 18, flexShrink: 0 }}>💬</span>
+          <span>
+            Quer receber lembretes de revisão no WhatsApp?{' '}
+            <Link to="/perfil" style={{ color: 'var(--color-success)', fontWeight: 600, textDecoration: 'none' }}>
+              Adicione seu número no perfil →
+            </Link>
+          </span>
+        </div>
+      )}
 
       {/* ── Create form ───────────────────────────────────────────────────── */}
       {showCreate && (
