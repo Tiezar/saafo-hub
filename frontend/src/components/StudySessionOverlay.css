@@ -163,3 +163,20 @@
   margin-right: 4px;
   opacity: 0.7;
 }
+
+@media (max-width: 768px) {
+  .study-overlay { padding: 12px; align-items: flex-end; }
+  .study-overlay-inner { max-width: 100%; }
+  .study-card-flip { height: 220px; }
+  .study-card-flip .study-card-front,
+  .study-card-flip .study-card-back { padding: 20px; }
+  .study-card-text { font-size: 17px; }
+  .study-rating-btn { min-width: 72px; padding: 10px 8px; font-size: 12px; }
+}
+
+@media (max-width: 480px) {
+  .study-card-flip { height: 180px; }
+  .study-card-text { font-size: 15px; }
+  .study-rating-btn { min-width: 0; flex: 1; }
+  .study-rating-key { display: none; }
+}

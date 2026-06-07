@@ -20,7 +20,8 @@ import { LoginGoogleUseCase } from '../../../application/use-cases/login-google.
 import type { IUserRepository } from '../../../domain/repositories/user-repository.interface';
 import { ResendService } from '../../email/resend.service';
 import { PrismaService } from '../../database/prisma.service';
-import { IsNotEmpty, IsString, IsEmail, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString, IsEmail, MinLength, Matches } from 'class-validator';
+import { Transform } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
 
 // ─── Cookie config ─────────────────────────────────────────────────────────
@@ -43,13 +44,20 @@ class LoginGoogleDto {
 }
 
 class RegisterDto {
-  @IsEmail() email: string;
+  @Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase().trim() : value))
+  @IsEmail({}, { message: 'E-mail inválido' })
+  @Matches(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, { message: 'E-mail inválido' })
+  email: string;
+
   @IsString() @IsNotEmpty() name: string;
   @IsString() @MinLength(6) password: string;
 }
 
 class LoginDto {
-  @IsEmail() email: string;
+  @Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase().trim() : value))
+  @IsEmail({}, { message: 'E-mail inválido' })
+  email: string;
+
   @IsString() @IsNotEmpty() password: string;
 }
 
@@ -334,14 +342,4 @@ export class AuthController {
     return { ok: true };
   }
 
-  // ── Force verify (dev helper) ─────────────────────────────────────────────
-
-  @Get('force-verify')
-  async forceVerify(@Query('email') email: string) {
-    if (!email) throw new BadRequestException('E-mail é obrigatório');
-    const user = await this.userRepository.findByEmail(email);
-    if (!user) throw new BadRequestException('Usuário não encontrado');
-    await this.userRepository.verifyEmail(user.id);
-    return { message: `E-mail ${email} verificado com sucesso! Pode fazer o login agora.` };
-  }
 }

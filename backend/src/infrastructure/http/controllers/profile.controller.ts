@@ -2,16 +2,19 @@ import {
   Controller,
   Get,
   Patch,
+  Delete,
   Body,
   UseGuards,
   Request,
   Inject,
   NotFoundException,
   BadRequestException,
+  HttpCode,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UpdateProfileUseCase } from '../../../application/use-cases/update-profile.use-case';
 import type { IUserRepository } from '../../../domain/repositories/user-repository.interface';
+import { PrismaService } from '../../database/prisma.service';
 import { IsString, IsOptional, MinLength } from 'class-validator';
 
 class UpdateProfileDto {
@@ -43,6 +46,7 @@ export class ProfileController {
 
   constructor(
     @Inject('IUserRepository') private userRepository: IUserRepository,
+    private prisma: PrismaService,
   ) {
     this.updateProfileUseCase = new UpdateProfileUseCase(userRepository);
   }
@@ -62,6 +66,14 @@ export class ProfileController {
       institutionId: user.institutionId,
       phone: user.phone,
     };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete()
+  @HttpCode(200)
+  async deleteAccount(@Request() req: any) {
+    await this.prisma.user.delete({ where: { id: req.user.id } });
+    return { ok: true };
   }
 
   @UseGuards(JwtAuthGuard)

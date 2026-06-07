@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Star, RotateCw, AlertTriangle, RefreshCw, Check, Bot, FileText, CheckCircle } from 'lucide-react';
+import { Search, Star, RotateCw, AlertTriangle, RefreshCw, Check, Bot, FileText, CheckCircle, Trash2 } from 'lucide-react';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { useApp } from '../contexts/AppContext';
 import type { Institution } from '../types';
 import './Profile.css';
 import CustomSelect from '../components/CustomSelect';
+import DeleteAccountModal from '../components/DeleteAccountModal';
 
 interface SubscriptionDetails {
   status: string;
@@ -40,7 +42,7 @@ export default function Profile() {
     currentUser, planStatus, institutions,
     fetchInstitutions, handleUpdateProfile,
     setUpgradeModalOpen, setCheckoutOpen, fetchPlanStatus,
-    apiCall, showSuccess, showError,
+    apiCall, showSuccess, showError, handleLogout,
   } = useApp();
 
   const [name,         setName]         = useState(currentUser?.name ?? '');
@@ -51,6 +53,8 @@ export default function Profile() {
   const [instSelection, setInstSelection] = useState<'IFRO' | 'UNIR' | 'OTHER' | ''>('');
   const [customInstName, setCustomInstName] = useState('');
   const [saving,        setSaving]        = useState(false);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   // Subscription details (only fetched when user is STUDENT)
   const [subDetails,     setSubDetails]     = useState<SubscriptionDetails | null>(null);
@@ -209,17 +213,29 @@ export default function Profile() {
     finally { setSaving(false); }
   };
 
+  const isMobile = useIsMobile();
+
+  const handleDeleteAccount = async () => {
+    await apiCall('/profile', { method: 'DELETE' });
+    handleLogout();
+  };
+
   return (
     <div className="page" style={{ padding: '24px 24px 48px' }}>
+      <DeleteAccountModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleDeleteAccount}
+      />
       {/* Page Header */}
       <header style={{ marginBottom: 40, borderBottom: '1px solid var(--border-color)', paddingBottom: 24 }}>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 300, color: 'var(--text-primary)', margin: 0 }}>Perfil</h2>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 26 : 36, fontWeight: 300, color: 'var(--text-primary)', margin: 0 }}>Perfil</h2>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, color: 'var(--text-muted)', marginTop: 8 }}>
           Gerencie suas informações pessoais e detalhes da sua assinatura.
         </p>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: isMobile ? 24 : 48 }}>
         {/* Left Column: Painel de Assinatura */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           <h3 className="academic-label" style={{ color: 'var(--text-secondary)' }}>Painel de Assinatura</h3>
@@ -471,6 +487,9 @@ export default function Profile() {
                 value={phoneDisplay}
                 onChange={e => setPhoneDisplay(formatBRPhone(e.target.value))}
               />
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, lineHeight: 1.5 }}>
+                💬 Necessário para receber lembretes diários de flashcards pendentes e alertas do calendário via WhatsApp.
+              </p>
             </div>
 
             {/* Instituição de Ensino */}
@@ -531,6 +550,40 @@ export default function Profile() {
               </button>
             </div>
           </form>
+        </div>
+      </div>
+
+      {/* Danger Zone */}
+      <div style={{ marginTop: 64, borderTop: '1px solid var(--border-color)', paddingTop: 40 }}>
+        <h3 className="academic-label" style={{ color: 'var(--color-danger)', marginBottom: 16 }}>Zona de Perigo</h3>
+        <div style={{
+          backgroundColor: 'var(--bg-card)', border: '1px solid var(--color-danger)',
+          borderRadius: 'var(--radius-md)', padding: 24,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24,
+          flexWrap: 'wrap',
+        }}>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-primary)', marginBottom: 4 }}>
+              Apagar minha conta
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+              Remove permanentemente sua conta e todos os dados associados. Sem recuperação.
+            </div>
+          </div>
+          <button
+            onClick={() => setDeleteModalOpen(true)}
+            style={{
+              flexShrink: 0, padding: '10px 20px', borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--color-danger)', background: 'transparent',
+              color: 'var(--color-danger)', cursor: 'pointer',
+              fontFamily: 'var(--font-label)', fontSize: 12,
+              textTransform: 'uppercase', letterSpacing: '0.05em',
+              display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600,
+            }}
+          >
+            <Trash2 size={14} />
+            Apagar conta
+          </button>
         </div>
       </div>
     </div>
