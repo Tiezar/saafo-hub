@@ -21,12 +21,13 @@ export class EvoApiService {
 
     try {
       const res = await fetch(
-        `${this.apiUrl}/message/sendText/${this.instance}`,
+        `${this.apiUrl}/send/text`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             apikey: this.apiKey!,
+            instance: this.instance!,
           },
           body: JSON.stringify({ number: normalized, text: message }),
         },
