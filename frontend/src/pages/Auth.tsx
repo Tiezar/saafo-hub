@@ -94,8 +94,16 @@ export default function Auth() {
         || msg?.toLowerCase().includes('caixa de entrada')
         || msg?.toLowerCase().includes('verify-email');
       if (!isRegistering && isUnverified) {
+        // Re-send verification email automatically so the user gets a fresh link
+        try {
+          await apiCall('/auth/resend-verification', {
+            method: 'POST',
+            body: JSON.stringify({ email: authEmail }),
+          });
+        } catch { /* silent — show pending screen regardless */ }
         setEmailPending(authEmail);
         setAuthEmail(''); setAuthPassword('');
+        flash('success', 'Enviamos um novo link de verificação para o seu e-mail.');
       } else {
         flash('error', msg);
       }
