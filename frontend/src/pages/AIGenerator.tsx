@@ -40,7 +40,7 @@ function wordHint(n: number): { text: string; color: string } | null {
 
 export default function AIGenerator() {
   const isMobile = useIsMobile();
-  const { apiCall, visibleTopics, subjects, selectedTopic, fetchCardsForTopic, showError, showSuccess, handleQuickSetup } = useApp();
+  const { apiCall, token, visibleTopics, subjects, selectedTopic, fetchCardsForTopic, showError, showSuccess, handleQuickSetup } = useApp();
 
   // ── Inline setup (when user has no topics yet) ────────────────────────────
   const [showSetup,      setShowSetup]      = useState(false);
@@ -119,7 +119,7 @@ export default function AIGenerator() {
         fd.append('topicId', aiTopicId);
         if (aiTheme.trim()) fd.append('theme', aiTheme.trim());
         fd.append('count', String(aiCount));
-        const token = localStorage.getItem('token');
+        // Use the token from AppContext rather than localStorage
         const resp = await fetch(`${API_URL}/ai/generate-file`, {
           method: 'POST',
           headers: token ? { Authorization: `Bearer ${token}` } : {},
