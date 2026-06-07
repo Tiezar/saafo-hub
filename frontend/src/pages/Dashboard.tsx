@@ -161,9 +161,7 @@ export default function Dashboard() {
               <Zap size={32} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
               <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 4, color: 'var(--text-primary)' }}>Insights no Plano Estudante</p>
               <p style={{ fontSize: 12, marginBottom: 16 }}>A IA analisa seu histórico e gera recomendações personalizadas.</p>
-              <button onClick={() => setUpgradeModalOpen(true)} className="btn-oxblood" style={{ width: '100%' }}>
-                <Star size={12} /> Assinar
-              </button>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>🔒 Em breve</span>
             </div>
           ) : (
             <>
@@ -336,9 +334,7 @@ function PlanBanner({ planStatus, onUpgrade }: { planStatus: ReturnType<typeof u
             <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Assine o Plano Estudante para continuar usando a IA, insights e WhatsApp.</div>
           </div>
         </div>
-        <button className="btn-oxblood" style={{ backgroundColor: 'var(--color-danger)' }} onClick={onUpgrade}>
-          <Star size={14} /> Assinar
-        </button>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>🔒 Em breve</span>
       </div>
     );
   }
@@ -355,9 +351,7 @@ function PlanBanner({ planStatus, onUpgrade }: { planStatus: ReturnType<typeof u
             Restam <strong>{planStatus.trialDaysLeft} dia{planStatus.trialDaysLeft !== 1 ? 's' : ''}</strong> de período gratuito.
           </span>
         </div>
-        <button className="btn-outline-custom" onClick={onUpgrade}>
-          Ver planos
-        </button>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>🔒 Em breve</span>
       </div>
     );
   }

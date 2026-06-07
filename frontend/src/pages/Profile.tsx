@@ -238,9 +238,9 @@ export default function Profile() {
                       ? `Você possui ${planStatus.trialDaysLeft} dias restantes em seu período gratuito.`
                       : 'Seu período de teste expirou. Assine o plano Estudante para reaver o acesso à IA, WhatsApp e flashcards ilimitados.'}
                   </p>
-                  <button className="btn-oxblood" style={{ width: '100%' }} onClick={() => setUpgradeModalOpen(true)}>
-                    <Star size={12} style={{ marginRight: 6 }} /> Assinar Plano Estudante
-                  </button>
+                  <div style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius)', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>
+                    🔒 Pagamentos disponíveis em breve
+                  </div>
                 </div>
               )}
 

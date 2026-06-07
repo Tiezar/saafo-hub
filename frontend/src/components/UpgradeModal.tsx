@@ -46,14 +46,11 @@ export default function UpgradeModal() {
         </div>
 
         <div className="modal-footer" style={{ flexDirection: 'column', gap: 12 }}>
-          <button className="btn-primary" style={{ width: '100%', padding: '14px' }}
-            onClick={handleCheckout} disabled={checkoutLoading}>
-            {checkoutLoading
-              ? <><RotateCw size={16} className="animate-spin" /> Aguarde...</>
-              : <><CreditCard size={16} /> Assinar agora — R$ 19/mês</>}
-          </button>
+          <div style={{ width: '100%', padding: '14px', borderRadius: 'var(--radius)', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', textAlign: 'center', fontSize: 14, color: 'var(--text-muted)', fontWeight: 600 }}>
+            🔒 Pagamentos disponíveis em breve
+          </div>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
-            Cancele quando quiser. Sem multas ou fidelidade.
+            Em breve você poderá assinar diretamente por aqui.
           </p>
         </div>
       </div>

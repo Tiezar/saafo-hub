@@ -42,38 +42,38 @@ export default function PlanSelectionModal({ open, onTrial, onSubscribe }: Props
             </div>
           </button>
 
-          {/* Subscribe option */}
-          <button
-            onClick={onSubscribe}
+          {/* Subscribe option — coming soon */}
+          <div
             style={{
               width: '100%', textAlign: 'left', padding: '20px', borderRadius: 12,
-              border: '1.5px solid var(--color-primary)', background: 'var(--bg-card)',
-              cursor: 'pointer', color: 'inherit', position: 'relative', overflow: 'hidden',
+              border: '1.5px solid var(--border-color)', background: 'var(--bg-card)',
+              color: 'inherit', position: 'relative', overflow: 'hidden', opacity: 0.6,
+              boxSizing: 'border-box',
             }}
           >
             <div style={{
               position: 'absolute', top: 10, right: 12,
-              background: 'var(--color-primary)', color: '#fff',
+              background: 'var(--text-muted)', color: '#fff',
               fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
             }}>
-              MELHOR OPÇÃO
+              EM BREVE
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
               <div style={{ padding: 10, borderRadius: 6, background: 'var(--bg-card-high)', flexShrink: 0 }}>
-                <Star size={22} style={{ color: 'var(--color-primary)' }} />
+                <Star size={22} style={{ color: 'var(--text-muted)' }} />
               </div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>
-                  Assinar agora{' '}
-                  <span style={{ color: 'var(--color-primary)', fontFamily: 'var(--font-display)' }}>R$ 19/mês</span>
+                  Assinar{' '}
+                  <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)' }}>R$ 19/mês</span>
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>
                   100 cards/dia · 20 provas/semana · 3 estilos de questão.<br />
-                  Cartão de crédito. Cancele quando quiser.
+                  Pagamentos disponíveis em breve.
                 </div>
               </div>
             </div>
-          </button>
+          </div>
         </div>
 
         <div className="modal-footer">
