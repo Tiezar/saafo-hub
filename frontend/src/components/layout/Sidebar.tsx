@@ -56,8 +56,11 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
     <aside className={`sidebar${mobileOpen ? ' sidebar-open' : ''}`}>
       {/* Brand Header */}
       <div className="sidebar-brand">
-        <div className="sidebar-brand-icon">S</div>
-        <div className="sidebar-brand-name">SAAFO HUB</div>
+        <img 
+          src={theme === 'dark' ? '/saafo-hub-logo-dark.png' : '/saafo-hub-logo.png'} 
+          alt="SAAFO HUB" 
+          style={{ height: '28px', display: 'block', objectFit: 'contain' }} 
+        />
       </div>
 
       {/* CTA Button */}
