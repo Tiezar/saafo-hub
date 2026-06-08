@@ -38,6 +38,7 @@ model User {
   examRecords         ExamRecord[]
   eventTypes          UserEventType[]
   refreshTokens       RefreshToken[]
+  weeklyRoutines      UserWeeklyRoutine[]
 
   @@map("users")
 }
@@ -260,3 +261,16 @@ model CuratedTrack {
   @@map("curated_tracks")
 }
 
+model UserWeeklyRoutine {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String
+  color     String   @default("#6366f1")
+  days      Int[]
+  slots     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_weekly_routines")
+}
