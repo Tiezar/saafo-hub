@@ -266,6 +266,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } catch { /* silent */ }
       ytPlayerRef.current = null;
     }
+    const el = document.getElementById('yt-hidden-player');
+    if (el) el.remove();
     setPlayingAudio(false);
     setSelectedTrack(null);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

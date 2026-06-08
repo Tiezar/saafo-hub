@@ -1153,3 +1153,8 @@ input[type="time"] {
 }
 .btn-outline-custom:hover:not(:disabled) { background: var(--bg-card-high); border-color: var(--color-primary); }
 .btn-outline-custom:disabled { opacity: 0.55; cursor: not-allowed; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
