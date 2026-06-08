@@ -125,10 +125,27 @@ interface AppContextValue {
   handleCreateEventType: (name: string, color: string, icon: string) => Promise<UserEventType>;
   handleUpdateEventType: (id: string, patch: Partial<Pick<UserEventType, 'name' | 'color' | 'icon'>>) => Promise<void>;
   handleDeleteEventType: (id: string) => Promise<void>;
+
+  // Audio Player
+  ytReady: boolean;
+  setYtReady: (v: boolean) => void;
+  playingAudio: boolean;
+  setPlayingAudio: (v: boolean) => void;
+  selectedTrack: any;
+  setSelectedTrack: (v: any) => void;
+  volume: number;
+  setVolume: (v: number) => void;
+  curatedTracks: { id: string; name: string; youtubeId: string }[];
+  customTracks: { id: string; name: string; youtubeId: string }[];
+  ytPlayerRef: React.MutableRefObject<any>;
+  togglePlayAudio: () => void;
+  handleSelectTrack: (trackId: string) => void;
+  addCustomTrack: (name: string, url: string) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useApp() {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error('useApp must be used inside AppProvider');
@@ -220,8 +237,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [upgradeModalOpen,  setUpgradeModalOpen]  = useState(false);
   const [checkoutOpen,      setCheckoutOpen]      = useState(false);
   const [planSelectionOpen, setPlanSelectionOpen] = useState(false);
-  const [checkoutLoading,   setCheckoutLoading]   = useState(false);
+  const [checkoutLoading]   = useState(false);
+  // ── Audio Player States ───────────────────────────────────────────────────
+  const [ytReady, setYtReady] = useState(false);
+  const [playingAudio, setPlayingAudio] = useState(false);
+  const [selectedTrack, setSelectedTrack] = useState<any>(null);
+  const [volume, setVolumeState] = useState(() => Number(localStorage.getItem('pomo_audio_volume') ?? 50));
+  const [curatedTracks, setCuratedTracks] = useState<{ id: string; name: string; youtubeId: string }[]>([]);
+  const [customTracks, setCustomTracks] = useState<{ id: string; name: string; youtubeId: string }[]>(() => {
+    return JSON.parse(localStorage.getItem('pomo_custom_tracks') ?? '[]');
+  });
 
+  const ytPlayerRef = useRef<any>(null);
   // ── Logout ────────────────────────────────────────────────────────────────
   const handleLogout = useCallback(() => {
     // Fire-and-forget: revoke refresh token cookie on server
@@ -232,6 +259,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSpaces([]); setCalendarEvents([]);
     setPlanStatus(null); setInsights([]);
     setActiveSessionId(null); setSessionCards([]);
+    if (ytPlayerRef.current) {
+      try {
+        if (typeof ytPlayerRef.current.stopVideo === 'function') ytPlayerRef.current.stopVideo();
+        if (typeof ytPlayerRef.current.destroy === 'function') ytPlayerRef.current.destroy();
+      } catch { /* silent */ }
+      ytPlayerRef.current = null;
+    }
+    setPlayingAudio(false);
+    setSelectedTrack(null);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── tryRefresh ────────────────────────────────────────────────────────────
@@ -274,7 +310,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     if (res.status === 401 && !_retryToken) {
       const newToken = await tryRefresh();
-      if (newToken) return apiCall(endpoint, options, newToken);
+      if (newToken) {
+        const retryHeaders = {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${newToken}`,
+          ...(options.headers as Record<string, string> | undefined),
+        };
+        const retryRes = await fetch(`${API_URL}${endpoint}`, { ...options, headers: retryHeaders, credentials: 'include' });
+        if (!retryRes.ok) {
+          const e = await retryRes.json().catch(() => ({}));
+          const msg = Array.isArray(e.message) ? e.message.join(', ') : e.message || 'Erro na requisição';
+          throw new Error(msg);
+        }
+        const text = await retryRes.text();
+        return text ? JSON.parse(text) : null;
+      }
       handleLogout();
       throw new Error('Sessão expirada. Faça login novamente.');
     }
@@ -287,6 +337,62 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const text = await res.text();
     return text ? JSON.parse(text) : null;
   }, [tryRefresh, handleLogout]);
+
+  // ── Audio Player ──────────────────────────────────────────────────────────
+
+  const fetchPomodoroTracks = useCallback(async () => {
+    try {
+      const res = await apiCall('/pomodoro/tracks') as { id: string; name: string; youtubeId: string }[];
+      setCuratedTracks(res);
+      
+      const lastTrackId = localStorage.getItem('pomo_last_track_id');
+      const allTracks = [...res, ...customTracks];
+      const found = allTracks.find(t => t.youtubeId === lastTrackId) || res[0];
+      if (found) {
+        setSelectedTrack(found);
+      }
+    } catch { /* silent */ }
+  }, [apiCall, customTracks, setCuratedTracks, setSelectedTrack]);
+
+  const togglePlayAudio = useCallback(() => {
+    if (!ytPlayerRef.current) return;
+    if (playingAudio) {
+      if (typeof ytPlayerRef.current.pauseVideo === 'function') ytPlayerRef.current.pauseVideo();
+      setPlayingAudio(false);
+    } else {
+      if (typeof ytPlayerRef.current.playVideo === 'function') ytPlayerRef.current.playVideo();
+      setPlayingAudio(true);
+    }
+  }, [playingAudio, setPlayingAudio]);
+
+  const setVolume = useCallback((v: number) => {
+    setVolumeState(v);
+    localStorage.setItem('pomo_audio_volume', String(v));
+    if (ytPlayerRef.current && typeof ytPlayerRef.current.setVolume === 'function') {
+      ytPlayerRef.current.setVolume(v);
+    }
+  }, [setVolumeState]);
+
+  const handleSelectTrack = useCallback((trackId: string) => {
+    if (trackId === 'add_custom') return;
+    const all = [...curatedTracks, ...customTracks];
+    const found = all.find(t => t.youtubeId === trackId);
+    if (found) {
+      setSelectedTrack(found);
+      localStorage.setItem('pomo_last_track_id', found.youtubeId);
+    }
+  }, [curatedTracks, customTracks, setSelectedTrack]);
+
+  const addCustomTrack = useCallback((name: string, youtubeId: string) => {
+    const newTrack = { id: youtubeId, name, youtubeId };
+    setCustomTracks(prev => {
+      const updated = [...prev, newTrack];
+      localStorage.setItem('pomo_custom_tracks', JSON.stringify(updated));
+      return updated;
+    });
+    setSelectedTrack(newTrack);
+    localStorage.setItem('pomo_last_track_id', youtubeId);
+  }, [setCustomTracks, setSelectedTrack]);
 
   // ── Auth helpers ──────────────────────────────────────────────────────────
   const storeAuth = useCallback((at: string, user: User) => {
@@ -373,37 +479,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     finally { setInsightsLoading(false); }
   }, [apiCall]);
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-  // On mount: attempt to restore session from httpOnly refresh token cookie
-  useEffect(() => { tryRefresh(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => { if (token && !currentUser) fetchUserProfile(); }, [token, currentUser, fetchUserProfile]);
-  useEffect(() => {
-    if (currentUser) {
-      const now = new Date();
-      fetchSubjects(); fetchMetrics(); fetchInstitutions(); fetchSpaces(); fetchPlanStatus();
-      fetchAllCards();
-      fetchCalendarEvents(now.getFullYear(), now.getMonth() + 1);
-      fetchEventTypes();
-    }
-  }, [currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => { if (selectedSubject) fetchTopicsForSubject(selectedSubject.id); }, [selectedSubject, fetchTopicsForSubject]);
-  useEffect(() => { if (selectedTopic)   fetchCardsForTopic(selectedTopic.id);       }, [selectedTopic,   fetchCardsForTopic]);
-
-  // ── Computed ──────────────────────────────────────────────────────────────
-  const visibleSubjects = useMemo(() =>
-    activeSpaceId ? subjects.filter(s => s.spaceId === activeSpaceId) : subjects,
-    [subjects, activeSpaceId]
-  );
-
-  const visibleTopics = useMemo(() =>
-    activeSpaceId
-      ? topics.filter(t => visibleSubjects.some(s => s.id === t.subjectId))
-      : topics,
-    [topics, visibleSubjects, activeSpaceId]
-  );
 
   // ── CRUD — Spaces ─────────────────────────────────────────────────────────
   const handleCreateSpace = useCallback(async (name: string, color: string, icon: string) => {
@@ -698,6 +774,39 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return u;
   }, [apiCall]);
 
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+  // On mount: attempt to restore session from httpOnly refresh token cookie
+  useEffect(() => { tryRefresh(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { if (token && !currentUser) fetchUserProfile(); }, [token, currentUser, fetchUserProfile]);
+  useEffect(() => {
+    if (currentUser) {
+      const now = new Date();
+      fetchSubjects(); fetchMetrics(); fetchInstitutions(); fetchSpaces(); fetchPlanStatus();
+      fetchAllCards();
+      fetchCalendarEvents(now.getFullYear(), now.getMonth() + 1);
+      fetchEventTypes();
+      fetchPomodoroTracks();
+    }
+  }, [currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { if (selectedSubject) fetchTopicsForSubject(selectedSubject.id); }, [selectedSubject, fetchTopicsForSubject]);
+  useEffect(() => { if (selectedTopic)   fetchCardsForTopic(selectedTopic.id);       }, [selectedTopic,   fetchCardsForTopic]);
+
+  // ── Computed ──────────────────────────────────────────────────────────────
+  const visibleSubjects = useMemo(() =>
+    activeSpaceId ? subjects.filter(s => s.spaceId === activeSpaceId) : subjects,
+    [subjects, activeSpaceId]
+  );
+
+  const visibleTopics = useMemo(() =>
+    activeSpaceId
+      ? topics.filter(t => visibleSubjects.some(s => s.id === t.subjectId))
+      : topics,
+    [topics, visibleSubjects, activeSpaceId]
+  );
+
   // ─────────────────────────────────────────────────────────────────────────
 
   const value: AppContextValue = {
@@ -730,6 +839,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     handleCreateCard, handleDeleteCard, handleUpdateCard, fetchAllCards,
     handleUpdateProfile,
     fetchEventTypes, handleCreateEventType, handleUpdateEventType, handleDeleteEventType,
+    ytReady, setYtReady, playingAudio, setPlayingAudio, selectedTrack, setSelectedTrack,
+    volume, setVolume, curatedTracks, customTracks, ytPlayerRef, togglePlayAudio,
+    handleSelectTrack, addCustomTrack,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
