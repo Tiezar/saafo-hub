@@ -7,7 +7,7 @@
 ---
 
 ## 1. Objetivo & Escopo
-Melhorar a experiência de foco do usuário no módulo de Pomodoro do SAAFO HUB, permitindo a reprodução de faixas de som ambiente (Lo-Fi, Chuva, Sons de Natureza, Café Jazz) e a inserção de playlists/vídeos personalizados do YouTube. O player deve ser visualmente integrado ao **Marginália Design System**, operando de forma silenciosa/oculta e controlado via React.
+Melhorar a experiência de foco do usuário no módulo de Pomodoro do SAAFO HUB, permitindo a reprodução de faixas de som ambiente (Lo-Fi, Chuva, Sons de Natureza, Café Jazz) e a inserção de playlists/vídeos personalizados do YouTube. O player deve ser visualmente integrado ao **Marginália Design System**, operando de forma silenciosa/oculta e controlado via React. **As faixas padrão/curadas serão dinâmicas, persistidas no banco de dados e gerenciáveis diretamente através de uma interface no Painel do Administrador (Admin).**
 
 ---
 
@@ -52,8 +52,9 @@ As preferências serão salvas localmente nas chaves correspondentes:
 
 ---
 
-## 5. Lista Inicial de Sons Curados
-1.  **Lofi Girl Focus:** `jfKfPfyJRdk` (Live stream ID / Vídeo ID)
+## 5. Sons Curados (Dinâmicos via Banco de Dados)
+A lista de faixas curadas não será estática no código do frontend, mas sim recuperada via API do backend. Uma carga inicial (seed) do banco de dados incluirá:
+1.  **Lofi Girl Focus:** `jfKfPfyJRdk` (Live stream ID)
 2.  **Som de Chuva Intensa:** `hBGwt25VJ-s`
 3.  **Café Jazz Lounge:** `5w3T1Jg0t6w`
 4.  **Sons da Floresta:** `mPZkdNFkNps`
@@ -62,3 +63,34 @@ As preferências serão salvas localmente nas chaves correspondentes:
 
 ## 6. Autoplay & Restrições do Navegador
 *   Devido às políticas modernas dos navegadores, a reprodução de mídia requer uma ação direta do usuário. O player será inicializado em estado **pausado**, dependendo do clique inicial no botão "Play" para começar.
+
+---
+
+## 7. Modelagem do Banco de Dados & Endpoints de API
+
+### 7.1. Banco de Dados (Prisma Model)
+```prisma
+model CuratedTrack {
+  id        String   @id @default(uuid())
+  name      String
+  youtubeId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("curated_tracks")
+}
+```
+
+### 7.2. Endpoints da API (Backend)
+1.  **Listagem Pública para Pomodoro:**
+    *   `GET /pomodoro/tracks` (Acessível a usuários logados): Retorna todas as faixas curadas cadastradas.
+2.  **Administração (Admin-only, com `AdminGuard`):**
+    *   `POST /admin/tracks`: Cadastra nova faixa curada.
+    *   `PUT /admin/tracks/:id`: Edita nome/link de faixa curada existente.
+    *   `DELETE /admin/tracks/:id`: Remove faixa curada.
+
+---
+
+## 8. Painel do Administrador (Frontend)
+Adição de uma nova aba/tabela na área de Administração do SAAFO HUB, permitindo visualizar a lista de sons ativos, cadastrar novos nomes/vídeos do YouTube e excluir sons obsoletos.
+
