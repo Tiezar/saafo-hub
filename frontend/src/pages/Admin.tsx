@@ -169,7 +169,7 @@ export default function Admin() {
   const [waSending, setWaSending] = useState(false);
   const [waResult, setWaResult]   = useState<{ ok: boolean; msg: string } | null>(null);
 
-  const isAdmin = ADMIN_EMAILS.length === 0 || ADMIN_EMAILS.includes(currentUser?.email?.toLowerCase() ?? '');
+  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email?.toLowerCase() ?? '');
 
   async function testWhatsApp() {
     setWaSending(true);

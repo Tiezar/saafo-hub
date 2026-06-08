@@ -34,7 +34,7 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
     cards, subjects, startStudySession,
   } = useApp();
 
-  const isAdmin = ADMIN_EMAILS.length === 0 || ADMIN_EMAILS.includes(currentUser?.email?.toLowerCase() ?? '');
+  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email?.toLowerCase() ?? '');
 
   const dueCount = cards.filter(c => new Date(c.nextReview) <= new Date()).length;
   const showOnboardingDot = subjects.length === 0 && localStorage.getItem('onboarding_dismissed') !== '1';
@@ -55,9 +55,12 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
   return (
     <aside className={`sidebar${mobileOpen ? ' sidebar-open' : ''}`}>
       {/* Brand Header */}
-      <div className="sidebar-brand">
-        <div className="sidebar-brand-icon">S</div>
-        <div className="sidebar-brand-name">SAAFO HUB</div>
+      <div className="sidebar-brand" style={{ justifyContent: 'center' }}>
+        <img 
+          src={theme === 'dark' ? '/saafo-hub-logo-dark.png' : '/saafo-hub-logo.png'} 
+          alt="SAAFO HUB" 
+          style={{ height: '28px', display: 'block', objectFit: 'contain' }} 
+        />
       </div>
 
       {/* CTA Button */}

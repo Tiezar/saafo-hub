@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import {
-  Brain, ChevronRight, RotateCw, AlertCircle, CheckCircle,
+  ChevronRight, RotateCw, AlertCircle, CheckCircle,
   Sun, Moon, Mail,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
@@ -153,8 +153,11 @@ export default function Auth() {
 
       <div className="auth-card">
         <div className="auth-brand">
-          <div className="auth-brand-icon"><Brain size={20} /></div>
-          <span className="auth-brand-name">SAAFO HUB</span>
+          <img 
+            src={theme === 'dark' ? '/saafo-hub-logo-dark.png' : '/saafo-hub-logo.png'} 
+            alt="SAAFO HUB" 
+            style={{ height: '36px', display: 'block', margin: '0 auto', objectFit: 'contain' }} 
+          />
         </div>
 
         <h2 className="auth-title">
