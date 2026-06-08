@@ -81,7 +81,7 @@ export class ResendService {
     const frontendUrl = (process.env.FRONTEND_URL ?? 'http://localhost:5173')
       .split(',')[0]
       .trim();
-    const logoUrl = `${frontendUrl}/saafo-hub-logo-dark.png`;
+    const logoUrl = `${frontendUrl}/saafo-hub-logo.png`;
 
     return `
 <!DOCTYPE html>
@@ -91,9 +91,9 @@ export class ResendService {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lembrete — SAAFO HUB</title>
 </head>
-<body style="margin:0;padding:0;background-color:#09090b;font-family:'Inter',system-ui,sans-serif;">
+<body style="margin:0;padding:0;background-color:#fff8f3;font-family:'Inter',system-ui,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-    style="background-color:#09090b;padding:40px 20px;">
+    style="background-color:#fff8f3;padding:40px 20px;">
     <tr>
       <td align="center">
         <table role="presentation" width="100%" style="max-width:520px;">
@@ -109,28 +109,28 @@ export class ResendService {
 
           <!-- Card -->
           <tr>
-            <td style="background-color:#18181b;border:1px solid #27272a;
-              border-radius:16px;padding:40px 36px;">
-              <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#a78bfa;
-                text-transform:uppercase;letter-spacing:0.08em;">⏰ Lembrete</p>
-              <h1 style="margin:0 0 12px;font-size:24px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">
+            <td style="background-color:#fef2e4;border:1px solid #cdc5bc;
+              border-radius:6px;padding:40px 36px;">
+              <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#a33b3a;
+                text-transform:uppercase;letter-spacing:0.08em;font-family:monospace;">⏰ Lembrete</p>
+              <h1 style="margin:0 0 12px;font-size:24px;font-weight:700;color:#201b12;letter-spacing:-0.5px;font-family:'Georgia',serif;">
                 ${eventType} em ${when}
               </h1>
-              <p style="margin:0 0 24px;font-size:15px;color:#a1a1aa;line-height:1.6;">
-                Olá, <strong style="color:#ffffff;">${name}</strong>! Não esqueça do seu compromisso de estudos programado.
+              <p style="margin:0 0 24px;font-size:15px;color:#4b463f;line-height:1.6;">
+                Olá, <strong style="color:#201b12;">${name}</strong>! Não esqueça do seu compromisso de estudos programado.
               </p>
 
-              <div style="background-color:#09090b;border:1px solid #27272a;
-                border-radius:12px;padding:20px 24px;margin-bottom:24px;">
-                <div style="font-size:18px;font-weight:700;color:#ffffff;margin-bottom:6px;">
+              <div style="background-color:#fff8f3;border:1px solid #cdc5bc;
+                border-radius:6px;padding:20px 24px;margin-bottom:24px;">
+                <div style="font-size:18px;font-weight:700;color:#201b12;margin-bottom:6px;font-family:'Georgia',serif;">
                   ${eventTitle}
                 </div>
-                <div style="font-size:14px;color:#a1a1aa;">
+                <div style="font-size:14px;color:#4b463f;">
                   🕐 ${timeStr}
                 </div>
               </div>
 
-              <p style="margin:0;font-size:13px;color:#71717a;line-height:1.5;border-top:1px solid #27272a;padding-top:20px;">
+              <p style="margin:0;font-size:13px;color:#7c766e;line-height:1.5;border-top:1px solid #cdc5bc;padding-top:20px;">
                 Bons estudos! 📚
               </p>
             </td>
@@ -139,9 +139,9 @@ export class ResendService {
           <!-- Footer -->
           <tr>
             <td align="center" style="padding-top:24px;">
-              <p style="margin:0;font-size:12px;color:#52525b;line-height:1.5;">
+              <p style="margin:0;font-size:12px;color:#7c766e;line-height:1.5;">
                 SAAFO HUB &mdash; Plataforma Inteligente de Flashcards<br />
-                <span style="color:#3f3f46;">© ${new Date().getFullYear()} SAAFO HUB. Todos os direitos reservados.</span>
+                <span style="color:#cdc5bc;">© ${new Date().getFullYear()} SAAFO HUB. Todos os direitos reservados.</span>
               </p>
             </td>
           </tr>
@@ -158,7 +158,7 @@ export class ResendService {
     const frontendUrl = (process.env.FRONTEND_URL ?? 'http://localhost:5173')
       .split(',')[0]
       .trim();
-    const logoUrl = `${frontendUrl}/saafo-hub-logo-dark.png`;
+    const logoUrl = `${frontendUrl}/saafo-hub-logo.png`;
 
     return `
 <!DOCTYPE html>
@@ -168,9 +168,9 @@ export class ResendService {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Confirme seu email — SAAFO HUB</title>
 </head>
-<body style="margin:0;padding:0;background-color:#09090b;font-family:'Inter',system-ui,sans-serif;">
+<body style="margin:0;padding:0;background-color:#fff8f3;font-family:'Inter',system-ui,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-    style="background-color:#09090b;padding:40px 20px;">
+    style="background-color:#fff8f3;padding:40px 20px;">
     <tr>
       <td align="center">
         <table role="presentation" width="100%" style="max-width:520px;">
@@ -186,27 +186,26 @@ export class ResendService {
 
           <!-- Card -->
           <tr>
-            <td style="background-color:#18181b;border:1px solid #27272a;
-              border-radius:16px;padding:40px 36px;">
-              <h1 style="margin:0 0 12px;font-size:24px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">
+            <td style="background-color:#fef2e4;border:1px solid #cdc5bc;
+              border-radius:6px;padding:40px 36px;">
+              <h1 style="margin:0 0 12px;font-size:24px;font-weight:700;color:#201b12;letter-spacing:-0.5px;font-family:'Georgia',serif;">
                 Confirme seu e-mail
               </h1>
-              <p style="margin:0 0 28px;font-size:15px;color:#a1a1aa;line-height:1.6;">
-                Olá, <strong style="color:#ffffff;">${name}</strong>! Obrigado por se cadastrar no SAAFO HUB. Clique no botão abaixo para verificar seu endereço de e-mail e ativar sua conta.
+              <p style="margin:0 0 28px;font-size:15px;color:#4b463f;line-height:1.6;">
+                Olá, <strong style="color:#201b12;">${name}</strong>! Obrigado por se cadastrar no SAAFO HUB. Clique no botão abaixo para verificar seu endereço de e-mail e ativar sua conta.
               </p>
 
               <div align="center" style="margin-bottom:28px;">
                 <a href="${verifyUrl}" target="_blank"
                   style="display:inline-block;padding:14px 32px;
-                    background-color:#7c3aed;
-                    background:linear-gradient(135deg,#7c3aed,#6366f1);
-                    color:#ffffff;text-decoration:none;border-radius:8px;
-                    font-weight:600;font-size:15px;letter-spacing:0.2px;box-shadow:0 4px 12px rgba(124,58,237,0.25);">
+                    background-color:#a33b3a;
+                    color:#ffffff;text-decoration:none;border-radius:6px;
+                    font-weight:600;font-size:15px;letter-spacing:0.2px;box-shadow:0 4px 12px rgba(163,59,58,0.25);">
                   Ativar Minha Conta
                 </a>
               </div>
 
-              <p style="margin:28px 0 0;font-size:13px;color:#71717a;line-height:1.5;border-top:1px solid #27272a;padding-top:20px;">
+              <p style="margin:28px 0 0;font-size:13px;color:#7c766e;line-height:1.5;border-top:1px solid #cdc5bc;padding-top:20px;">
                 Este link expira em <strong>24 horas</strong>.<br />
                 Se você não realizou este cadastro, por favor desconsidere este e-mail.
               </p>
@@ -216,9 +215,9 @@ export class ResendService {
           <!-- Footer -->
           <tr>
             <td align="center" style="padding-top:24px;">
-              <p style="margin:0;font-size:12px;color:#52525b;line-height:1.5;">
+              <p style="margin:0;font-size:12px;color:#7c766e;line-height:1.5;">
                 SAAFO HUB &mdash; Plataforma Inteligente de Flashcards<br />
-                <span style="color:#3f3f46;">© ${new Date().getFullYear()} SAAFO HUB. Todos os direitos reservados.</span>
+                <span style="color:#cdc5bc;">© ${new Date().getFullYear()} SAAFO HUB. Todos os direitos reservados.</span>
               </p>
             </td>
           </tr>
