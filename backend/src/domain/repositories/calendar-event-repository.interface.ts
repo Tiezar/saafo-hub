@@ -16,10 +16,17 @@ export interface CreateCalendarEventInput {
   reminders?: ReminderInput[];
 }
 
-export interface UpdateCalendarEventInput extends Partial<Omit<CreateCalendarEventInput, 'userId'>> {}
+export interface UpdateCalendarEventInput extends Partial<
+  Omit<CreateCalendarEventInput, 'userId'>
+> {}
 
 export interface ICalendarEventRepository {
-  findByUserAndRange(userId: string, from: Date, to: Date, spaceId?: string): Promise<CalendarEvent[]>;
+  findByUserAndRange(
+    userId: string,
+    from: Date,
+    to: Date,
+    spaceId?: string,
+  ): Promise<CalendarEvent[]>;
   findById(id: string): Promise<CalendarEvent | null>;
   findUpcoming(userId: string, limit: number): Promise<CalendarEvent[]>;
   create(input: CreateCalendarEventInput): Promise<CalendarEvent>;

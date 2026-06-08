@@ -10,9 +10,21 @@ export class PrismaUserRepository implements IUserRepository {
 
   private toDomain(p: PrismaUser): User {
     return new User(
-      p.id, p.email, p.name, p.nickname, p.googleId, p.passwordHash,
-      p.institutionId, p.createdAt, p.updatedAt, p.emailVerified, p.phone,
-      p.plan, p.trialEndsAt, p.asaasCustomerId, p.asaasSubscriptionId,
+      p.id,
+      p.email,
+      p.name,
+      p.nickname,
+      p.googleId,
+      p.passwordHash,
+      p.institutionId,
+      p.createdAt,
+      p.updatedAt,
+      p.emailVerified,
+      p.phone,
+      p.plan,
+      p.trialEndsAt,
+      p.asaasCustomerId,
+      p.asaasSubscriptionId,
     );
   }
 
@@ -32,9 +44,13 @@ export class PrismaUserRepository implements IUserRepository {
   }
 
   async create(user: Partial<User>): Promise<User> {
-    const trialEndsAt = user.trialEndsAt ?? (() => {
-      const d = new Date(); d.setDate(d.getDate() + 14); return d;
-    })();
+    const trialEndsAt =
+      user.trialEndsAt ??
+      (() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 14);
+        return d;
+      })();
     const created = await this.prisma.user.create({
       data: {
         email: user.email!,
@@ -55,22 +71,37 @@ export class PrismaUserRepository implements IUserRepository {
       const updated = await this.prisma.user.update({
         where: { id },
         data: {
-          ...(user.name               !== undefined && { name: user.name }),
-          ...(user.nickname           !== undefined && { nickname: user.nickname }),
-          ...(user.googleId           !== undefined && { googleId: user.googleId }),
-          ...(user.passwordHash       !== undefined && { passwordHash: user.passwordHash }),
-          ...(user.institutionId      !== undefined && { institutionId: user.institutionId }),
-          ...(user.emailVerified      !== undefined && { emailVerified: user.emailVerified }),
-          ...(user.phone              !== undefined && { phone: user.phone }),
-          ...(user.plan               !== undefined && { plan: user.plan }),
-          ...(user.trialEndsAt        !== undefined && { trialEndsAt: user.trialEndsAt }),
-          ...(user.asaasCustomerId    !== undefined && { asaasCustomerId: user.asaasCustomerId }),
-          ...(user.asaasSubscriptionId !== undefined && { asaasSubscriptionId: user.asaasSubscriptionId }),
+          ...(user.name !== undefined && { name: user.name }),
+          ...(user.nickname !== undefined && { nickname: user.nickname }),
+          ...(user.googleId !== undefined && { googleId: user.googleId }),
+          ...(user.passwordHash !== undefined && {
+            passwordHash: user.passwordHash,
+          }),
+          ...(user.institutionId !== undefined && {
+            institutionId: user.institutionId,
+          }),
+          ...(user.emailVerified !== undefined && {
+            emailVerified: user.emailVerified,
+          }),
+          ...(user.phone !== undefined && { phone: user.phone }),
+          ...(user.plan !== undefined && { plan: user.plan }),
+          ...(user.trialEndsAt !== undefined && {
+            trialEndsAt: user.trialEndsAt,
+          }),
+          ...(user.asaasCustomerId !== undefined && {
+            asaasCustomerId: user.asaasCustomerId,
+          }),
+          ...(user.asaasSubscriptionId !== undefined && {
+            asaasSubscriptionId: user.asaasSubscriptionId,
+          }),
         },
       });
       return this.toDomain(updated);
     } catch (err) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003') {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2003'
+      ) {
         throw new Error('Institution not found');
       }
       throw err;

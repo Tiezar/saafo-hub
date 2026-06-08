@@ -17,7 +17,7 @@ export class PrismaStudySpaceRepository implements IStudySpaceRepository {
       where: { userId },
       orderBy: { createdAt: 'asc' },
     });
-    return spaces.map(s => this.toDomain(s));
+    return spaces.map((s) => this.toDomain(s));
   }
 
   async findById(id: string): Promise<StudySpace | null> {

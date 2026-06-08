@@ -7,21 +7,33 @@ import type { ICalendarEventRepository } from '../../domain/repositories/calenda
 import type { DailyActivity } from '../../domain/entities/study-metrics';
 
 const CACHE_TTL_MS = 4 * 60 * 60 * 1000; // 4 horas
-const PT_DAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+const PT_DAYS = [
+  'Domingo',
+  'Segunda',
+  'Terça',
+  'Quarta',
+  'Quinta',
+  'Sexta',
+  'Sábado',
+];
 
 @Injectable()
 export class InsightsService {
   constructor(
-    @Inject('IMetricsRepository') private readonly metricsRepo: IMetricsRepository,
+    @Inject('IMetricsRepository')
+    private readonly metricsRepo: IMetricsRepository,
     @Inject('ICardRepository') private readonly cardRepo: ICardRepository,
-    @Inject('ICalendarEventRepository') private readonly calendarRepo: ICalendarEventRepository,
+    @Inject('ICalendarEventRepository')
+    private readonly calendarRepo: ICalendarEventRepository,
     private readonly geminiService: GeminiService,
     private readonly prisma: PrismaService,
   ) {}
 
   async getInsights(userId: string, userName: string): Promise<Insight[]> {
     // Verificar cache
-    const cached = await this.prisma.insightCache.findUnique({ where: { userId } });
+    const cached = await this.prisma.insightCache.findUnique({
+      where: { userId },
+    });
     if (cached && Date.now() - cached.generatedAt.getTime() < CACHE_TTL_MS) {
       return cached.data as unknown as Insight[];
     }
@@ -35,7 +47,10 @@ export class InsightsService {
     const now = new Date();
     const to14 = new Date(now.getTime() + 14 * 86_400_000);
     const events = await this.calendarRepo.findByUserAndRange(
-      userId, now, to14, undefined,
+      userId,
+      now,
+      to14,
+      undefined,
     );
     const exams = events.filter((e: any) => e.type === 'EXAM');
 
@@ -43,27 +58,39 @@ export class InsightsService {
     const streak = this.computeStreak(metrics.dailyActivity);
     const bestDay = this.computeBestDay(metrics.dailyActivity);
 
-    const totalCards = metrics.subjectsPerformance.reduce((s, p) => s + p.totalCards, 0);
-    const dominant = [...metrics.subjectsPerformance].sort((a, b) => b.totalCards - a.totalCards)[0];
-    const dominantPct = dominant && totalCards > 0
-      ? Math.round((dominant.totalCards / totalCards) * 100) : 0;
+    const totalCards = metrics.subjectsPerformance.reduce(
+      (s, p) => s + p.totalCards,
+      0,
+    );
+    const dominant = [...metrics.subjectsPerformance].sort(
+      (a, b) => b.totalCards - a.totalCards,
+    )[0];
+    const dominantPct =
+      dominant && totalCards > 0
+        ? Math.round((dominant.totalCards / totalCards) * 100)
+        : 0;
 
     const weakest = metrics.subjectsPerformance
-      .filter(s => s.totalCards >= 5)
+      .filter((s) => s.totalCards >= 5)
       .sort((a, b) => a.retentionRate - b.retentionRate)[0];
 
     const rawData = {
       userName,
       streak,
       overdueCount: overdueCards.length,
-      subjects: metrics.subjectsPerformance.map(s => ({
+      subjects: metrics.subjectsPerformance.map((s) => ({
         name: s.subjectName,
         retention: Math.round(s.retentionRate),
         totalCards: s.totalCards,
       })),
       upcomingExams: exams.map((e: any) => ({
         title: e.title,
-        daysUntil: Math.max(0, Math.ceil((new Date(e.startAt).getTime() - now.getTime()) / 86_400_000)),
+        daysUntil: Math.max(
+          0,
+          Math.ceil(
+            (new Date(e.startAt).getTime() - now.getTime()) / 86_400_000,
+          ),
+        ),
       })),
       bestDayOfWeek: bestDay,
       dominantSubject: dominant?.subjectName,
@@ -90,7 +117,9 @@ export class InsightsService {
   }
 
   private computeStreak(activity: DailyActivity[]): number {
-    const actSet = new Set(activity.filter(a => a.count > 0).map(a => a.date));
+    const actSet = new Set(
+      activity.filter((a) => a.count > 0).map((a) => a.date),
+    );
     let streak = 0;
     const d = new Date();
     for (let i = 0; i < 365; i++) {

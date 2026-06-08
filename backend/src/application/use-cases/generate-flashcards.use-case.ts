@@ -1,7 +1,10 @@
 import { ITopicRepository } from '../../domain/repositories/topic-repository.interface';
 import { ISubjectRepository } from '../../domain/repositories/subject-repository.interface';
 import { ICardRepository } from '../../domain/repositories/card-repository.interface';
-import { GeminiService, GeneratedCard } from '../../infrastructure/ai/gemini.service';
+import {
+  GeminiService,
+  GeneratedCard,
+} from '../../infrastructure/ai/gemini.service';
 
 export interface GenerateFlashcardsInput {
   topicId: string;
@@ -46,11 +49,13 @@ export class GenerateFlashcardsUseCase {
       mimeType: input.mimeType,
       theme: input.theme,
       count: input.count,
-      existingCards: existingCards.map(c => ({ front: c.front })),
+      existingCards: existingCards.map((c) => ({ front: c.front })),
     });
 
     if (!generated.length) {
-      throw new Error('A IA não conseguiu extrair flashcards do conteúdo fornecido.');
+      throw new Error(
+        'A IA não conseguiu extrair flashcards do conteúdo fornecido.',
+      );
     }
 
     return generated;

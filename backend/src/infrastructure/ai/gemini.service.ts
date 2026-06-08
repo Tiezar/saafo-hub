@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 
 export interface GeneratedCard {
   front: string;
@@ -71,7 +75,9 @@ export class GeminiService {
     this.apiKey = process.env.GEMINI_API_KEY ?? '';
   }
 
-  async generateFlashcards(options: GeminiGenerateOptions): Promise<GeneratedCard[]> {
+  async generateFlashcards(
+    options: GeminiGenerateOptions,
+  ): Promise<GeneratedCard[]> {
     if (!this.apiKey) {
       throw new InternalServerErrorException('Serviço de IA não disponível.');
     }
@@ -106,7 +112,7 @@ export class GeminiService {
                 type: 'OBJECT',
                 properties: {
                   front: { type: 'STRING' },
-                  back:  { type: 'STRING' },
+                  back: { type: 'STRING' },
                 },
                 required: ['front', 'back'],
               },
@@ -137,12 +143,15 @@ export class GeminiService {
       if (!rawText) throw new Error('Resposta vazia do serviço de IA');
 
       const parsed = JSON.parse(rawText);
-      if (!Array.isArray(parsed.cards)) throw new Error('Formato inválido retornado pela IA');
+      if (!Array.isArray(parsed.cards))
+        throw new Error('Formato inválido retornado pela IA');
 
       return parsed.cards as GeneratedCard[];
     } catch (err) {
       this.logger.error(`Gemini generation failed: ${(err as Error).message}`);
-      throw new InternalServerErrorException('Falha ao gerar flashcards. Tente novamente.');
+      throw new InternalServerErrorException(
+        'Falha ao gerar flashcards. Tente novamente.',
+      );
     }
   }
 
@@ -161,17 +170,23 @@ export class GeminiService {
     weakestRetention: number | null;
     totalSubjects: number;
   }): Promise<Insight[]> {
-    if (!this.apiKey) throw new InternalServerErrorException('Serviço de IA não disponível.');
+    if (!this.apiKey)
+      throw new InternalServerErrorException('Serviço de IA não disponível.');
 
     const payload = {
-      contents: [{
-        parts: [{
-          text: `Analise os dados de estudo abaixo e gere insights personalizados:\n\n${JSON.stringify(data, null, 2)}`,
-        }],
-      }],
+      contents: [
+        {
+          parts: [
+            {
+              text: `Analise os dados de estudo abaixo e gere insights personalizados:\n\n${JSON.stringify(data, null, 2)}`,
+            },
+          ],
+        },
+      ],
       systemInstruction: {
-        parts: [{
-          text: `Você é um tutor de estudos. Gere insights ULTRA-CURTOS para leitura em 2 segundos.
+        parts: [
+          {
+            text: `Você é um tutor de estudos. Gere insights ULTRA-CURTOS para leitura em 2 segundos.
 REGRAS RÍGIDAS:
 - Gere exatamente 4 insights
 - title: 3 a 4 palavras, imperativo (ex: "Revise Direito Civil")
@@ -180,7 +195,8 @@ REGRAS RÍGIDAS:
 - Português direto, sem vírgulas desnecessárias
 - Types: streak, weak_subject, exam_alert, overdue_cards, productivity_pattern, focus_concentration
 - Não mencione exames se upcomingExams estiver vazio`,
-        }],
+          },
+        ],
       },
       generationConfig: {
         responseMimeType: 'application/json',
@@ -192,9 +208,9 @@ REGRAS RÍGIDAS:
               items: {
                 type: 'OBJECT',
                 properties: {
-                  type:     { type: 'STRING' },
-                  title:    { type: 'STRING', maxLength: 40 },
-                  message:  { type: 'STRING', maxLength: 80 },
+                  type: { type: 'STRING' },
+                  title: { type: 'STRING', maxLength: 40 },
+                  message: { type: 'STRING', maxLength: 80 },
                   priority: { type: 'STRING', enum: ['high', 'medium', 'low'] },
                 },
                 required: ['type', 'title', 'message', 'priority'],
@@ -209,22 +225,32 @@ REGRAS RÍGIDAS:
     try {
       const res = await fetch(
         `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
       );
-      if (!res.ok) throw new Error(`IA HTTP ${res.status}: ${await res.text()}`);
+      if (!res.ok)
+        throw new Error(`IA HTTP ${res.status}: ${await res.text()}`);
       const resp = await res.json();
       const rawText = resp.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawText) throw new Error('Resposta vazia do serviço de IA');
       const parsed = JSON.parse(rawText);
       if (!Array.isArray(parsed.insights)) throw new Error('Formato inválido');
-      return (parsed.insights as Insight[]).map(ins => ({
+      return (parsed.insights as Insight[]).map((ins) => ({
         ...ins,
-        title:   ins.title.length   > 40 ? ins.title.slice(0, 38) + '…'   : ins.title,
-        message: ins.message.length > 80 ? ins.message.slice(0, 78) + '…' : ins.message,
+        title: ins.title.length > 40 ? ins.title.slice(0, 38) + '…' : ins.title,
+        message:
+          ins.message.length > 80
+            ? ins.message.slice(0, 78) + '…'
+            : ins.message,
       }));
     } catch (err) {
       this.logger.error(`Gemini insights failed: ${(err as Error).message}`);
-      throw new InternalServerErrorException('Falha ao gerar insights. Tente novamente.');
+      throw new InternalServerErrorException(
+        'Falha ao gerar insights. Tente novamente.',
+      );
     }
   }
 
@@ -235,7 +261,8 @@ REGRAS RÍGIDAS:
     profileId: 'quick' | 'applied' | 'contextual',
     count: number,
   ): Promise<QuizQuestion[]> {
-    if (!this.apiKey) throw new InternalServerErrorException('Serviço de IA não disponível.');
+    if (!this.apiKey)
+      throw new InternalServerErrorException('Serviço de IA não disponível.');
 
     const PROFILE_SYSTEM: Record<string, string> = {
       quick: `Você é um professor criando questões de REVISÃO RÁPIDA em português brasileiro.
@@ -261,19 +288,24 @@ PROIBIDO: pergunta que a resposta esteja explícita no texto-base.`,
     };
 
     const PROFILE_USER_HINT: Record<string, string> = {
-      quick:      'Gere questões de revisão rápida (1-3 linhas, diretas ao ponto):',
-      applied:    'Gere questões aplicadas com contexto situacional curto:',
-      contextual: 'Gere questões estilo vestibular com texto-base longo (6-15 linhas) e pergunta de análise:',
+      quick: 'Gere questões de revisão rápida (1-3 linhas, diretas ao ponto):',
+      applied: 'Gere questões aplicadas com contexto situacional curto:',
+      contextual:
+        'Gere questões estilo vestibular com texto-base longo (6-15 linhas) e pergunta de análise:',
     };
 
-    const context = cards.map(c => `• ${c.front} → ${c.back}`).join('\n');
+    const context = cards.map((c) => `• ${c.front} → ${c.back}`).join('\n');
 
     const payload = {
-      contents: [{
-        parts: [{
-          text: `${PROFILE_USER_HINT[profileId]}\n\nBase de conhecimento (${cards.length} flashcards):\n${context}\n\nGere EXATAMENTE ${count} questões de múltipla escolha.`,
-        }],
-      }],
+      contents: [
+        {
+          parts: [
+            {
+              text: `${PROFILE_USER_HINT[profileId]}\n\nBase de conhecimento (${cards.length} flashcards):\n${context}\n\nGere EXATAMENTE ${count} questões de múltipla escolha.`,
+            },
+          ],
+        },
+      ],
       systemInstruction: { parts: [{ text: PROFILE_SYSTEM[profileId] }] },
       generationConfig: {
         responseMimeType: 'application/json',
@@ -285,13 +317,18 @@ PROIBIDO: pergunta que a resposta esteja explícita no texto-base.`,
               items: {
                 type: 'OBJECT',
                 properties: {
-                  textBase:     { type: 'STRING' },
-                  question:     { type: 'STRING' },
-                  options:      { type: 'ARRAY', items: { type: 'STRING' } },
+                  textBase: { type: 'STRING' },
+                  question: { type: 'STRING' },
+                  options: { type: 'ARRAY', items: { type: 'STRING' } },
                   correctIndex: { type: 'INTEGER' },
-                  explanation:  { type: 'STRING' },
+                  explanation: { type: 'STRING' },
                 },
-                required: ['question', 'options', 'correctIndex', 'explanation'],
+                required: [
+                  'question',
+                  'options',
+                  'correctIndex',
+                  'explanation',
+                ],
               },
             },
           },
@@ -303,7 +340,11 @@ PROIBIDO: pergunta que a resposta esteja explícita no texto-base.`,
     try {
       const res = await fetch(
         `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
       );
       if (!res.ok) {
         const errText = await res.text();
@@ -313,11 +354,16 @@ PROIBIDO: pergunta que a resposta esteja explícita no texto-base.`,
       const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawText) throw new Error('Resposta vazia do serviço de IA');
       const parsed = JSON.parse(rawText);
-      if (!Array.isArray(parsed.questions)) throw new Error('Formato inválido retornado pela IA');
+      if (!Array.isArray(parsed.questions))
+        throw new Error('Formato inválido retornado pela IA');
       return parsed.questions as QuizQuestion[];
     } catch (err) {
-      this.logger.error(`Gemini exam generation failed: ${(err as Error).message}`);
-      throw new InternalServerErrorException('Falha ao gerar prova. Tente novamente.');
+      this.logger.error(
+        `Gemini exam generation failed: ${(err as Error).message}`,
+      );
+      throw new InternalServerErrorException(
+        'Falha ao gerar prova. Tente novamente.',
+      );
     }
   }
 
@@ -328,23 +374,29 @@ PROIBIDO: pergunta que a resposta esteja explícita no texto-base.`,
     expectedAnswer: string,
     userAnswer: string,
   ): Promise<EssayEvaluation> {
-    if (!this.apiKey) throw new InternalServerErrorException('Serviço de IA não disponível.');
+    if (!this.apiKey)
+      throw new InternalServerErrorException('Serviço de IA não disponível.');
 
     const payload = {
-      contents: [{
-        parts: [{
-          text: `Avalie a resposta do estudante para a seguinte questão:
+      contents: [
+        {
+          parts: [
+            {
+              text: `Avalie a resposta do estudante para a seguinte questão:
 
 QUESTÃO: ${question}
 
 GABARITO (resposta esperada): ${expectedAnswer}
 
 RESPOSTA DO ESTUDANTE: ${userAnswer || '(sem resposta)'}`,
-        }],
-      }],
+            },
+          ],
+        },
+      ],
       systemInstruction: {
-        parts: [{
-          text: `Você é um professor avaliando respostas dissertativas de estudantes.
+        parts: [
+          {
+            text: `Você é um professor avaliando respostas dissertativas de estudantes.
 Analise com rigor e precisão, comparando a resposta do estudante com o gabarito.
 
 Avalie e retorne:
@@ -355,17 +407,18 @@ Avalie e retorne:
 
 Critérios: seja justo mas exigente. Conceitos corretos mas incompletos = nota parcial. Termos diferentes mas equivalentes = aceite. Informação factualmente errada = desconte.
 Escreva em português brasileiro.`,
-        }],
+          },
+        ],
       },
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: {
           type: 'OBJECT',
           properties: {
-            score:    { type: 'INTEGER' },
+            score: { type: 'INTEGER' },
             feedback: { type: 'STRING' },
-            correct:  { type: 'ARRAY', items: { type: 'STRING' } },
-            missing:  { type: 'ARRAY', items: { type: 'STRING' } },
+            correct: { type: 'ARRAY', items: { type: 'STRING' } },
+            missing: { type: 'ARRAY', items: { type: 'STRING' } },
           },
           required: ['score', 'feedback', 'correct', 'missing'],
         },
@@ -375,9 +428,14 @@ Escreva em português brasileiro.`,
     try {
       const res = await fetch(
         `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
       );
-      if (!res.ok) throw new Error(`IA HTTP ${res.status}: ${await res.text()}`);
+      if (!res.ok)
+        throw new Error(`IA HTTP ${res.status}: ${await res.text()}`);
       const data = await res.json();
       const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawText) throw new Error('Resposta vazia do serviço de IA');
@@ -385,8 +443,12 @@ Escreva em português brasileiro.`,
       parsed.score = Math.max(0, Math.min(10, parsed.score));
       return parsed;
     } catch (err) {
-      this.logger.error(`Gemini essay evaluation failed: ${(err as Error).message}`);
-      throw new InternalServerErrorException('Falha ao avaliar resposta. Tente novamente.');
+      this.logger.error(
+        `Gemini essay evaluation failed: ${(err as Error).message}`,
+      );
+      throw new InternalServerErrorException(
+        'Falha ao avaliar resposta. Tente novamente.',
+      );
     }
   }
 
@@ -406,16 +468,26 @@ Escreva em português brasileiro.`,
       ];
     }
 
-    const fileUri = await this.uploadToFilesApi(options.fileBuffer, options.mimeType);
+    const fileUri = await this.uploadToFilesApi(
+      options.fileBuffer,
+      options.mimeType,
+    );
     return [{ fileData: { mimeType: options.mimeType, fileUri } }];
   }
 
-  private async uploadToFilesApi(buffer: Buffer, mimeType: string): Promise<string> {
-    const metadata = JSON.stringify({ file: { displayName: `upload-${Date.now()}` } });
+  private async uploadToFilesApi(
+    buffer: Buffer,
+    mimeType: string,
+  ): Promise<string> {
+    const metadata = JSON.stringify({
+      file: { displayName: `upload-${Date.now()}` },
+    });
     const boundary = `boundary_${Date.now()}`;
 
     const body = Buffer.concat([
-      Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=utf-8\r\n\r\n`),
+      Buffer.from(
+        `--${boundary}\r\nContent-Type: application/json; charset=utf-8\r\n\r\n`,
+      ),
       Buffer.from(metadata),
       Buffer.from(`\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`),
       buffer,
@@ -446,14 +518,13 @@ Escreva em português brasileiro.`,
 
   private async waitForFileProcessing(fileName: string): Promise<void> {
     for (let i = 0; i < 20; i++) {
-      await new Promise(r => setTimeout(r, 2000));
-      const res = await fetch(
-        `${this.baseUrl}/${fileName}?key=${this.apiKey}`,
-      );
+      await new Promise((r) => setTimeout(r, 2000));
+      const res = await fetch(`${this.baseUrl}/${fileName}?key=${this.apiKey}`);
       if (!res.ok) continue;
       const data = await res.json();
       if (data.state === 'ACTIVE') return;
-      if (data.state === 'FAILED') throw new Error('Processamento do arquivo falhou.');
+      if (data.state === 'FAILED')
+        throw new Error('Processamento do arquivo falhou.');
     }
     throw new Error('Timeout no processamento do arquivo.');
   }

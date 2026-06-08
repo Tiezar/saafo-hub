@@ -6,6 +6,7 @@ import { DatabaseModule } from '../../database/database.module';
 import { AuthController } from '../controllers/auth.controller';
 import { JwtStrategy } from '../strategies/jwt.strategy';
 import { ResendService } from '../../email/resend.service';
+import { CleanupService } from '../../tasks/cleanup.service';
 
 @Module({
   imports: [
@@ -20,6 +21,6 @@ import { ResendService } from '../../email/resend.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [JwtStrategy, ResendService],
+  providers: [JwtStrategy, ResendService, CleanupService],
 })
 export class AuthModule {}

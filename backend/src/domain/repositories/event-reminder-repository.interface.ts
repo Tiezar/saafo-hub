@@ -19,6 +19,11 @@ export interface DueReminder {
 export interface IEventReminderRepository {
   findDueAndUnsent(): Promise<DueReminder[]>;
   markSent(id: string): Promise<void>;
-  createNext(eventId: string, minutesBefore: number, method: string, scheduledAt: Date): Promise<void>;
+  createNext(
+    eventId: string,
+    minutesBefore: number,
+    method: string,
+    scheduledAt: Date,
+  ): Promise<void>;
   deleteUnsent(eventId: string): Promise<void>;
 }

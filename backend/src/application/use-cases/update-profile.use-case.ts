@@ -25,10 +25,12 @@ export class UpdateProfileUseCase {
       updateData.name = data.name.trim();
     }
     if (data.nickname !== undefined) {
-      if (data.nickname.trim() === '') throw new Error('Nickname cannot be empty');
+      if (data.nickname.trim() === '')
+        throw new Error('Nickname cannot be empty');
       updateData.nickname = data.nickname.trim();
     }
-    if (data.institutionId !== undefined) updateData.institutionId = data.institutionId;
+    if (data.institutionId !== undefined)
+      updateData.institutionId = data.institutionId;
     if (data.phone !== undefined) updateData.phone = data.phone || null;
     if (data.password !== undefined) {
       updateData.passwordHash = await bcrypt.hash(data.password, 12);

@@ -20,8 +20,8 @@ import { LoggingInterceptor } from './infrastructure/logger/logging.interceptor'
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
-        ttl: 60000 * 15,
-        limit: 100,
+        ttl: 60000,
+        limit: 150,
       },
     ]),
     DatabaseModule,

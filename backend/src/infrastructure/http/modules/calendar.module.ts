@@ -11,6 +11,11 @@ import { ResendService } from '../../email/resend.service';
 @Module({
   imports: [DatabaseModule],
   controllers: [CalendarController, StudySpaceController, EventTypeController],
-  providers: [EvoApiService, ReminderSchedulerService, FlashcardReminderService, ResendService],
+  providers: [
+    EvoApiService,
+    ReminderSchedulerService,
+    FlashcardReminderService,
+    ResendService,
+  ],
 })
 export class CalendarModule {}

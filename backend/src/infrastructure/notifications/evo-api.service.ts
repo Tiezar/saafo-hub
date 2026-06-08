@@ -13,25 +13,24 @@ export class EvoApiService {
 
   async sendWhatsApp(phone: string, message: string): Promise<void> {
     if (!this.isConfigured) {
-      this.logger.warn('EvoAPI not configured — skipping WhatsApp notification');
+      this.logger.warn(
+        'EvoAPI not configured — skipping WhatsApp notification',
+      );
       return;
     }
 
     const normalized = this.normalizePhone(phone);
 
     try {
-      const res = await fetch(
-        `${this.apiUrl}/send/text`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: this.apiKey!,
-            instance: this.instance!,
-          },
-          body: JSON.stringify({ number: normalized, text: message }),
+      const res = await fetch(`${this.apiUrl}/send/text`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: this.apiKey!,
+          instance: this.instance!,
         },
-      );
+        body: JSON.stringify({ number: normalized, text: message }),
+      });
 
       if (!res.ok) {
         const body = await res.text();

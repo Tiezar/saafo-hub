@@ -42,7 +42,7 @@ export class PrismaCardRepository implements ICardRepository {
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
-    return cards.map(c => this.toDomain(c));
+    return cards.map((c) => this.toDomain(c));
   }
 
   async countGeneratedToday(userId: string): Promise<number> {

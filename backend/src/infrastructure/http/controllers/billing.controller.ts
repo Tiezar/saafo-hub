@@ -1,13 +1,32 @@
 import {
-  Controller, Post, Get, Put, Delete, Body, Headers, Req,
-  Inject, UseGuards, NotFoundException, BadRequestException,
-  UnauthorizedException, HttpCode, InternalServerErrorException,
+  Controller,
+  Post,
+  Get,
+  Put,
+  Delete,
+  Body,
+  Headers,
+  Req,
+  Inject,
+  UseGuards,
+  NotFoundException,
+  BadRequestException,
+  UnauthorizedException,
+  HttpCode,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { AsaasService, AsaasCardData, AsaasHolderInfo } from '../../payments/asaas.service';
+import {
+  AsaasService,
+  AsaasCardData,
+  AsaasHolderInfo,
+} from '../../payments/asaas.service';
 import type { IUserRepository } from '../../../domain/repositories/user-repository.interface';
 import {
-  IsString, IsNotEmpty, MaxLength, Matches,
+  IsString,
+  IsNotEmpty,
+  MaxLength,
+  Matches,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -17,17 +36,29 @@ import { Type } from 'class-transformer';
 // email is injected server-side from JWT — not sent by the frontend
 class HolderInfoDto {
   @IsString() @IsNotEmpty() name: string;
-  @IsString() @Matches(/^\d{11,14}$/, { message: 'CPF/CNPJ inválido' }) cpfCnpj: string;
-  @IsString() @Matches(/^\d{8}$/, { message: 'CEP inválido' }) postalCode: string;
+  @IsString()
+  @Matches(/^\d{11,14}$/, { message: 'CPF/CNPJ inválido' })
+  cpfCnpj: string;
+  @IsString()
+  @Matches(/^\d{8}$/, { message: 'CEP inválido' })
+  postalCode: string;
   @IsString() @IsNotEmpty() @MaxLength(10) addressNumber: string;
-  @IsString() @Matches(/^\d{10,11}$/, { message: 'Telefone inválido' }) phone: string;
+  @IsString()
+  @Matches(/^\d{10,11}$/, { message: 'Telefone inválido' })
+  phone: string;
 }
 
 class CardDataDto implements AsaasCardData {
   @IsString() @IsNotEmpty() @MaxLength(100) holderName: string;
-  @IsString() @Matches(/^\d{13,19}$/, { message: 'Número do cartão inválido' }) number: string;
-  @IsString() @Matches(/^(0[1-9]|1[0-2])$/, { message: 'Mês inválido' }) expiryMonth: string;
-  @IsString() @Matches(/^\d{4}$/, { message: 'Ano inválido' }) expiryYear: string;
+  @IsString()
+  @Matches(/^\d{13,19}$/, { message: 'Número do cartão inválido' })
+  number: string;
+  @IsString()
+  @Matches(/^(0[1-9]|1[0-2])$/, { message: 'Mês inválido' })
+  expiryMonth: string;
+  @IsString()
+  @Matches(/^\d{4}$/, { message: 'Ano inválido' })
+  expiryYear: string;
   @IsString() @Matches(/^\d{3,4}$/, { message: 'CVV inválido' }) ccv: string;
 }
 
@@ -61,17 +92,31 @@ export class BillingController {
   private async ensureCustomer(userId: string) {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new NotFoundException('Usuário não encontrado.');
-    if (!process.env.ASAAS_API_KEY) throw new InternalServerErrorException('Gateway de pagamento não configurado.');
+    if (!process.env.ASAAS_API_KEY)
+      throw new InternalServerErrorException(
+        'Gateway de pagamento não configurado.',
+      );
 
-    const customerId = await this.asaasService.findOrCreateCustomer(user.id, user.name, user.email);
+    const customerId = await this.asaasService.findOrCreateCustomer(
+      user.id,
+      user.name,
+      user.email,
+    );
     if (!user.asaasCustomerId) {
-      await this.userRepository.update(user.id, { asaasCustomerId: customerId });
+      await this.userRepository.update(user.id, {
+        asaasCustomerId: customerId,
+      });
     }
 
     // Cancel any pending subscription before creating a new one
     if (user.asaasSubscriptionId && user.plan !== 'STUDENT') {
-      await this.asaasService.cancelExistingSubscription(user.id, user.asaasSubscriptionId);
-      await this.userRepository.update(user.id, { asaasSubscriptionId: undefined });
+      await this.asaasService.cancelExistingSubscription(
+        user.id,
+        user.asaasSubscriptionId,
+      );
+      await this.userRepository.update(user.id, {
+        asaasSubscriptionId: undefined,
+      });
     }
 
     return { user, customerId };
@@ -85,11 +130,21 @@ export class BillingController {
     const { user, customerId } = await this.ensureCustomer(req.user.id);
 
     const { creditCardToken } = await this.asaasService.tokenizeCard(
-      customerId, body.card, { ...body.holder, email: user.email }, getClientIp(req),
+      customerId,
+      body.card,
+      { ...body.holder, email: user.email },
+      getClientIp(req),
     );
 
-    const sub = await this.asaasService.createSubscriptionCard(customerId, user.id, creditCardToken);
-    await this.userRepository.update(user.id, { asaasSubscriptionId: sub.id, plan: 'STUDENT' });
+    const sub = await this.asaasService.createSubscriptionCard(
+      customerId,
+      user.id,
+      creditCardToken,
+    );
+    await this.userRepository.update(user.id, {
+      asaasSubscriptionId: sub.id,
+      plan: 'STUDENT',
+    });
 
     return { ok: true };
   }
@@ -104,7 +159,9 @@ export class BillingController {
     if (!user.asaasSubscriptionId) return null;
 
     try {
-      return await this.asaasService.getSubscriptionDetails(user.asaasSubscriptionId);
+      return await this.asaasService.getSubscriptionDetails(
+        user.asaasSubscriptionId,
+      );
     } catch {
       return null;
     }
@@ -117,15 +174,26 @@ export class BillingController {
   async updatePaymentMethod(@Req() req: any, @Body() body: UpdateCardDto) {
     const user = await this.userRepository.findById(req.user.id);
     if (!user) throw new NotFoundException('Usuário não encontrado.');
-    if (!user.asaasSubscriptionId) throw new BadRequestException('Nenhuma assinatura ativa.');
+    if (!user.asaasSubscriptionId)
+      throw new BadRequestException('Nenhuma assinatura ativa.');
 
-    const customerId = await this.asaasService.findOrCreateCustomer(user.id, user.name, user.email);
-
-    const { creditCardToken } = await this.asaasService.tokenizeCard(
-      customerId, body.card, { ...body.holder, email: user.email }, getClientIp(req),
+    const customerId = await this.asaasService.findOrCreateCustomer(
+      user.id,
+      user.name,
+      user.email,
     );
 
-    await this.asaasService.updateSubscriptionCard(user.asaasSubscriptionId, creditCardToken);
+    const { creditCardToken } = await this.asaasService.tokenizeCard(
+      customerId,
+      body.card,
+      { ...body.holder, email: user.email },
+      getClientIp(req),
+    );
+
+    await this.asaasService.updateSubscriptionCard(
+      user.asaasSubscriptionId,
+      creditCardToken,
+    );
     return { ok: true };
   }
 
@@ -151,10 +219,14 @@ export class BillingController {
   @UseGuards(JwtAuthGuard)
   async cancelSubscription(@Req() req: any) {
     const user = await this.userRepository.findById(req.user.id);
-    if (!user?.asaasSubscriptionId) throw new BadRequestException('Nenhuma assinatura ativa encontrada.');
+    if (!user?.asaasSubscriptionId)
+      throw new BadRequestException('Nenhuma assinatura ativa encontrada.');
 
     await this.asaasService.cancelSubscription(user.asaasSubscriptionId);
-    await this.userRepository.update(user.id, { plan: 'EXPIRED', asaasSubscriptionId: undefined });
+    await this.userRepository.update(user.id, {
+      plan: 'EXPIRED',
+      asaasSubscriptionId: undefined,
+    });
     return { message: 'Assinatura cancelada com sucesso.' };
   }
 
@@ -162,9 +234,13 @@ export class BillingController {
 
   @Post('webhook')
   @HttpCode(200)
-  async handleWebhook(@Body() body: any, @Headers('asaas-access-token') token: string) {
+  async handleWebhook(
+    @Body() body: any,
+    @Headers('asaas-access-token') token: string,
+  ) {
     const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN;
-    if (webhookToken && token !== webhookToken) throw new UnauthorizedException('Webhook token inválido.');
+    if (webhookToken && token !== webhookToken)
+      throw new UnauthorizedException('Webhook token inválido.');
 
     const event: string = body.event ?? '';
     const userId: string = body.payment?.externalReference ?? '';
@@ -172,7 +248,13 @@ export class BillingController {
 
     if (['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED'].includes(event)) {
       await this.userRepository.update(userId, { plan: 'STUDENT' });
-    } else if (['PAYMENT_OVERDUE', 'SUBSCRIPTION_DELETED', 'SUBSCRIPTION_INACTIVATED'].includes(event)) {
+    } else if (
+      [
+        'PAYMENT_OVERDUE',
+        'SUBSCRIPTION_DELETED',
+        'SUBSCRIPTION_INACTIVATED',
+      ].includes(event)
+    ) {
       const user = await this.userRepository.findById(userId);
       if (user?.plan === 'STUDENT') {
         await this.userRepository.update(userId, { plan: 'EXPIRED' });

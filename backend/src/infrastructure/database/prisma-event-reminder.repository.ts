@@ -28,7 +28,7 @@ export class PrismaEventReminderRepository implements IEventReminderRepository {
         },
       },
     });
-    return reminders as unknown as DueReminder[];
+    return reminders;
   }
 
   async markSent(id: string): Promise<void> {

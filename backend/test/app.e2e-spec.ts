@@ -52,16 +52,24 @@ describe('SAAFO HUB API (e2e)', () => {
     // Seed institutions in E2E test
     const fs = require('fs');
     const path = require('path');
-    const filePath = path.join(__dirname, '../src/infrastructure/database/seeds/institutions.json');
+    const filePath = path.join(
+      __dirname,
+      '../src/infrastructure/database/seeds/institutions.json',
+    );
     const institutions = JSON.parse(fs.readFileSync(filePath, 'utf8'));
     for (const inst of institutions) {
       let sigla: string | null = null;
-      const siglaMatch = inst.name.match(/,\s*([A-Z]{2,})|–\s*([A-Za-z]+)|-\s*([A-Z]+)$/);
+      const siglaMatch = inst.name.match(
+        /,\s*([A-Z]{2,})|–\s*([A-Za-z]+)|-\s*([A-Z]+)$/,
+      );
       if (siglaMatch) {
         sigla = siglaMatch[1] || siglaMatch[2] || siglaMatch[3] || null;
       } else {
         const parts = inst.name.split(' ');
-        const acronyms = parts.filter((p: string) => p === p.toUpperCase() && p.length > 2 && /^[A-Z]+$/.test(p));
+        const acronyms = parts.filter(
+          (p: string) =>
+            p === p.toUpperCase() && p.length > 2 && /^[A-Z]+$/.test(p),
+        );
         if (acronyms.length > 0) {
           sigla = acronyms[0];
         } else if (inst.domains && inst.domains.length > 0) {
@@ -78,7 +86,7 @@ describe('SAAFO HUB API (e2e)', () => {
           sigla: sigla,
           uf: inst['state-province'] || null,
           domains: inst.domains || [],
-        }
+        },
       });
     }
 
@@ -123,7 +131,7 @@ describe('SAAFO HUB API (e2e)', () => {
       const instRes = await request(app.getHttpServer())
         .get('/institutions?search=USP')
         .expect(200);
-      
+
       const institutionId = instRes.body[0].id;
       expect(institutionId).toBeDefined();
 

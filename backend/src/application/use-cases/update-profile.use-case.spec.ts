@@ -118,7 +118,9 @@ describe('UpdateProfileUseCase', () => {
     mockUserRepository.findById.mockResolvedValue(existingUser);
     mockUserRepository.update.mockResolvedValue(updatedUser);
 
-    const result = await useCase.execute('1', { institutionId: 'institution-uuid-123' });
+    const result = await useCase.execute('1', {
+      institutionId: 'institution-uuid-123',
+    });
 
     expect(mockUserRepository.findById).toHaveBeenCalledWith('1');
     expect(mockUserRepository.update).toHaveBeenCalledWith('1', {
