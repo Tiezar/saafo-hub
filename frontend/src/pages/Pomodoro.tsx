@@ -218,19 +218,23 @@ export default function Pomodoro() {
   };
 
   function getYoutubeId(url: string) {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/|live\/)([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : url;
   }
 
   const handleAddCustomTrack = () => {
-    if (!customName || !customUrl) return;
-    const parsedId = getYoutubeId(customUrl);
+    if (!customUrl.trim()) {
+      alert('Por favor, informe a URL ou ID do vídeo do YouTube.');
+      return;
+    }
+    const trackName = customName.trim() || 'Som Personalizado';
+    const parsedId = getYoutubeId(customUrl.trim());
     if (!parsedId || parsedId.length !== 11) {
       alert('ID do YouTube inválido. Certifique-se de usar um link de vídeo ou ID de 11 caracteres válido.');
       return;
     }
-    const newTrack = { id: parsedId, name: customName, youtubeId: parsedId };
+    const newTrack = { id: parsedId, name: trackName, youtubeId: parsedId };
     const updated = [...customTracks, newTrack];
     setCustomTracks(updated);
     localStorage.setItem('pomo_custom_tracks', JSON.stringify(updated));
@@ -708,7 +712,7 @@ export default function Pomodoro() {
 
       {/* Add Custom Track Modal */}
       {showCustomModal && (
-        <div className="modal-overlay" onClick={() => setShowCustomModal(false)}>
+        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowCustomModal(false); }}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
             <div className="modal-header">
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, margin: 0, color: 'var(--color-primary)' }}>Adicionar Link do YouTube</h3>
