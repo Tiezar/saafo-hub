@@ -234,4 +234,46 @@ export class AdminController {
 
     return { ok: true, sentTo: user.phone };
   }
+
+  // ── GET /admin/tracks ───────────────────────────────────────────────────────
+  @Get('tracks')
+  async listAdminTracks() {
+    return this.prisma.curatedTrack.findMany({
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  // ── POST /admin/tracks ──────────────────────────────────────────────────────
+  @Post('tracks')
+  async createTrack(@Req() req: any) {
+    const { name, youtubeId } = req.body;
+    if (!name || !youtubeId) {
+      throw new BadRequestException('Nome e YouTube ID são obrigatórios.');
+    }
+    return this.prisma.curatedTrack.create({
+      data: { name, youtubeId },
+    });
+  }
+
+  // ── POST /admin/tracks/:id ───────────────────────────────────────────────────
+  @Post('tracks/:id')
+  async updateTrack(@Param('id') id: string, @Req() req: any) {
+    const { name, youtubeId } = req.body;
+    if (!name || !youtubeId) {
+      throw new BadRequestException('Nome e YouTube ID são obrigatórios.');
+    }
+    return this.prisma.curatedTrack.update({
+      where: { id },
+      data: { name, youtubeId },
+    });
+  }
+
+  // ── POST /admin/tracks/:id/delete ───────────────────────────────────────────
+  @Post('tracks/:id/delete')
+  async deleteTrack(@Param('id') id: string) {
+    await this.prisma.curatedTrack.delete({
+      where: { id },
+    });
+    return { ok: true };
+  }
 }

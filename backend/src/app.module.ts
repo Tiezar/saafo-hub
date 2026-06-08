@@ -13,6 +13,7 @@ import { InsightsModule } from './infrastructure/http/modules/insights.module';
 import { AdminModule } from './infrastructure/http/modules/admin.module';
 import { LoggerModule } from './infrastructure/logger/logger.module';
 import { LoggingInterceptor } from './infrastructure/logger/logging.interceptor';
+import { PomodoroModule } from './infrastructure/http/modules/pomodoro.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { LoggingInterceptor } from './infrastructure/logger/logging.interceptor'
     BillingModule,
     InsightsModule,
     AdminModule,
+    PomodoroModule,
     LoggerModule,
   ],
   providers: [
