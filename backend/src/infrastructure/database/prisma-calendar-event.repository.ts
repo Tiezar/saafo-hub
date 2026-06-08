@@ -5,7 +5,10 @@ import {
   CreateCalendarEventInput,
   UpdateCalendarEventInput,
 } from '../../domain/repositories/calendar-event-repository.interface';
-import { CalendarEvent, ReminderMethod } from '../../domain/entities/calendar-event';
+import {
+  CalendarEvent,
+  ReminderMethod,
+} from '../../domain/entities/calendar-event';
 import { Prisma } from '@prisma/client';
 
 type PrismaEventWithReminders = Prisma.CalendarEventGetPayload<{
@@ -31,7 +34,7 @@ export class PrismaCalendarEventRepository implements ICalendarEventRepository {
       p.color,
       p.recurrenceDays,
       p.recurrenceEndsAt,
-      p.reminders.map(r => ({
+      p.reminders.map((r) => ({
         id: r.id,
         minutesBefore: r.minutesBefore,
         method: r.method as ReminderMethod,
@@ -47,7 +50,10 @@ export class PrismaCalendarEventRepository implements ICalendarEventRepository {
     return new Date(startAt.getTime() - minutesBefore * 60 * 1000);
   }
 
-  private nextRecurringDate(startAt: Date, recurrenceDays: number[]): Date | null {
+  private nextRecurringDate(
+    startAt: Date,
+    recurrenceDays: number[],
+  ): Date | null {
     if (!recurrenceDays.length) return null;
     const now = new Date();
     const candidate = new Date(startAt);
@@ -60,7 +66,12 @@ export class PrismaCalendarEventRepository implements ICalendarEventRepository {
     return null;
   }
 
-  async findByUserAndRange(userId: string, from: Date, to: Date, spaceId?: string): Promise<CalendarEvent[]> {
+  async findByUserAndRange(
+    userId: string,
+    from: Date,
+    to: Date,
+    spaceId?: string,
+  ): Promise<CalendarEvent[]> {
     const events = await this.prisma.calendarEvent.findMany({
       where: {
         userId,
@@ -73,7 +84,7 @@ export class PrismaCalendarEventRepository implements ICalendarEventRepository {
       include: { reminders: true },
       orderBy: { startAt: 'asc' },
     });
-    return events.map(e => this.toDomain(e));
+    return events.map((e) => this.toDomain(e));
   }
 
   async findById(id: string): Promise<CalendarEvent | null> {
@@ -89,23 +100,22 @@ export class PrismaCalendarEventRepository implements ICalendarEventRepository {
     const events = await this.prisma.calendarEvent.findMany({
       where: {
         userId,
-        OR: [
-          { startAt: { gte: now } },
-          { recurrenceDays: { isEmpty: false } },
-        ],
+        OR: [{ startAt: { gte: now } }, { recurrenceDays: { isEmpty: false } }],
       },
       include: { reminders: true },
       orderBy: { startAt: 'asc' },
       take: limit,
     });
-    return events.map(e => this.toDomain(e));
+    return events.map((e) => this.toDomain(e));
   }
 
   async create(input: CreateCalendarEventInput): Promise<CalendarEvent> {
     const isRecurring = (input.recurrenceDays?.length ?? 0) > 0;
-    const effectiveStart = isRecurring && input.reminders?.length
-      ? (this.nextRecurringDate(input.startAt, input.recurrenceDays ?? []) ?? input.startAt)
-      : input.startAt;
+    const effectiveStart =
+      isRecurring && input.reminders?.length
+        ? (this.nextRecurringDate(input.startAt, input.recurrenceDays ?? []) ??
+          input.startAt)
+        : input.startAt;
 
     const created = await this.prisma.calendarEvent.create({
       data: {
@@ -123,10 +133,13 @@ export class PrismaCalendarEventRepository implements ICalendarEventRepository {
         recurrenceEndsAt: input.recurrenceEndsAt,
         reminders: input.reminders?.length
           ? {
-              create: input.reminders.map(r => ({
+              create: input.reminders.map((r) => ({
                 minutesBefore: r.minutesBefore,
                 method: r.method as any,
-                scheduledAt: this.computeScheduledAt(effectiveStart, r.minutesBefore),
+                scheduledAt: this.computeScheduledAt(
+                  effectiveStart,
+                  r.minutesBefore,
+                ),
                 sent: false,
               })),
             }
@@ -137,15 +150,25 @@ export class PrismaCalendarEventRepository implements ICalendarEventRepository {
     return this.toDomain(created);
   }
 
-  async update(id: string, input: UpdateCalendarEventInput): Promise<CalendarEvent> {
-    const existing = await this.prisma.calendarEvent.findUnique({ where: { id } });
+  async update(
+    id: string,
+    input: UpdateCalendarEventInput,
+  ): Promise<CalendarEvent> {
+    const existing = await this.prisma.calendarEvent.findUnique({
+      where: { id },
+    });
     if (!existing) throw new Error('Event not found');
 
     const startAt = input.startAt ?? existing.startAt;
-    const isRecurring = ((input.recurrenceDays ?? existing.recurrenceDays)?.length ?? 0) > 0;
-    const effectiveStart = isRecurring && input.reminders?.length
-      ? (this.nextRecurringDate(startAt, input.recurrenceDays ?? existing.recurrenceDays) ?? startAt)
-      : startAt;
+    const isRecurring =
+      ((input.recurrenceDays ?? existing.recurrenceDays)?.length ?? 0) > 0;
+    const effectiveStart =
+      isRecurring && input.reminders?.length
+        ? (this.nextRecurringDate(
+            startAt,
+            input.recurrenceDays ?? existing.recurrenceDays,
+          ) ?? startAt)
+        : startAt;
 
     const updated = await this.prisma.calendarEvent.update({
       where: { id },
@@ -159,15 +182,22 @@ export class PrismaCalendarEventRepository implements ICalendarEventRepository {
         ...(input.subjectId !== undefined && { subjectId: input.subjectId }),
         ...(input.notes !== undefined && { notes: input.notes }),
         ...(input.color !== undefined && { color: input.color }),
-        ...(input.recurrenceDays !== undefined && { recurrenceDays: input.recurrenceDays }),
-        ...(input.recurrenceEndsAt !== undefined && { recurrenceEndsAt: input.recurrenceEndsAt }),
+        ...(input.recurrenceDays !== undefined && {
+          recurrenceDays: input.recurrenceDays,
+        }),
+        ...(input.recurrenceEndsAt !== undefined && {
+          recurrenceEndsAt: input.recurrenceEndsAt,
+        }),
         ...(input.reminders !== undefined && {
           reminders: {
             deleteMany: { sent: false },
-            create: input.reminders.map(r => ({
+            create: input.reminders.map((r) => ({
               minutesBefore: r.minutesBefore,
               method: r.method as any,
-              scheduledAt: this.computeScheduledAt(effectiveStart, r.minutesBefore),
+              scheduledAt: this.computeScheduledAt(
+                effectiveStart,
+                r.minutesBefore,
+              ),
               sent: false,
             })),
           },

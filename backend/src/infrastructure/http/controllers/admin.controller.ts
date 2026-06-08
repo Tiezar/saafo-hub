@@ -1,5 +1,13 @@
 import {
-  Controller, Get, Post, Param, Query, Req, UseGuards, NotFoundException, BadRequestException,
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Req,
+  UseGuards,
+  NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { AdminGuard } from '../guards/admin.guard';
@@ -29,7 +37,7 @@ export class AdminController {
     const where = {
       ...(search && {
         OR: [
-          { name:  { contains: search, mode: 'insensitive' as const } },
+          { name: { contains: search, mode: 'insensitive' as const } },
           { email: { contains: search, mode: 'insensitive' as const } },
         ],
       }),
@@ -63,7 +71,7 @@ export class AdminController {
       this.prisma.user.count({ where }),
     ]);
 
-    const userIds = users.map(u => u.id);
+    const userIds = users.map((u) => u.id);
 
     // Cards generated today
     const today = new Date();
@@ -81,14 +89,19 @@ export class AdminController {
       }),
     ]);
 
-    const cardsTodayMap = new Map(cardsTodayRaw.map(r => [r.userId, r._count._all]));
+    const cardsTodayMap = new Map(
+      cardsTodayRaw.map((r) => [r.userId, r._count._all]),
+    );
 
     const reviewsMap = new Map<string, number>();
     for (const s of sessionsWithReviews) {
-      reviewsMap.set(s.userId, (reviewsMap.get(s.userId) ?? 0) + s._count.reviews);
+      reviewsMap.set(
+        s.userId,
+        (reviewsMap.get(s.userId) ?? 0) + s._count.reviews,
+      );
     }
 
-    const data = users.map(u => ({
+    const data = users.map((u) => ({
       id: u.id,
       name: u.name,
       email: u.email,
@@ -97,18 +110,23 @@ export class AdminController {
       createdAt: u.createdAt,
       emailVerified: u.emailVerified,
       usage: {
-        subjects:          u._count.subjects,
-        cards:             u._count.cards,
-        studySessions:     u._count.studySessions,
-        examRecords:       u._count.examRecords,
+        subjects: u._count.subjects,
+        cards: u._count.cards,
+        studySessions: u._count.studySessions,
+        examRecords: u._count.examRecords,
         cardsGeneratedToday: cardsTodayMap.get(u.id) ?? 0,
-        totalReviews:        reviewsMap.get(u.id) ?? 0,
+        totalReviews: reviewsMap.get(u.id) ?? 0,
       },
     }));
 
     return {
       data,
-      meta: { total, page: parseInt(page), pageSize: PAGE_SIZE, pages: Math.ceil(total / PAGE_SIZE) },
+      meta: {
+        total,
+        page: parseInt(page),
+        pageSize: PAGE_SIZE,
+        pages: Math.ceil(total / PAGE_SIZE),
+      },
     };
   }
 
@@ -144,22 +162,27 @@ export class AdminController {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const [cardsTodayRaw, sessionsWithReviews, lastSession] = await Promise.all([
-      this.prisma.card.count({
-        where: { userId: id, createdAt: { gte: today } },
-      }),
-      this.prisma.studySession.findMany({
-        where: { userId: id },
-        select: { _count: { select: { reviews: true } } },
-      }),
-      this.prisma.studySession.findFirst({
-        where: { userId: id },
-        orderBy: { startedAt: 'desc' },
-        select: { startedAt: true },
-      }),
-    ]);
+    const [cardsTodayRaw, sessionsWithReviews, lastSession] = await Promise.all(
+      [
+        this.prisma.card.count({
+          where: { userId: id, createdAt: { gte: today } },
+        }),
+        this.prisma.studySession.findMany({
+          where: { userId: id },
+          select: { _count: { select: { reviews: true } } },
+        }),
+        this.prisma.studySession.findFirst({
+          where: { userId: id },
+          orderBy: { startedAt: 'desc' },
+          select: { startedAt: true },
+        }),
+      ],
+    );
 
-    const totalReviews = sessionsWithReviews.reduce((sum, s) => sum + s._count.reviews, 0);
+    const totalReviews = sessionsWithReviews.reduce(
+      (sum, s) => sum + s._count.reviews,
+      0,
+    );
 
     return {
       id: user.id,
@@ -172,13 +195,13 @@ export class AdminController {
       phone: user.phone,
       asaasSubscriptionId: user.asaasSubscriptionId,
       usage: {
-        subjects:            user._count.subjects,
-        cards:               user._count.cards,
-        studySessions:       user._count.studySessions,
-        examRecords:         user._count.examRecords,
+        subjects: user._count.subjects,
+        cards: user._count.cards,
+        studySessions: user._count.studySessions,
+        examRecords: user._count.examRecords,
         cardsGeneratedToday: cardsTodayRaw,
         totalReviews,
-        lastActivityAt:      lastSession?.startedAt ?? null,
+        lastActivityAt: lastSession?.startedAt ?? null,
       },
     };
   }

@@ -1,13 +1,26 @@
 import {
-  Controller, Get, Post, Delete,
-  Body, Param, Request,
-  UseGuards, NotFoundException, ForbiddenException,
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  Request,
+  UseGuards,
+  NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { PrismaService } from '../../database/prisma.service';
 import {
-  IsString, IsNotEmpty, IsInt, Min, Max, IsIn,
-  IsOptional, IsArray,
+  IsString,
+  IsNotEmpty,
+  IsInt,
+  Min,
+  Max,
+  IsIn,
+  IsOptional,
+  IsArray,
 } from 'class-validator';
 
 class CreateExamRecordDto {
@@ -35,14 +48,14 @@ export class ExamHistoryController {
   async createRecord(@Request() req: any, @Body() body: CreateExamRecordDto) {
     return this.prisma.examRecord.create({
       data: {
-        userId:     req.user.id,
-        topicId:    body.topicId ?? null,
-        topicIds:   body.topicIds ?? [],
-        topicName:  body.topicName,
+        userId: req.user.id,
+        topicId: body.topicId ?? null,
+        topicIds: body.topicIds ?? [],
+        topicName: body.topicName,
         scopeLabel: body.scopeLabel ?? null,
-        profileId:  body.profileId ?? null,
-        mode:       body.mode,
-        questions:  body.questions,
+        profileId: body.profileId ?? null,
+        mode: body.mode,
+        questions: body.questions,
       },
     });
   }
@@ -80,9 +93,9 @@ export class ExamHistoryController {
     return this.prisma.examAttempt.create({
       data: {
         examRecordId: id,
-        score:        body.score,
-        timeLimit:    body.timeLimit ?? null,
-        timeTaken:    body.timeTaken ?? null,
+        score: body.score,
+        timeLimit: body.timeLimit ?? null,
+        timeTaken: body.timeTaken ?? null,
       },
     });
   }

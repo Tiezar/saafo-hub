@@ -1,6 +1,9 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import type { IEventReminderRepository, DueReminder } from '../../domain/repositories/event-reminder-repository.interface';
+import type {
+  IEventReminderRepository,
+  DueReminder,
+} from '../../domain/repositories/event-reminder-repository.interface';
 import { EvoApiService } from './evo-api.service';
 import { ResendService } from '../email/resend.service';
 
@@ -29,7 +32,9 @@ export class ReminderSchedulerService {
     try {
       due = await this.reminderRepo.findDueAndUnsent();
     } catch (err) {
-      this.logger.error(`Failed to fetch due reminders: ${(err as Error).message}`);
+      this.logger.error(
+        `Failed to fetch due reminders: ${(err as Error).message}`,
+      );
       return;
     }
 
@@ -109,8 +114,15 @@ export class ReminderSchedulerService {
 
   private formatTime(date: Date): string {
     const d = new Date(date);
-    const day = d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
-    const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const day = d.toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      day: '2-digit',
+      month: '2-digit',
+    });
+    const time = d.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
     return `${day} às ${time}`;
   }
 

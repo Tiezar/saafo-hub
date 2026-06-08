@@ -15,11 +15,20 @@ describe('GenerateFlashcardsUseCase', () => {
     topicRepository = { findById: jest.fn() } as any;
     subjectRepository = { findById: jest.fn() } as any;
     geminiService = { generateFlashcards: jest.fn() } as any;
-    useCase = new GenerateFlashcardsUseCase(topicRepository, subjectRepository, geminiService);
+    useCase = new GenerateFlashcardsUseCase(
+      topicRepository,
+      subjectRepository,
+      geminiService,
+    );
   });
 
   it('should generate flashcards and return them without saving', async () => {
-    const mockSubject = new Subject('sub-1', 'Constitucional', '#ff0000', 'user-1');
+    const mockSubject = new Subject(
+      'sub-1',
+      'Constitucional',
+      '#ff0000',
+      'user-1',
+    );
     const mockTopic = new Topic('topic-1', 'Direitos Fundamentais', 'sub-1');
     const mockGeneratedCards = [
       { front: 'Artigo 5', back: 'Direitos fundamentais' },
@@ -50,18 +59,31 @@ describe('GenerateFlashcardsUseCase', () => {
     topicRepository.findById.mockResolvedValue(null);
 
     await expect(
-      useCase.execute({ text: 'Texto de estudo', topicId: 'topic-1', userId: 'user-1' }),
+      useCase.execute({
+        text: 'Texto de estudo',
+        topicId: 'topic-1',
+        userId: 'user-1',
+      }),
     ).rejects.toThrow('Topic not found');
   });
 
   it('should throw an error if topic belongs to someone else', async () => {
-    const mockSubject = new Subject('sub-1', 'Constitucional', '#ff0000', 'user-2');
+    const mockSubject = new Subject(
+      'sub-1',
+      'Constitucional',
+      '#ff0000',
+      'user-2',
+    );
     const mockTopic = new Topic('topic-1', 'Direitos Fundamentais', 'sub-1');
     topicRepository.findById.mockResolvedValue(mockTopic);
     subjectRepository.findById.mockResolvedValue(mockSubject);
 
     await expect(
-      useCase.execute({ text: 'Texto de estudo', topicId: 'topic-1', userId: 'user-1' }),
+      useCase.execute({
+        text: 'Texto de estudo',
+        topicId: 'topic-1',
+        userId: 'user-1',
+      }),
     ).rejects.toThrow('Unauthorized access to topic');
   });
 });

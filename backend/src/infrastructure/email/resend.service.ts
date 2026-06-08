@@ -25,7 +25,9 @@ export class ResendService {
     });
 
     if (error) {
-      this.logger.error(`Failed to send verification email to ${to}: ${error.message}`);
+      this.logger.error(
+        `Failed to send verification email to ${to}: ${error.message}`,
+      );
       throw new Error('Não foi possível enviar o email de verificação.');
     }
 
@@ -50,11 +52,19 @@ export class ResendService {
       from,
       to,
       subject: `⏰ Lembrete: ${eventTitle} — SAAFO HUB`,
-      html: this.buildReminderEmailHtml(name, eventTitle, eventType, timeStr, when),
+      html: this.buildReminderEmailHtml(
+        name,
+        eventTitle,
+        eventType,
+        timeStr,
+        when,
+      ),
     });
 
     if (error) {
-      this.logger.error(`Failed to send reminder email to ${to}: ${error.message}`);
+      this.logger.error(
+        `Failed to send reminder email to ${to}: ${error.message}`,
+      );
       return;
     }
 

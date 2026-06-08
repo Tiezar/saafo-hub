@@ -17,11 +17,20 @@ import { PrismaEventReminderRepository } from './prisma-event-reminder.repositor
     { provide: 'ISubjectRepository', useClass: PrismaSubjectRepository },
     { provide: 'ITopicRepository', useClass: PrismaTopicRepository },
     { provide: 'ICardRepository', useClass: PrismaCardRepository },
-    { provide: 'IStudySessionRepository', useClass: PrismaStudySessionRepository },
+    {
+      provide: 'IStudySessionRepository',
+      useClass: PrismaStudySessionRepository,
+    },
     { provide: 'IMetricsRepository', useClass: PrismaMetricsRepository },
     { provide: 'IStudySpaceRepository', useClass: PrismaStudySpaceRepository },
-    { provide: 'ICalendarEventRepository', useClass: PrismaCalendarEventRepository },
-    { provide: 'IEventReminderRepository', useClass: PrismaEventReminderRepository },
+    {
+      provide: 'ICalendarEventRepository',
+      useClass: PrismaCalendarEventRepository,
+    },
+    {
+      provide: 'IEventReminderRepository',
+      useClass: PrismaEventReminderRepository,
+    },
   ],
   exports: [
     PrismaService,

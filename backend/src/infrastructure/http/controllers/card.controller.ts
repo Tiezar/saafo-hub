@@ -89,8 +89,9 @@ export class CardController {
       return await this.listCardsUseCase.execute(topicId, req.user.id);
     } catch (err) {
       const msg = (err as Error).message;
-      if (msg === 'Topic not found')              throw new NotFoundException(msg);
-      if (msg === 'Unauthorized access to topic') throw new ForbiddenException(msg);
+      if (msg === 'Topic not found') throw new NotFoundException(msg);
+      if (msg === 'Unauthorized access to topic')
+        throw new ForbiddenException(msg);
       throw new BadRequestException(msg);
     }
   }
@@ -101,12 +102,21 @@ export class CardController {
   }
 
   @Patch(':id')
-  async update(@Request() req: any, @Param('id') id: string, @Body() body: UpdateCardDto) {
+  async update(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() body: UpdateCardDto,
+  ) {
     const card = await this.cardRepository.findById(id);
     if (!card) throw new NotFoundException('Card not found');
-    if (card.userId !== req.user.id) throw new ForbiddenException('Unauthorized access to card');
-    if (!body.front && !body.back) throw new BadRequestException('Forneça front ou back para atualizar.');
-    return this.cardRepository.update(id, { front: body.front, back: body.back });
+    if (card.userId !== req.user.id)
+      throw new ForbiddenException('Unauthorized access to card');
+    if (!body.front && !body.back)
+      throw new BadRequestException('Forneça front ou back para atualizar.');
+    return this.cardRepository.update(id, {
+      front: body.front,
+      back: body.back,
+    });
   }
 
   @Delete(':id')

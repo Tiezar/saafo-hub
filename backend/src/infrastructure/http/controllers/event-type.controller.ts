@@ -1,18 +1,67 @@
 import {
-  Controller, Get, Post, Patch, Delete,
-  Body, Param, Request, UseGuards,
-  NotFoundException, ForbiddenException,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Request,
+  UseGuards,
+  NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { PrismaService } from '../../database/prisma.service';
-import { IsString, IsNotEmpty, IsOptional, MaxLength, Matches } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  MaxLength,
+  Matches,
+} from 'class-validator';
 
 const DEFAULT_TYPES = [
-  { key: 'EXAM',          name: 'Prova',            color: '#ef4444', icon: 'GraduationCap', order: 0, isSystem: true },
-  { key: 'DEADLINE',      name: 'Entrega',           color: '#f97316', icon: 'Flag',          order: 1, isSystem: true },
-  { key: 'FIXED_BLOCK',   name: 'Bloco Fixo',        color: '#3b82f6', icon: 'Layers',        order: 2, isSystem: true },
-  { key: 'REMINDER',      name: 'Lembrete',          color: '#8b5cf6', icon: 'Bell',          order: 3, isSystem: true },
-  { key: 'STUDY_SESSION', name: 'Sessão de Estudo',  color: '#10b981', icon: 'BookOpen',      order: 4, isSystem: true },
+  {
+    key: 'EXAM',
+    name: 'Prova',
+    color: '#ef4444',
+    icon: 'GraduationCap',
+    order: 0,
+    isSystem: true,
+  },
+  {
+    key: 'DEADLINE',
+    name: 'Entrega',
+    color: '#f97316',
+    icon: 'Flag',
+    order: 1,
+    isSystem: true,
+  },
+  {
+    key: 'FIXED_BLOCK',
+    name: 'Bloco Fixo',
+    color: '#3b82f6',
+    icon: 'Layers',
+    order: 2,
+    isSystem: true,
+  },
+  {
+    key: 'REMINDER',
+    name: 'Lembrete',
+    color: '#8b5cf6',
+    icon: 'Bell',
+    order: 3,
+    isSystem: true,
+  },
+  {
+    key: 'STUDY_SESSION',
+    name: 'Sessão de Estudo',
+    color: '#10b981',
+    icon: 'BookOpen',
+    order: 4,
+    isSystem: true,
+  },
 ];
 
 class UpsertEventTypeDto {
@@ -37,7 +86,7 @@ export class EventTypeController {
     // Lazy-seed defaults on first access
     if (types.length === 0) {
       await this.prisma.userEventType.createMany({
-        data: DEFAULT_TYPES.map(t => ({ ...t, userId: req.user.id })),
+        data: DEFAULT_TYPES.map((t) => ({ ...t, userId: req.user.id })),
       });
       types = await this.prisma.userEventType.findMany({
         where: { userId: req.user.id },
@@ -50,14 +99,16 @@ export class EventTypeController {
 
   @Post()
   async create(@Request() req: any, @Body() body: UpsertEventTypeDto) {
-    const count = await this.prisma.userEventType.count({ where: { userId: req.user.id } });
+    const count = await this.prisma.userEventType.count({
+      where: { userId: req.user.id },
+    });
     return this.prisma.userEventType.create({
       data: {
         userId: req.user.id,
-        name:  body.name,
+        name: body.name,
         color: body.color,
-        icon:  body.icon,
-        key:   body.key ?? null,
+        icon: body.icon,
+        key: body.key ?? null,
         order: count,
         isSystem: false,
       },
@@ -65,16 +116,20 @@ export class EventTypeController {
   }
 
   @Patch(':id')
-  async update(@Request() req: any, @Param('id') id: string, @Body() body: Partial<UpsertEventTypeDto>) {
+  async update(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() body: Partial<UpsertEventTypeDto>,
+  ) {
     const type = await this.prisma.userEventType.findUnique({ where: { id } });
     if (!type) throw new NotFoundException();
     if (type.userId !== req.user.id) throw new ForbiddenException();
     return this.prisma.userEventType.update({
       where: { id },
       data: {
-        ...(body.name  !== undefined && { name:  body.name }),
+        ...(body.name !== undefined && { name: body.name }),
         ...(body.color !== undefined && { color: body.color }),
-        ...(body.icon  !== undefined && { icon:  body.icon }),
+        ...(body.icon !== undefined && { icon: body.icon }),
       },
     });
   }

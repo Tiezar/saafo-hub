@@ -11,8 +11,18 @@ describe('InstitutionController', () => {
       institution: {
         findMany: jest.fn().mockImplementation((args) => {
           const list = [
-            { id: '1', name: 'Universidade de São Paulo', sigla: 'USP', uf: 'São Paulo' },
-            { id: '2', name: 'Universidade Federal do Rio de Janeiro', sigla: 'UFRJ', uf: 'Rio de Janeiro' },
+            {
+              id: '1',
+              name: 'Universidade de São Paulo',
+              sigla: 'USP',
+              uf: 'São Paulo',
+            },
+            {
+              id: '2',
+              name: 'Universidade Federal do Rio de Janeiro',
+              sigla: 'UFRJ',
+              uf: 'Rio de Janeiro',
+            },
           ];
 
           if (!args?.where) {
@@ -56,7 +66,9 @@ describe('InstitutionController', () => {
   });
 
   it('deve filtrar instituições pelo nome (case insensitive)', async () => {
-    const result = await controller.getInstitutions('Federal do Rio de Janeiro');
+    const result = await controller.getInstitutions(
+      'Federal do Rio de Janeiro',
+    );
     expect(result.length).toBe(1);
     expect(result[0].name).toBe('Universidade Federal do Rio de Janeiro');
   });

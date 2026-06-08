@@ -50,7 +50,8 @@ export class FlashcardReminderService {
     for (const user of users) {
       const dueCount = user._count.cards;
       const firstName = user.nickname ?? user.name.split(' ')[0];
-      const cardLabel = dueCount === 1 ? '1 flashcard' : `${dueCount} flashcards`;
+      const cardLabel =
+        dueCount === 1 ? '1 flashcard' : `${dueCount} flashcards`;
 
       const message =
         `📚 *SAAFO HUB — Revisão Pendente*\n\n` +
@@ -60,7 +61,9 @@ export class FlashcardReminderService {
       try {
         await this.evoApi.sendWhatsApp(user.phone!, message);
       } catch (err) {
-        this.logger.error(`Failed to send reminder to ${user.phone}: ${(err as Error).message}`);
+        this.logger.error(
+          `Failed to send reminder to ${user.phone}: ${(err as Error).message}`,
+        );
       }
     }
   }

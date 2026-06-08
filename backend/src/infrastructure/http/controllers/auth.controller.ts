@@ -20,7 +20,13 @@ import { LoginGoogleUseCase } from '../../../application/use-cases/login-google.
 import type { IUserRepository } from '../../../domain/repositories/user-repository.interface';
 import { ResendService } from '../../email/resend.service';
 import { PrismaService } from '../../database/prisma.service';
-import { IsNotEmpty, IsString, IsEmail, MinLength, Matches } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsEmail,
+  MinLength,
+  Matches,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
 
@@ -44,7 +50,9 @@ class LoginGoogleDto {
 }
 
 class RegisterDto {
-  @Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase().trim() : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.toLowerCase().trim() : value,
+  )
   @IsEmail({}, { message: 'E-mail inválido' })
   @Matches(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, { message: 'E-mail inválido' })
   email: string;
@@ -54,7 +62,9 @@ class RegisterDto {
 }
 
 class LoginDto {
-  @Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase().trim() : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.toLowerCase().trim() : value,
+  )
   @IsEmail({}, { message: 'E-mail inválido' })
   email: string;
 
@@ -97,7 +107,10 @@ export class AuthController {
     res: Response,
   ) {
     const rawToken = crypto.randomBytes(48).toString('hex');
-    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(rawToken)
+      .digest('hex');
     const expiresAt = new Date(Date.now() + REFRESH_TTL_MS);
 
     await this.prisma.refreshToken.create({
@@ -109,10 +122,7 @@ export class AuthController {
       .deleteMany({
         where: {
           userId,
-          OR: [
-            { expiresAt: { lt: new Date() } },
-            { revokedAt: { not: null } },
-          ],
+          OR: [{ expiresAt: { lt: new Date() } }, { revokedAt: { not: null } }],
         },
       })
       .catch(() => {});
@@ -141,12 +151,15 @@ export class AuthController {
     const verifyUrl = `${apiUrl}/auth/verify-email?token=${verifyToken}`;
 
     try {
-      await this.resendService.sendVerificationEmail(user.email, user.name, verifyUrl);
+      await this.resendService.sendVerificationEmail(
+        user.email,
+        user.name,
+        verifyUrl,
+      );
     } catch {
-      await this.userRepository.verifyEmail(user.id);
-      return {
-        message: `Conta criada com sucesso! (O envio de e-mail falhou por conta do domínio do Resend não verificado, mas sua conta foi ativada automaticamente para fins de teste).`,
-      };
+      throw new BadRequestException(
+        'Cadastro realizado, mas falhou ao enviar o e-mail de verificação. Por favor, solicite o reenvio de confirmação na tela de login.',
+      );
     }
 
     return {
@@ -162,22 +175,28 @@ export class AuthController {
 
     const user = await this.userRepository.findByEmail(body.email);
     if (!user) throw new BadRequestException('Usuário não encontrado');
-    if (user.emailVerified) throw new BadRequestException('Este e-mail já está verificado');
+    if (user.emailVerified)
+      throw new BadRequestException('Este e-mail já está verificado');
 
     const verifyToken = this.signEmailVerifyToken(user.id);
     const apiUrl = process.env.API_URL ?? 'http://localhost:3000';
     const verifyUrl = `${apiUrl}/auth/verify-email?token=${verifyToken}`;
 
     try {
-      await this.resendService.sendVerificationEmail(user.email, user.name, verifyUrl);
+      await this.resendService.sendVerificationEmail(
+        user.email,
+        user.name,
+        verifyUrl,
+      );
     } catch {
-      await this.userRepository.verifyEmail(user.id);
-      return {
-        message: `O envio de e-mail falhou por conta do domínio do Resend não verificado, mas sua conta foi ativada automaticamente para fins de teste.`,
-      };
+      throw new BadRequestException(
+        'Falha ao enviar o e-mail de verificação. Por favor, tente novamente mais tarde.',
+      );
     }
 
-    return { message: `Novo e-mail de verificação enviado com sucesso para ${user.email}.` };
+    return {
+      message: `Novo e-mail de verificação enviado com sucesso para ${user.email}.`,
+    };
   }
 
   // ── Login ────────────────────────────────────────────────────────────────
@@ -203,7 +222,12 @@ export class AuthController {
 
     return {
       access_token: this.signAccessToken(user.id, user.email),
-      user: { id: user.id, email: user.email, name: user.name, nickname: user.nickname },
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        nickname: user.nickname,
+      },
     };
   }
 
@@ -226,7 +250,9 @@ export class AuthController {
 
     const payload = ticket.getPayload();
     if (!payload || !payload.email || !payload.sub || !payload.name)
-      throw new BadRequestException('Token do Google sem as informações necessárias');
+      throw new BadRequestException(
+        'Token do Google sem as informações necessárias',
+      );
 
     try {
       const user = await this.loginGoogleUseCase.execute({
@@ -239,7 +265,12 @@ export class AuthController {
 
       return {
         access_token: this.signAccessToken(user.id, user.email),
-        user: { id: user.id, email: user.email, name: user.name, nickname: user.nickname },
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          nickname: user.nickname,
+        },
       };
     } catch (err) {
       if (err instanceof HttpException) throw err;
@@ -250,10 +281,7 @@ export class AuthController {
   // ── Email verification redirect ──────────────────────────────────────────
 
   @Get('verify-email')
-  async verifyEmail(
-    @Query('token') token: string,
-    @Res() res: Response,
-  ) {
+  async verifyEmail(@Query('token') token: string, @Res() res: Response) {
     const frontendUrl = (process.env.FRONTEND_URL ?? 'http://localhost:5173')
       .split(',')[0]
       .trim();
@@ -261,12 +289,16 @@ export class AuthController {
     if (!token) return res.redirect(`${frontendUrl}?auth_error=token_missing`);
 
     try {
-      const payload = await this.jwtService.verifyAsync<{ sub: string; type: string }>(token);
+      const payload = await this.jwtService.verifyAsync<{
+        sub: string;
+        type: string;
+      }>(token);
       if (payload.type !== 'email-verify')
         return res.redirect(`${frontendUrl}?auth_error=invalid_token`);
 
       const user = await this.userRepository.findById(payload.sub);
-      if (!user) return res.redirect(`${frontendUrl}?auth_error=user_not_found`);
+      if (!user)
+        return res.redirect(`${frontendUrl}?auth_error=user_not_found`);
 
       await this.userRepository.verifyEmail(user.id);
       await this.issueRefreshToken(user.id, crypto.randomUUID(), res);
@@ -284,22 +316,35 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const rawToken: string | undefined = (req.cookies as Record<string, string>)?.[REFRESH_COOKIE];
+    const rawToken: string | undefined = (
+      req.cookies as Record<string, string>
+    )?.[REFRESH_COOKIE];
     if (!rawToken) throw new UnauthorizedException('Sem sessão ativa.');
 
-    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-    const record = await this.prisma.refreshToken.findUnique({ where: { tokenHash } });
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(rawToken)
+      .digest('hex');
+    const record = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash },
+    });
 
     if (!record) throw new UnauthorizedException('Token inválido.');
 
     // Reuse attack: token already revoked → revoke entire family
     if (record.revokedAt) {
       await this.prisma.refreshToken.updateMany({
-        where: { userId: record.userId, family: record.family, revokedAt: null },
+        where: {
+          userId: record.userId,
+          family: record.family,
+          revokedAt: null,
+        },
         data: { revokedAt: new Date() },
       });
       res.clearCookie(REFRESH_COOKIE, { path: '/' });
-      throw new UnauthorizedException('Sessão comprometida. Faça login novamente.');
+      throw new UnauthorizedException(
+        'Sessão comprometida. Faça login novamente.',
+      );
     }
 
     if (record.expiresAt < new Date()) {
@@ -324,13 +369,15 @@ export class AuthController {
   // ── Logout ────────────────────────────────────────────────────────────────
 
   @Post('logout')
-  async logout(
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const rawToken: string | undefined = (req.cookies as Record<string, string>)?.[REFRESH_COOKIE];
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const rawToken: string | undefined = (
+      req.cookies as Record<string, string>
+    )?.[REFRESH_COOKIE];
     if (rawToken) {
-      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const tokenHash = crypto
+        .createHash('sha256')
+        .update(rawToken)
+        .digest('hex');
       await this.prisma.refreshToken
         .updateMany({
           where: { tokenHash, revokedAt: null },
@@ -341,5 +388,4 @@ export class AuthController {
     res.clearCookie(REFRESH_COOKIE, { path: '/' });
     return { ok: true };
   }
-
 }

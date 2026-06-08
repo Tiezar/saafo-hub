@@ -111,9 +111,18 @@ export class CalendarController {
     @Query('to') to?: string,
     @Query('spaceId') spaceId?: string,
   ) {
-    const fromDate = from ? new Date(from) : new Date(new Date().setDate(new Date().getDate() - 7));
-    const toDate = to ? new Date(to) : new Date(new Date().setDate(new Date().getDate() + 60));
-    return this.eventRepo.findByUserAndRange(req.user.id, fromDate, toDate, spaceId);
+    const fromDate = from
+      ? new Date(from)
+      : new Date(new Date().setDate(new Date().getDate() - 7));
+    const toDate = to
+      ? new Date(to)
+      : new Date(new Date().setDate(new Date().getDate() + 60));
+    return this.eventRepo.findByUserAndRange(
+      req.user.id,
+      fromDate,
+      toDate,
+      spaceId,
+    );
   }
 
   @Get('events/upcoming')
@@ -137,7 +146,9 @@ export class CalendarController {
         notes: body.notes ?? null,
         color: body.color ?? null,
         recurrenceDays: body.recurrenceDays ?? [],
-        recurrenceEndsAt: body.recurrenceEndsAt ? new Date(body.recurrenceEndsAt) : null,
+        recurrenceEndsAt: body.recurrenceEndsAt
+          ? new Date(body.recurrenceEndsAt)
+          : null,
         reminders: body.reminders ?? [],
       });
     } catch (err) {
@@ -166,8 +177,12 @@ export class CalendarController {
         ...(body.subjectId !== undefined && { subjectId: body.subjectId }),
         ...(body.notes !== undefined && { notes: body.notes }),
         ...(body.color !== undefined && { color: body.color }),
-        ...(body.recurrenceDays !== undefined && { recurrenceDays: body.recurrenceDays }),
-        ...(body.recurrenceEndsAt !== undefined && { recurrenceEndsAt: new Date(body.recurrenceEndsAt) }),
+        ...(body.recurrenceDays !== undefined && {
+          recurrenceDays: body.recurrenceDays,
+        }),
+        ...(body.recurrenceEndsAt !== undefined && {
+          recurrenceEndsAt: new Date(body.recurrenceEndsAt),
+        }),
         ...(body.reminders !== undefined && { reminders: body.reminders }),
       });
     } catch (err) {

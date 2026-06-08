@@ -1,5 +1,10 @@
 import {
-  CanActivate, ExecutionContext, HttpException, Inject, Injectable, UnauthorizedException,
+  CanActivate,
+  ExecutionContext,
+  HttpException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import type { IUserRepository } from '../../../domain/repositories/user-repository.interface';
 
@@ -21,7 +26,8 @@ export class PlanGuard implements CanActivate {
 
     throw new HttpException(
       {
-        message: 'Seu período gratuito expirou. Assine o Plano Estudante para continuar usando a IA.',
+        message:
+          'Seu período gratuito expirou. Assine o Plano Estudante para continuar usando a IA.',
         code: 'PLAN_EXPIRED',
         trialEndsAt: user.trialEndsAt,
       },
