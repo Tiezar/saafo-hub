@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, SkipForward, RotateCw, Clock, Coffee, Settings, ChevronDown } from 'lucide-react';
+import { Play, Pause, SkipForward, RotateCw, Clock, Coffee, Settings, ChevronDown, Music, Volume2, VolumeX, Plus, X } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import './Pomodoro.css';
 import CustomSelect from '../components/CustomSelect';
@@ -46,7 +46,7 @@ function sendNotification(title: string, body: string) {
 }
 
 export default function Pomodoro() {
-  const { cards, visibleTopics, subjects } = useApp();
+  const { cards, visibleTopics, subjects, apiCall } = useApp();
 
   const [phase,        setPhase]        = useState<Phase>('focus');
   const [running,      setRunning]       = useState(false);
@@ -61,6 +61,23 @@ export default function Pomodoro() {
 
   const [topicId,      setTopicId]       = useState('');
   const [showSettings, setShowSettings] = useState(false);
+
+  // Audio Player states
+  const [ytReady, setYtReady] = useState(false);
+  const [playingAudio, setPlayingAudio] = useState(false);
+  const [currentTrack, setCurrentTrack] = useState<any>(null);
+  const [volume, setVolume] = useState(() => Number(localStorage.getItem('pomo_audio_volume') ?? 50));
+  const [curatedTracks, setCuratedTracks] = useState<{ id: string; name: string; youtubeId: string }[]>([]);
+  const [customTracks, setCustomTracks] = useState<{ id: string; name: string; youtubeId: string }[]>(() => {
+    return JSON.parse(localStorage.getItem('pomo_custom_tracks') ?? '[]');
+  });
+
+  // Custom link modal states
+  const [showCustomModal, setShowCustomModal] = useState(false);
+  const [customName, setCustomName] = useState('');
+  const [customUrl, setCustomUrl] = useState('');
+
+  const playerRef = useRef<any>(null);
 
   // Refs to avoid stale closures in the timer effect
   const phaseRef   = useRef(phase);
@@ -81,6 +98,149 @@ export default function Pomodoro() {
 
   // Ask notification permission once on mount
   useEffect(() => { requestNotifPermission(); }, []);
+
+  // Load YT IFrame API
+  useEffect(() => {
+    (window as any).onYouTubeIframeAPIReady = () => {
+      setYtReady(true);
+    };
+
+    if ((window as any).YT && (window as any).YT.Player) {
+      setYtReady(true);
+    } else {
+      if (!document.getElementById('yt-iframe-api')) {
+        const tag = document.createElement('script');
+        tag.id = 'yt-iframe-api';
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+      }
+    }
+  }, []);
+
+  // Fetch Curated Tracks
+  useEffect(() => {
+    apiCall('/pomodoro/tracks')
+      .then((res: any) => {
+        setCuratedTracks(res);
+        const lastTrackId = localStorage.getItem('pomo_last_track_id');
+        const allTracks = [...res, ...customTracks];
+        const found = allTracks.find(t => t.youtubeId === lastTrackId) || res[0];
+        if (found) {
+          setCurrentTrack(found);
+        }
+      })
+      .catch(err => console.error(err));
+  }, [apiCall]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle player instantiation and update
+  useEffect(() => {
+    if (!ytReady || !currentTrack) return;
+
+    if (playerRef.current) {
+      playerRef.current.cueVideoById({
+        videoId: currentTrack.youtubeId,
+        startSeconds: 0,
+      });
+      if (playingAudio) {
+        playerRef.current.playVideo();
+      }
+      return;
+    }
+
+    playerRef.current = new (window as any).YT.Player('yt-hidden-player', {
+      height: '0',
+      width: '0',
+      videoId: currentTrack.youtubeId,
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        modestbranding: 1,
+        rel: 0,
+        showinfo: 0,
+        iv_load_policy: 3,
+      },
+      events: {
+        onReady: (event: any) => {
+          event.target.setVolume(volume);
+          if (playingAudio) {
+            event.target.playVideo();
+          }
+        },
+        onStateChange: (event: any) => {
+          const state = event.data;
+          if (state === (window as any).YT.PlayerState.PLAYING) {
+            setPlayingAudio(true);
+          } else if (state === (window as any).YT.PlayerState.PAUSED || state === (window as any).YT.PlayerState.ENDED) {
+            setPlayingAudio(false);
+          }
+        }
+      }
+    });
+
+    return () => {
+      // Keep it persistent unless component unmounts
+    };
+  }, [ytReady, currentTrack]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const togglePlayAudio = () => {
+    if (!playerRef.current) return;
+    if (playingAudio) {
+      playerRef.current.pauseVideo();
+      setPlayingAudio(false);
+    } else {
+      playerRef.current.playVideo();
+      setPlayingAudio(true);
+    }
+  };
+
+  const handleVolumeChange = (v: number) => {
+    setVolume(v);
+    localStorage.setItem('pomo_audio_volume', String(v));
+    if (playerRef.current && typeof playerRef.current.setVolume === 'function') {
+      playerRef.current.setVolume(v);
+    }
+  };
+
+  const handleSelectTrack = (trackId: string) => {
+    if (trackId === 'add_custom') {
+      setShowCustomModal(true);
+      return;
+    }
+    const all = [...curatedTracks, ...customTracks];
+    const found = all.find(t => t.youtubeId === trackId);
+    if (found) {
+      setCurrentTrack(found);
+      localStorage.setItem('pomo_last_track_id', found.youtubeId);
+    }
+  };
+
+  function getYoutubeId(url: string) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : url;
+  }
+
+  const handleAddCustomTrack = () => {
+    if (!customName || !customUrl) return;
+    const parsedId = getYoutubeId(customUrl);
+    if (!parsedId || parsedId.length !== 11) {
+      alert('ID do YouTube inválido. Certifique-se de usar um link de vídeo ou ID de 11 caracteres válido.');
+      return;
+    }
+    const newTrack = { id: parsedId, name: customName, youtubeId: parsedId };
+    const updated = [...customTracks, newTrack];
+    setCustomTracks(updated);
+    localStorage.setItem('pomo_custom_tracks', JSON.stringify(updated));
+    setCurrentTrack(newTrack);
+    localStorage.setItem('pomo_last_track_id', parsedId);
+    
+    setCustomName('');
+    setCustomUrl('');
+    setShowCustomModal(false);
+  };
 
   // Tick
   useEffect(() => {
@@ -359,6 +519,80 @@ export default function Pomodoro() {
               </div>
             )}
           </div>
+
+          {/* Pomodoro Audio Player */}
+          <div style={{ width: '100%', borderTop: '1px solid var(--border-color)', paddingTop: 24, marginTop: 24 }}>
+            <span className="academic-label" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', marginBottom: 16 }}>
+              <Music size={14} /> Som Ambiente
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Select Dropdown */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <select
+                  value={currentTrack?.youtubeId ?? ''}
+                  onChange={e => handleSelectTrack(e.target.value)}
+                  style={{ flex: 1, padding: '9px 14px', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', fontSize: 13, color: 'inherit', cursor: 'pointer', outline: 'none' }}
+                >
+                  <optgroup label="Sons Curados">
+                    {curatedTracks.map(t => (
+                      <option key={t.youtubeId} value={t.youtubeId}>{t.name}</option>
+                    ))}
+                  </optgroup>
+                  {customTracks.length > 0 && (
+                    <optgroup label="Seus Links">
+                      {customTracks.map(t => (
+                        <option key={t.youtubeId} value={t.youtubeId}>{t.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  <option value="add_custom">+ Adicionar link personalizado...</option>
+                </select>
+              </div>
+
+              {/* Player Controls */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <button
+                  onClick={togglePlayAudio}
+                  disabled={!currentTrack}
+                  style={{
+                    width: 38,
+                    height: 38,
+                    backgroundColor: 'var(--color-primary)',
+                    color: '#fff',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    borderRadius: '6px',
+                    opacity: currentTrack ? 1 : 0.5,
+                  }}
+                  title={playingAudio ? 'Pausar áudio' : 'Tocar áudio'}
+                >
+                  {playingAudio ? <Pause size={16} /> : <Play size={16} style={{ marginLeft: 1 }} />}
+                </button>
+
+                {/* Volume Slider */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+                  <button
+                    onClick={() => handleVolumeChange(volume === 0 ? 50 : 0)}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
+                  >
+                    {volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                  </button>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={volume}
+                    onChange={e => handleVolumeChange(Number(e.target.value))}
+                    style={{ flex: 1, accentColor: 'var(--color-primary)' }}
+                  />
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', minWidth: 24, textAlign: 'right' }}>{volume}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Right Column: Context & Stats */}
@@ -467,6 +701,50 @@ export default function Pomodoro() {
           </div>
         </div>
       </div>
+
+      {/* Hidden YouTube Player */}
+      <div id="yt-hidden-player" style={{ position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none' }} />
+
+      {/* Add Custom Track Modal */}
+      {showCustomModal && (
+        <div className="modal-overlay" onClick={() => setShowCustomModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+            <div className="modal-header">
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, margin: 0, color: 'var(--color-primary)' }}>Adicionar Link do YouTube</h3>
+              <button className="btn-ghost btn-icon" onClick={() => setShowCustomModal(false)}><X size={18} /></button>
+            </div>
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label className="academic-label" style={{ fontSize: 9, display: 'block', marginBottom: 6 }}>Nome do Som</label>
+                <input
+                  type="text"
+                  value={customName}
+                  onChange={e => setCustomName(e.target.value)}
+                  placeholder="Ex: Minha Playlist de Foco"
+                  style={{ width: '100%', padding: '9px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', fontSize: 13, color: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div>
+                <label className="academic-label" style={{ fontSize: 9, display: 'block', marginBottom: 6 }}>URL ou ID do YouTube</label>
+                <input
+                  type="text"
+                  value={customUrl}
+                  onChange={e => setCustomUrl(e.target.value)}
+                  placeholder="Ex: https://www.youtube.com/watch?v=..."
+                  style={{ width: '100%', padding: '9px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', fontSize: 13, color: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <button
+                className="btn-primary"
+                onClick={handleAddCustomTrack}
+                style={{ width: '100%', padding: '10px 24px', marginTop: 8 }}
+              >
+                Adicionar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
