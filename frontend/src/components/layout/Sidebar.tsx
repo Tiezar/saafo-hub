@@ -55,7 +55,7 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
   return (
     <aside className={`sidebar${mobileOpen ? ' sidebar-open' : ''}`}>
       {/* Brand Header */}
-      <div className="sidebar-brand">
+      <div className="sidebar-brand" style={{ justifyContent: 'center' }}>
         <img 
           src={theme === 'dark' ? '/saafo-hub-logo-dark.png' : '/saafo-hub-logo.png'} 
           alt="SAAFO HUB" 
