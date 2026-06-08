@@ -34,7 +34,7 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
     cards, subjects, startStudySession,
   } = useApp();
 
-  const isAdmin = ADMIN_EMAILS.length === 0 || ADMIN_EMAILS.includes(currentUser?.email?.toLowerCase() ?? '');
+  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email?.toLowerCase() ?? '');
 
   const dueCount = cards.filter(c => new Date(c.nextReview) <= new Date()).length;
   const showOnboardingDot = subjects.length === 0 && localStorage.getItem('onboarding_dismissed') !== '1';
