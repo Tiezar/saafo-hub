@@ -276,11 +276,13 @@ export default function Admin() {
   };
 
   // Summary derived from current page — for totals use meta
+  // eslint-disable-next-line react-hooks/purity
+  const nowMs = Date.now();
   const students  = users.filter(u => u.plan === 'STUDENT').length;
   const trials    = users.filter(u => u.plan === 'FREE_TRIAL' && u.trialEndsAt && new Date(u.trialEndsAt) >= new Date()).length;
   const expiring  = users.filter(u => {
     if (u.plan !== 'FREE_TRIAL' || !u.trialEndsAt) return false;
-    const diff = (new Date(u.trialEndsAt).getTime() - Date.now()) / 86400000;
+    const diff = (new Date(u.trialEndsAt).getTime() - nowMs) / 86400000;
     return diff >= 0 && diff <= 3;
   }).length;
 

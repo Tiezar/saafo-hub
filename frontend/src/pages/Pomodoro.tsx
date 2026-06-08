@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, SkipForward, RotateCw, Clock, Coffee, Settings, ChevronDown, Music, Volume2, VolumeX, Plus, X } from 'lucide-react';
+import { Play, Pause, SkipForward, RotateCw, Clock, Coffee, Settings, ChevronDown, Music, Volume2, VolumeX, X } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import './Pomodoro.css';
 import CustomSelect from '../components/CustomSelect';
@@ -65,7 +65,7 @@ export default function Pomodoro() {
   // Audio Player states
   const [ytReady, setYtReady] = useState(false);
   const [playingAudio, setPlayingAudio] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState<any>(null);
+  const [selectedTrack, setSelectedTrack] = useState<any>(null);
   const [volume, setVolume] = useState(() => Number(localStorage.getItem('pomo_audio_volume') ?? 50));
   const [curatedTracks, setCuratedTracks] = useState<{ id: string; name: string; youtubeId: string }[]>([]);
   const [customTracks, setCustomTracks] = useState<{ id: string; name: string; youtubeId: string }[]>(() => {
@@ -127,7 +127,7 @@ export default function Pomodoro() {
         const allTracks = [...res, ...customTracks];
         const found = allTracks.find(t => t.youtubeId === lastTrackId) || res[0];
         if (found) {
-          setCurrentTrack(found);
+          setSelectedTrack(found);
         }
       })
       .catch(err => console.error(err));
@@ -135,11 +135,11 @@ export default function Pomodoro() {
 
   // Handle player instantiation and update
   useEffect(() => {
-    if (!ytReady || !currentTrack) return;
+    if (!ytReady || !selectedTrack) return;
 
     if (playerRef.current) {
       playerRef.current.cueVideoById({
-        videoId: currentTrack.youtubeId,
+        videoId: selectedTrack.youtubeId,
         startSeconds: 0,
       });
       if (playingAudio) {
@@ -151,7 +151,7 @@ export default function Pomodoro() {
     playerRef.current = new (window as any).YT.Player('yt-hidden-player', {
       height: '0',
       width: '0',
-      videoId: currentTrack.youtubeId,
+      videoId: selectedTrack.youtubeId,
       playerVars: {
         autoplay: 0,
         controls: 0,
@@ -183,7 +183,7 @@ export default function Pomodoro() {
     return () => {
       // Keep it persistent unless component unmounts
     };
-  }, [ytReady, currentTrack]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ytReady, selectedTrack]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const togglePlayAudio = () => {
     if (!playerRef.current) return;
@@ -212,13 +212,13 @@ export default function Pomodoro() {
     const all = [...curatedTracks, ...customTracks];
     const found = all.find(t => t.youtubeId === trackId);
     if (found) {
-      setCurrentTrack(found);
+      setSelectedTrack(found);
       localStorage.setItem('pomo_last_track_id', found.youtubeId);
     }
   };
 
   function getYoutubeId(url: string) {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : url;
   }
@@ -234,7 +234,7 @@ export default function Pomodoro() {
     const updated = [...customTracks, newTrack];
     setCustomTracks(updated);
     localStorage.setItem('pomo_custom_tracks', JSON.stringify(updated));
-    setCurrentTrack(newTrack);
+    setSelectedTrack(newTrack);
     localStorage.setItem('pomo_last_track_id', parsedId);
     
     setCustomName('');
@@ -275,7 +275,7 @@ export default function Pomodoro() {
     } else {
       setPhase('focus'); setSeconds(focusRef.current * 60);
     }
-  }, [seconds, running]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [seconds, running]);
 
   const reset = useCallback(() => {
     setRunning(false); setPhase('focus'); setRound(1);
@@ -496,6 +496,7 @@ export default function Pomodoro() {
 
             {showSettings && (
               <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* eslint-disable-next-line react-hooks/refs */}
                 {([
                   { label: 'Foco (min)',    value: focusMin, setter: applyFocus, min: 5,  max: 90 },
                   { label: 'Pausa (min)',   value: breakMin, setter: applyBreak, min: 1,  max: 30 },
@@ -529,7 +530,7 @@ export default function Pomodoro() {
               {/* Select Dropdown */}
               <div style={{ display: 'flex', gap: 8 }}>
                 <select
-                  value={currentTrack?.youtubeId ?? ''}
+                  value={selectedTrack?.youtubeId ?? ''}
                   onChange={e => handleSelectTrack(e.target.value)}
                   style={{ flex: 1, padding: '9px 14px', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', fontSize: 13, color: 'inherit', cursor: 'pointer', outline: 'none' }}
                 >
@@ -553,7 +554,7 @@ export default function Pomodoro() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <button
                   onClick={togglePlayAudio}
-                  disabled={!currentTrack}
+                  disabled={!selectedTrack}
                   style={{
                     width: 38,
                     height: 38,
@@ -565,7 +566,7 @@ export default function Pomodoro() {
                     justifyContent: 'center',
                     cursor: 'pointer',
                     borderRadius: '6px',
-                    opacity: currentTrack ? 1 : 0.5,
+                    opacity: selectedTrack ? 1 : 0.5,
                   }}
                   title={playingAudio ? 'Pausar áudio' : 'Tocar áudio'}
                 >
