@@ -532,26 +532,19 @@ export default function Pomodoro() {
             </span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Select Dropdown */}
-              <div style={{ display: 'flex', gap: 8 }}>
-                <select
+              <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                <CustomSelect
+                  variant="default"
+                  style={{ flex: 1 }}
                   value={selectedTrack?.youtubeId ?? ''}
-                  onChange={e => handleSelectTrack(e.target.value)}
-                  style={{ flex: 1, padding: '9px 14px', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', fontSize: 13, color: 'inherit', cursor: 'pointer', outline: 'none' }}
-                >
-                  <optgroup label="Sons Curados">
-                    {curatedTracks.map(t => (
-                      <option key={t.youtubeId} value={t.youtubeId}>{t.name}</option>
-                    ))}
-                  </optgroup>
-                  {customTracks.length > 0 && (
-                    <optgroup label="Seus Links">
-                      {customTracks.map(t => (
-                        <option key={t.youtubeId} value={t.youtubeId}>{t.name}</option>
-                      ))}
-                    </optgroup>
-                  )}
-                  <option value="add_custom">+ Adicionar link personalizado...</option>
-                </select>
+                  onChange={handleSelectTrack}
+                  placeholder="Selecione um som..."
+                  options={[
+                    ...curatedTracks.map(t => ({ value: t.youtubeId, label: t.name })),
+                    ...customTracks.map(t => ({ value: t.youtubeId, label: `[Meu] ${t.name}` })),
+                    { value: 'add_custom', label: '+ Adicionar link personalizado...' }
+                  ]}
+                />
               </div>
 
               {/* Player Controls */}
