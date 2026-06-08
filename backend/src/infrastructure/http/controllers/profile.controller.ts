@@ -10,12 +10,16 @@ import {
   NotFoundException,
   BadRequestException,
   HttpCode,
+  Post,
+  Put,
+  Param,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UpdateProfileUseCase } from '../../../application/use-cases/update-profile.use-case';
 import type { IUserRepository } from '../../../domain/repositories/user-repository.interface';
 import { PrismaService } from '../../database/prisma.service';
-import { IsString, IsOptional, MinLength } from 'class-validator';
+import { IsString, IsOptional, MinLength, IsArray, IsNumber, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 class UpdateProfileDto {
   @IsString()
@@ -38,6 +42,52 @@ class UpdateProfileDto {
   @IsString()
   @IsOptional()
   phone?: string;
+}
+
+class RoutineSlotDto {
+  @IsString()
+  startTime: string;
+
+  @IsString()
+  endTime: string;
+}
+
+class CreateRoutineDto {
+  @IsString()
+  label: string;
+
+  @IsString()
+  color: string;
+
+  @IsArray()
+  @IsNumber({}, { each: true })
+  days: number[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RoutineSlotDto)
+  slots: RoutineSlotDto[];
+}
+
+class UpdateRoutineDto {
+  @IsString()
+  @IsOptional()
+  label?: string;
+
+  @IsString()
+  @IsOptional()
+  color?: string;
+
+  @IsArray()
+  @IsOptional()
+  @IsNumber({}, { each: true })
+  days?: number[];
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => RoutineSlotDto)
+  slots?: RoutineSlotDto[];
 }
 
 @Controller('profile')
@@ -96,5 +146,59 @@ export class ProfileController {
       }
       throw new BadRequestException(msg);
     }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('routines')
+  async getRoutines(@Request() req: any) {
+    return this.prisma.userWeeklyRoutine.findMany({
+      where: { userId: req.user.id },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('routines')
+  async createRoutine(@Request() req: any, @Body() body: CreateRoutineDto) {
+    return this.prisma.userWeeklyRoutine.create({
+      data: {
+        userId: req.user.id,
+        label: body.label,
+        color: body.color,
+        days: body.days,
+        slots: body.slots as any,
+      },
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('routines/:id')
+  async updateRoutine(@Request() req: any, @Param('id') id: string, @Body() body: UpdateRoutineDto) {
+    const routine = await this.prisma.userWeeklyRoutine.findFirst({
+      where: { id, userId: req.user.id },
+    });
+    if (!routine) throw new NotFoundException('Rotina não encontrada');
+
+    return this.prisma.userWeeklyRoutine.update({
+      where: { id },
+      data: {
+        label: body.label,
+        color: body.color,
+        days: body.days,
+        slots: body.slots !== undefined ? (body.slots as any) : undefined,
+      },
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('routines/:id')
+  async deleteRoutine(@Request() req: any, @Param('id') id: string) {
+    const routine = await this.prisma.userWeeklyRoutine.findFirst({
+      where: { id, userId: req.user.id },
+    });
+    if (!routine) throw new NotFoundException('Rotina não encontrada');
+
+    await this.prisma.userWeeklyRoutine.delete({ where: { id } });
+    return { ok: true };
   }
 }
