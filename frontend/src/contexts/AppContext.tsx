@@ -5,7 +5,7 @@ import React, {
 import { API_URL } from '../lib/constants';
 import type {
   User, Institution, StudySpace, Subject, Topic, Card,
-  CalendarEvent, Metrics, PlanStatus, Insight, EventDraft, UserEventType,
+  CalendarEvent, Metrics, PlanStatus, Insight, EventDraft, UserEventType, UserWeeklyRoutine,
 } from '../types';
 import { blankDraft } from '../lib/utils';
 
@@ -126,6 +126,13 @@ interface AppContextValue {
   handleUpdateEventType: (id: string, patch: Partial<Pick<UserEventType, 'name' | 'color' | 'icon'>>) => Promise<void>;
   handleDeleteEventType: (id: string) => Promise<void>;
 
+  // Weekly Routines
+  weeklyRoutines: UserWeeklyRoutine[];
+  fetchWeeklyRoutines: () => Promise<void>;
+  createWeeklyRoutine: (data: Omit<UserWeeklyRoutine, 'id' | 'userId' | 'createdAt'>) => Promise<void>;
+  updateWeeklyRoutine: (id: string, data: Partial<Omit<UserWeeklyRoutine, 'id' | 'userId' | 'createdAt'>>) => Promise<void>;
+  deleteWeeklyRoutine: (id: string) => Promise<void>;
+
   // Audio Player
   ytReady: boolean;
   setYtReady: (v: boolean) => void;
@@ -207,6 +214,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [metrics,       setMetrics]      = useState<Metrics | null>(null);
   const [calendarEvents,setCalendarEvents]= useState<CalendarEvent[]>([]);
   const [eventTypes,    setEventTypes]   = useState<UserEventType[]>([]);
+  const [weeklyRoutines,setWeeklyRoutines] = useState<UserWeeklyRoutine[]>([]);
   const [institutions,  setInstitutions] = useState<Institution[]>([]);
   const [planStatus,    setPlanStatus]   = useState<PlanStatus | null>(null);
   const [insights,            setInsights]            = useState<Insight[]>([]);
@@ -621,6 +629,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setEventTypes(prev => prev.filter(t => t.id !== id));
   }, [apiCall]);
 
+  // ── Weekly Routines ────────────────────────────────────────────────────────
+  const fetchWeeklyRoutines = useCallback(async () => {
+    try {
+      const list = await apiCall('/profile/routines') as UserWeeklyRoutine[];
+      setWeeklyRoutines(list || []);
+    } catch { /* non-critical */ }
+  }, [apiCall]);
+
+  const createWeeklyRoutine = useCallback(async (data: Omit<UserWeeklyRoutine, 'id' | 'userId' | 'createdAt'>) => {
+    const created = await apiCall('/profile/routines', { method: 'POST', body: JSON.stringify(data) }) as UserWeeklyRoutine;
+    setWeeklyRoutines(prev => [...prev, created]);
+  }, [apiCall]);
+
+  const updateWeeklyRoutine = useCallback(async (id: string, data: Partial<Omit<UserWeeklyRoutine, 'id' | 'userId' | 'createdAt'>>) => {
+    const updated = await apiCall(`/profile/routines/${id}`, { method: 'PUT', body: JSON.stringify(data) }) as UserWeeklyRoutine;
+    setWeeklyRoutines(prev => prev.map(r => r.id === id ? updated : r));
+  }, [apiCall]);
+
+  const deleteWeeklyRoutine = useCallback(async (id: string) => {
+    await apiCall(`/profile/routines/${id}`, { method: 'DELETE' });
+    setWeeklyRoutines(prev => prev.filter(r => r.id !== id));
+  }, [apiCall]);
+
   // ── Study session ─────────────────────────────────────────────────────────
   const startStudySession = useCallback(async (topicId?: string, ignoreContext = false) => {
     // Ensure cards are loaded — fetch all if state is empty
@@ -789,6 +820,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       fetchAllCards();
       fetchCalendarEvents(now.getFullYear(), now.getMonth() + 1);
       fetchEventTypes();
+      fetchWeeklyRoutines();
       fetchPomodoroTracks();
     }
   }, [currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -841,6 +873,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     handleCreateCard, handleDeleteCard, handleUpdateCard, fetchAllCards,
     handleUpdateProfile,
     fetchEventTypes, handleCreateEventType, handleUpdateEventType, handleDeleteEventType,
+    weeklyRoutines, fetchWeeklyRoutines, createWeeklyRoutine, updateWeeklyRoutine, deleteWeeklyRoutine,
     ytReady, setYtReady, playingAudio, setPlayingAudio, selectedTrack, setSelectedTrack,
     volume, setVolume, curatedTracks, customTracks, ytPlayerRef, togglePlayAudio,
     handleSelectTrack, addCustomTrack,

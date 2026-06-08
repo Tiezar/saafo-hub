@@ -98,3 +98,19 @@ export interface EventDraft {
   recurrenceEnabled: boolean; recurrenceDays: number[]; recurrenceEndsAt: string;
   reminders: { minutesBefore: number; method: string }[];
 }
+
+export interface RoutineSlot {
+  startTime: string; // "HH:MM"
+  endTime: string;   // "HH:MM"
+}
+
+export interface UserWeeklyRoutine {
+  id: string;
+  userId: string;
+  label: string;
+  color: string;
+  days: number[]; // 0 = Sunday, 1 = Monday... 6 = Saturday
+  slots: RoutineSlot[];
+  createdAt: string;
+}
+
