@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Star, RotateCw, AlertTriangle, RefreshCw, Check, Bot, FileText, CheckCircle, Trash2 } from 'lucide-react';
+import { Search, Star, RotateCw, AlertTriangle, RefreshCw, Check, Bot, FileText, CheckCircle, Trash2, Plus, Edit3, Clock, X } from 'lucide-react';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useApp } from '../contexts/AppContext';
-import type { Institution } from '../types';
+import type { Institution, UserWeeklyRoutine } from '../types';
 import './Profile.css';
 import CustomSelect from '../components/CustomSelect';
 import DeleteAccountModal from '../components/DeleteAccountModal';
@@ -43,6 +43,7 @@ export default function Profile() {
     fetchInstitutions, handleUpdateProfile,
     setUpgradeModalOpen, setCheckoutOpen, fetchPlanStatus,
     apiCall, showSuccess, showError, handleLogout,
+    weeklyRoutines, createWeeklyRoutine, updateWeeklyRoutine, deleteWeeklyRoutine,
   } = useApp();
 
   const [name,         setName]         = useState(currentUser?.name ?? '');
@@ -55,6 +56,108 @@ export default function Profile() {
   const [saving,        setSaving]        = useState(false);
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+  // Weekly routine states
+  const [editingRoutine, setEditingRoutine] = useState<UserWeeklyRoutine | null>(null);
+  const [routineModalOpen, setRoutineModalOpen] = useState(false);
+  const [routineLabel, setRoutineLabel] = useState('');
+  const [routineColor, setRoutineColor] = useState('#6366f1');
+  const [routineDays, setRoutineDays] = useState<number[]>([]);
+  const [routineSlots, setRoutineSlots] = useState<{ startTime: string; endTime: string }[]>([
+    { startTime: '08:00', endTime: '12:00' }
+  ]);
+  const [routineSaving, setRoutineSaving] = useState(false);
+
+  const weekdaysPT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+  const handleOpenNewRoutine = () => {
+    setEditingRoutine(null);
+    setRoutineLabel('');
+    setRoutineColor('#6366f1');
+    setRoutineDays([]);
+    setRoutineSlots([{ startTime: '08:00', endTime: '12:00' }]);
+    setRoutineModalOpen(true);
+  };
+
+  const handleOpenEditRoutine = (r: UserWeeklyRoutine) => {
+    setEditingRoutine(r);
+    setRoutineLabel(r.label);
+    setRoutineColor(r.color);
+    setRoutineDays(r.days);
+    setRoutineSlots(r.slots.map(s => ({ startTime: s.startTime, endTime: s.endTime })));
+    setRoutineModalOpen(true);
+  };
+
+  const handleAddSlot = () => {
+    setRoutineSlots(prev => [...prev, { startTime: '08:00', endTime: '12:00' }]);
+  };
+
+  const handleRemoveSlot = (idx: number) => {
+    setRoutineSlots(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSlotChange = (idx: number, field: 'startTime' | 'endTime', val: string) => {
+    setRoutineSlots(prev => prev.map((s, i) => i === idx ? { ...s, [field]: val } : s));
+  };
+
+  const toggleDay = (day: number) => {
+    setRoutineDays(prev =>
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day].sort()
+    );
+  };
+
+  const handleSaveRoutine = async () => {
+    if (!routineLabel.trim()) {
+      showError('Digite o nome da rotina.');
+      return;
+    }
+    if (routineDays.length === 0) {
+      showError('Selecione pelo menos um dia da semana.');
+      return;
+    }
+    if (routineSlots.length === 0) {
+      showError('Adicione pelo menos um intervalo de horário.');
+      return;
+    }
+    for (const slot of routineSlots) {
+      if (slot.startTime >= slot.endTime) {
+        showError(`O horário de início (${slot.startTime}) deve ser menor que o de término (${slot.endTime}).`);
+        return;
+      }
+    }
+
+    setRoutineSaving(true);
+    try {
+      const payload = {
+        label: routineLabel.trim(),
+        color: routineColor,
+        days: routineDays,
+        slots: routineSlots,
+      };
+      if (editingRoutine) {
+        await updateWeeklyRoutine(editingRoutine.id, payload);
+        showSuccess('Rotina atualizada!');
+      } else {
+        await createWeeklyRoutine(payload);
+        showSuccess('Rotina criada!');
+      }
+      setRoutineModalOpen(false);
+    } catch (err) {
+      showError((err as Error).message);
+    } finally {
+      setRoutineSaving(false);
+    }
+  };
+
+  const handleDeleteRoutineClick = async (id: string) => {
+    if (!window.confirm('Excluir esta rotina?')) return;
+    try {
+      await deleteWeeklyRoutine(id);
+      showSuccess('Rotina excluída!');
+    } catch (err) {
+      showError((err as Error).message);
+    }
+  };
 
   // Subscription details (only fetched when user is STUDENT)
   const [subDetails,     setSubDetails]     = useState<SubscriptionDetails | null>(null);
@@ -552,6 +655,249 @@ export default function Profile() {
           </form>
         </div>
       </div>
+
+      {/* Weekly Routine Section */}
+      <div style={{ marginTop: 64, borderTop: '1px solid var(--border-color)', paddingTop: 40 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <div>
+            <h3 className="academic-label" style={{ color: 'var(--text-secondary)', margin: 0 }}>Minha Rotina Semanal</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
+              Cadastre seus compromissos fixos recorrentes (faculdade, trabalho, igreja, etc.) para sinalizar seu tempo ocupado no calendário.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleOpenNewRoutine}
+            className="btn-oxblood"
+            style={{ width: 'auto', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, textTransform: 'uppercase', fontFamily: 'var(--font-label)', fontWeight: 600 }}
+          >
+            <Plus size={14} />
+            Nova Rotina
+          </button>
+        </div>
+
+        {weeklyRoutines.length === 0 ? (
+          <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>
+            Nenhuma rotina semanal cadastrada. Adicione seus horários ocupados!
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+            {weeklyRoutines.map(r => (
+              <div key={r.id} style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: r.color }} />
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 15 }}>{r.label}</span>
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, fontWeight: 500 }}>
+                    📅 {r.days.map(d => weekdaysPT[d]).join(', ')}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {r.slots.map((s, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
+                        <Clock size={12} />
+                        <span>{s.startTime} - {s.endTime}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16, borderTop: '1px solid var(--border-subtle)', paddingTop: 12 }}>
+                  <button
+                    onClick={() => handleOpenEditRoutine(r)}
+                    className="btn-ghost"
+                    style={{ padding: '4px 8px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-secondary)', cursor: 'pointer', border: 'none', background: 'transparent' }}
+                  >
+                    <Edit3 size={12} /> Editar
+                  </button>
+                  <button
+                    onClick={() => handleDeleteRoutineClick(r.id)}
+                    className="btn-ghost"
+                    style={{ padding: '4px 8px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, color: 'var(--color-danger)', cursor: 'pointer', border: 'none', background: 'transparent' }}
+                  >
+                    <Trash2 size={12} /> Excluir
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Routine Modal */}
+      {routineModalOpen && (
+        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setRoutineModalOpen(false); }}>
+          <div className="modal" style={{ maxWidth: 480 }}>
+            <div className="modal-header">
+              <h3 style={{ margin: 0, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+                {editingRoutine ? 'Editar Rotina' : 'Nova Rotina Semanal'}
+              </h3>
+              <button onClick={() => setRoutineModalOpen(false)} className="btn-ghost btn-icon">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {/* Nome */}
+              <div>
+                <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 4 }}>Nome da Rotina</label>
+                <input
+                  className="input-notebook"
+                  type="text"
+                  placeholder="Ex: Trabalho, Faculdade"
+                  value={routineLabel}
+                  onChange={e => setRoutineLabel(e.target.value)}
+                  maxLength={50}
+                  required
+                />
+              </div>
+
+              {/* Cor */}
+              <div>
+                <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 6 }}>Cor de Identificação</label>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  {['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'].map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setRoutineColor(c)}
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        backgroundColor: c,
+                        border: routineColor === c ? '2px solid var(--text-primary)' : '1px solid var(--border-color)',
+                        cursor: 'pointer',
+                        padding: 0,
+                        transform: routineColor === c ? 'scale(1.1)' : 'none',
+                        transition: 'transform 0.1s'
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Dias da Semana */}
+              <div>
+                <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 8 }}>Dias da Semana</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
+                  {weekdaysPT.map((dayLabel, idx) => {
+                    const active = routineDays.includes(idx);
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => toggleDay(idx)}
+                        style={{
+                          flex: 1,
+                          height: 36,
+                          borderRadius: '50%',
+                          border: active ? 'none' : '1px solid var(--border-color)',
+                          backgroundColor: active ? routineColor : 'transparent',
+                          color: active ? '#fff' : 'var(--text-secondary)',
+                          fontFamily: 'var(--font-label)',
+                          fontSize: 12,
+                          fontWeight: active ? 'bold' : 'normal',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {dayLabel[0]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Intervalos */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <label className="academic-label" style={{ fontSize: 10, margin: 0 }}>Intervalos de Horário</label>
+                  <button
+                    type="button"
+                    onClick={handleAddSlot}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--color-primary)',
+                      fontFamily: 'var(--font-label)',
+                      fontSize: 11,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      fontWeight: 600
+                    }}
+                  >
+                    <Plus size={12} /> Adicionar
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {routineSlots.map((slot, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>De</span>
+                        <input
+                          type="time"
+                          className="academic-input"
+                          style={{ fontSize: 13, height: 34, padding: '4px 8px' }}
+                          value={slot.startTime}
+                          onChange={e => handleSlotChange(idx, 'startTime', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Até</span>
+                        <input
+                          type="time"
+                          className="academic-input"
+                          style={{ fontSize: 13, height: 34, padding: '4px 8px' }}
+                          value={slot.endTime}
+                          onChange={e => handleSlotChange(idx, 'endTime', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSlot(idx)}
+                        disabled={routineSlots.length <= 1}
+                        className="btn-ghost btn-icon"
+                        style={{ opacity: routineSlots.length <= 1 ? 0.3 : 1 }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn-outline-custom"
+                onClick={() => setRoutineModalOpen(false)}
+                disabled={routineSaving}
+                style={{ flex: 1 }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-oxblood"
+                onClick={handleSaveRoutine}
+                disabled={routineSaving}
+                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12, textTransform: 'uppercase', fontFamily: 'var(--font-label)' }}
+              >
+                {routineSaving ? <RotateCw size={14} className="animate-spin" /> : <Check size={14} />}
+                Salvar Rotina
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Danger Zone */}
       <div style={{ marginTop: 64, borderTop: '1px solid var(--border-color)', paddingTop: 40 }}>
