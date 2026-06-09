@@ -19,9 +19,19 @@ export default function CalendarPage() {
     openCreateEventWithData, openEditEvent, handleSaveEvent, handleDeleteEvent, closeEventModal,
     quickCreateEvent, fetchCalendarEvents, subjects, spaces, currentUser,
     eventTypes, handleCreateEventType, handleUpdateEventType, handleDeleteEventType,
+    weeklyRoutines,
   } = useApp();
 
   const [tab, setTab] = useState<'month' | 'agenda'>('month');
+
+  const [showRoutine, setShowRoutine] = useState(() => {
+    return localStorage.getItem('calendar_show_routine') !== 'false';
+  });
+
+  const handleToggleRoutine = (val: boolean) => {
+    setShowRoutine(val);
+    localStorage.setItem('calendar_show_routine', String(val));
+  };
 
   // Quick-add state
   const [quickTitle,  setQuickTitle]  = useState('');
@@ -244,6 +254,15 @@ export default function CalendarPage() {
           </button>
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'var(--font-label)', fontWeight: 600, marginRight: 8 }}>
+            <input
+              type="checkbox"
+              checked={showRoutine}
+              onChange={e => handleToggleRoutine(e.target.checked)}
+              style={{ accentColor: 'var(--color-primary)' }}
+            />
+            MOSTRAR ROTINA
+          </label>
           <button className="btn-outline-custom" onClick={() => setTypesModalOpen(true)} style={{ gap: 8 }}>
             <Settings size={14} /> Tipos de Evento
           </button>
@@ -290,13 +309,30 @@ export default function CalendarPage() {
                 const isToday   = day.toDateString() === today.toDateString();
                 const isCurrent = day.getMonth() === month;
                 const dayEvts   = eventsForDay(day);
+                const dayRoutineSlots = showRoutine
+                  ? weeklyRoutines
+                      .filter(r => r.days.includes(day.getDay()))
+                      .flatMap(r => r.slots.map(s => ({
+                        isRoutine: true,
+                        id: `routine-${r.id}-${s.startTime}`,
+                        title: `${r.label} (${s.startTime})`,
+                        color: r.color,
+                      })))
+                  : [];
+                
+                const maxEventsToShow = 3;
+                const displayedEvts = dayEvts.slice(0, maxEventsToShow);
+                const remainingSlotsCount = maxEventsToShow - displayedEvts.length;
+                const displayedRoutines = remainingSlotsCount > 0 ? dayRoutineSlots.slice(0, remainingSlotsCount) : [];
+                const totalEventsCount = dayEvts.length + dayRoutineSlots.length;
+
                 return (
                   <div key={i}
                     className={`cal-cell ${isCurrent ? '' : 'other-month'} ${isToday ? 'today' : ''}`}
                     onClick={() => handleDayClick(day)}>
                     <div className="cal-cell-number">{day.getDate()}</div>
                     <div className="calendar-events-list">
-                      {dayEvts.slice(0, 3).map((ev, ei) => {
+                      {displayedEvts.map((ev, ei) => {
                         const meta = getEventMeta(ev.type, eventTypes);
                         return (
                           <div key={ei} className="calendar-event-item"
@@ -306,8 +342,26 @@ export default function CalendarPage() {
                           </div>
                         );
                       })}
+                      {displayedRoutines.map((r) => (
+                        <div key={r.id} className="calendar-event-item"
+                          style={{
+                            background: 'transparent',
+                            color: r.color,
+                            border: `1px dotted ${r.color}`,
+                            fontStyle: 'italic',
+                            opacity: 0.6,
+                            cursor: 'default',
+                          }}
+                          onClick={e => e.stopPropagation()}>
+                          {r.title}
+                        </div>
+                      ))}
                     </div>
-                    {dayEvts.length > 3 && <div style={{ fontSize: 10, color: 'var(--text-muted)', paddingLeft: 4 }}>+{dayEvts.length - 3} mais</div>}
+                    {totalEventsCount > maxEventsToShow && (
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)', paddingLeft: 4 }}>
+                        +{totalEventsCount - maxEventsToShow} mais
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -323,7 +377,15 @@ export default function CalendarPage() {
             </div>
           </>
         ) : (
-          <AgendaView events={calendarEvents} today={today} subjects={subjects} openEditEvent={openEditEvent} eventTypes={eventTypes} />
+          <AgendaView
+            events={calendarEvents}
+            today={today}
+            subjects={subjects}
+            openEditEvent={openEditEvent}
+            eventTypes={eventTypes}
+            showRoutine={showRoutine}
+            weeklyRoutines={weeklyRoutines}
+          />
         )}
       </div>
 
@@ -348,7 +410,18 @@ export default function CalendarPage() {
                   <label className="academic-label">{eventDraft.allDay ? 'Data' : 'Data de Início'}</label>
                   <input type={eventDraft.allDay ? 'date' : 'datetime-local'} className="academic-input" style={{ fontFamily: 'var(--font-label)', fontSize: 14 }}
                     value={eventDraft.allDay ? eventDraft.startAt.split('T')[0] : eventDraft.startAt}
-                    onChange={e => setEventDraft(d => ({ ...d, startAt: eventDraft.allDay ? e.target.value + 'T00:00' : e.target.value }))}
+                    onChange={e => {
+                      const newStartAt = eventDraft.allDay ? e.target.value + 'T00:00' : e.target.value;
+                      setEventDraft(d => {
+                        const patch: any = { startAt: newStartAt };
+                        if (d.endAt) {
+                          const newDatePart = newStartAt.split('T')[0];
+                          const oldTimePart = d.endAt.split('T')[1] || '10:00';
+                          patch.endAt = `${newDatePart}T${oldTimePart}`;
+                        }
+                        return { ...d, ...patch };
+                      });
+                    }}
                     required />
                 </div>
 
@@ -399,8 +472,16 @@ export default function CalendarPage() {
                     {!eventDraft.allDay && (
                       <div style={{ gridColumn: 'span 12', marginBottom: 20 }}>
                         <label className="academic-label">Horário de término (opcional)</label>
-                        <input type="datetime-local" className="academic-input" style={{ fontFamily: 'var(--font-label)', fontSize: 14 }}
-                          value={eventDraft.endAt} onChange={e => setEventDraft(d => ({ ...d, endAt: e.target.value }))} />
+                        <input type="time" className="academic-input" style={{ fontFamily: 'var(--font-label)', fontSize: 14 }}
+                          value={eventDraft.endAt ? (eventDraft.endAt.split('T')[1] || '') : ''}
+                          onChange={e => {
+                            const newEndTime = e.target.value;
+                            setEventDraft(d => {
+                              if (!newEndTime) return { ...d, endAt: '' };
+                              const datePart = d.startAt.split('T')[0];
+                              return { ...d, endAt: `${datePart}T${newEndTime}` };
+                            });
+                          }} />
                       </div>
                     )}
                     <div style={{ gridColumn: 'span 6', marginBottom: 20 }}>
@@ -632,20 +713,71 @@ export default function CalendarPage() {
   );
 }
 
+interface AgendaItem {
+  id: string;
+  title: string;
+  timeLabel: string;
+  sortTime: string;
+  color: string;
+  isRoutine: boolean;
+  subjectName?: string;
+  typeLabel: string;
+  event?: any;
+}
+
 function AgendaView({
-  events, today, subjects, openEditEvent, eventTypes,
+  events, today, subjects, openEditEvent, eventTypes, showRoutine, weeklyRoutines,
 }: {
   events: ReturnType<typeof useApp>['calendarEvents'];
   today: Date;
   subjects: ReturnType<typeof useApp>['subjects'];
   openEditEvent: ReturnType<typeof useApp>['openEditEvent'];
   eventTypes: ReturnType<typeof useApp>['eventTypes'];
+  showRoutine: boolean;
+  weeklyRoutines: ReturnType<typeof useApp>['weeklyRoutines'];
 }) {
-  const agendaDays: { date: Date; events: typeof events }[] = [];
+  const agendaDays: { date: Date; items: AgendaItem[] }[] = [];
   for (let i = 0; i < 30; i++) {
     const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
     const evts = events.filter(ev => eventOccursOn(ev, d));
-    if (evts.length) agendaDays.push({ date: d, events: evts });
+
+    const realItems: AgendaItem[] = evts.map(ev => {
+      const meta = getEventMeta(ev.type, eventTypes);
+      const subj = subjects.find(s => s.id === ev.subjectId);
+      const timeLabel = formatEventTime(ev);
+      const sortTime = ev.allDay ? '00:00' : (ev.startAt.split('T')[1] || '00:00');
+      return {
+        id: ev.id,
+        title: ev.title,
+        timeLabel,
+        sortTime,
+        color: meta.color,
+        isRoutine: false,
+        subjectName: subj?.name,
+        typeLabel: meta.label,
+        event: ev,
+      };
+    });
+
+    const routineItems: AgendaItem[] = showRoutine
+      ? weeklyRoutines
+          .filter(r => r.days.includes(d.getDay()))
+          .flatMap(r => r.slots.map(s => {
+            const timeLabel = `${s.startTime} – ${s.endTime}`;
+            return {
+              id: `routine-${r.id}-${s.startTime}`,
+              title: r.label,
+              timeLabel,
+              sortTime: s.startTime,
+              color: r.color,
+              isRoutine: true,
+              typeLabel: 'Rotina',
+            };
+          }))
+      : [];
+
+    const allItems = [...realItems, ...routineItems].sort((a, b) => a.sortTime.localeCompare(b.sortTime));
+    if (allItems.length) agendaDays.push({ date: d, items: allItems });
   }
 
   if (!agendaDays.length) {
@@ -666,7 +798,7 @@ function AgendaView({
 
   return (
     <div style={{ maxWidth: 768, margin: '0 auto', padding: '12px 0' }}>
-      {agendaDays.map(({ date, events: dayEvts }) => {
+      {agendaDays.map(({ date, items }) => {
         return (
           <div key={date.toDateString()} style={{ marginBottom: 32 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 12, borderBottom: '1px solid var(--border-color)', paddingBottom: 6 }}>
@@ -678,38 +810,53 @@ function AgendaView({
               </span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {dayEvts.map(ev => {
-                const meta = getEventMeta(ev.type, eventTypes);
-                const subj = subjects.find(s => s.id === ev.subjectId);
+              {items.map(item => {
                 return (
-                  <div key={ev.id} onClick={() => openEditEvent(ev)}
+                  <div key={item.id} onClick={item.isRoutine ? undefined : () => openEditEvent(item.event)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       padding: '12px 16px',
                       borderBottom: '1px solid var(--border-subtle)',
-                      cursor: 'pointer',
+                      cursor: item.isRoutine ? 'default' : 'pointer',
                       transition: 'background-color var(--transition)',
+                      opacity: item.isRoutine ? 0.6 : 1,
+                      fontStyle: item.isRoutine ? 'italic' : 'normal',
                     }}
-                    className="agenda-event-row"
-                    onMouseOver={e => e.currentTarget.style.backgroundColor = 'var(--bg-surface)'}
-                    onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                    className={item.isRoutine ? '' : 'agenda-event-row'}
+                    onMouseOver={item.isRoutine ? undefined : e => e.currentTarget.style.backgroundColor = 'var(--bg-surface)'}
+                    onMouseOut={item.isRoutine ? undefined : e => e.currentTarget.style.backgroundColor = 'transparent'}>
                     <div style={{ width: 80, fontFamily: 'var(--font-label)', fontSize: 13, color: 'var(--text-secondary)' }}>
-                      {formatEventTime(ev)}
+                      {item.timeLabel}
                     </div>
-                    <div style={{ width: 12, height: 12, borderRadius: '50%', border: `2px solid ${meta.color}`, marginRight: 16, flexShrink: 0, backgroundColor: `${meta.color}22` }}></div>
+                    <div style={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: '50%',
+                      border: item.isRoutine ? `1px dotted ${item.color}` : `2px solid ${item.color}`,
+                      marginRight: 16,
+                      flexShrink: 0,
+                      backgroundColor: item.isRoutine ? 'transparent' : `${item.color}22`
+                    }}></div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
-                        {ev.title}
+                        {item.title}
                       </p>
-                      {subj && (
+                      {item.subjectName && (
                         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                          {subj.name}
+                          {item.subjectName}
                         </span>
                       )}
                     </div>
-                    <span className="chip-event" style={{ borderColor: meta.color, color: meta.color, backgroundColor: `${meta.color}12`, borderStyle: 'solid', borderWidth: '1px', margin: 0 }}>
-                      {meta.label}
+                    <span className="chip-event" style={{
+                      borderColor: item.color,
+                      color: item.color,
+                      backgroundColor: item.isRoutine ? 'transparent' : `${item.color}12`,
+                      borderStyle: item.isRoutine ? 'dotted' : 'solid',
+                      borderWidth: '1px',
+                      margin: 0
+                    }}>
+                      {item.typeLabel}
                     </span>
                   </div>
                 );
