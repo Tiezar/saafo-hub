@@ -246,4 +246,26 @@ npm run test:cov      # Relatório de cobertura
 
 ---
 
+## 12. O que funciona (Funcionalidades Operacionais)
+
+*   **Cadastro e Autenticação:** Fluxo completo de criação de conta, login convencional com JWT, suporte a OAuth 2.0 e controle de planos e faturamento integrado ao gateway Asaas.
+*   **Gerenciamento de Matérias e Tópicos:** Criação e categorização de disciplinas com cores personalizadas para organizar o plano de estudo.
+*   **Geração Automatizada de Flashcards por IA:** Extração automática de perguntas e respostas a partir de textos digitados ou de arquivos anexados (PDFs e Imagens de até 50MB) através da API do Google Gemini Pro.
+*   **Player de Flashcards com SM-2:** Execução e controle de revisões utilizando o algoritmo SuperMemo-2, com suporte completo a atalhos físicos de teclado (Barra de Espaço para revelar, números de 1 a 5 para notas).
+*   **Simulado de Provas por IA:** Geração dinâmica de simulados acadêmicos (questões discursivas ou objetivas) com correção automatizada pela IA e notas explicativas.
+*   **Calendário Acadêmico:** Grade visual para agendamento de sessões de estudo, integrada com controle visual de rotina semanal.
+*   **Disparo de Alertas e Lembretes:** Integração de alertas automáticos enviados via WhatsApp (Evolution API v3) e E-mail (Resend API) para notificar o estudante sobre revisões pendentes.
+*   **Timer Pomodoro:** Widget lateral interativo com seleção de som ambiente (chuva, ruído branco, cafeteria, etc.) para apoiar a técnica de foco.
+
+---
+
+## 13. O que ainda pode melhorar (Evoluções Futuras)
+
+*   **Aplicativo Mobile e Offline:** Conversão da interface frontend para um Progressive Web App (PWA) habilitando o modo offline com sincronização em segundo plano via Service Workers.
+*   **Gamificação Acadêmica:** Criação de rankings de pontuação semanais baseados na consistência das revisões (streak), conquistas com badges e compartilhamento de progresso com colegas.
+*   **Suporte a Modelos Locais de IA:** Habilitação de conectores para modelos de linguagem rodando localmente (via Ollama) no backend para diminuir custos operacionais de chamadas externas de API.
+*   **Integração Nativa LMS:** Conexão direta com sistemas de gestão de aprendizagem (como Moodle ou Google Classroom) para importar automaticamente o calendário de provas e materiais didáticos das aulas.
+
+---
+
 *Desenvolvido pela equipe Front-Enzos para a Hackathon IFRO ADS 2026.*
