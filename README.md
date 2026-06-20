@@ -195,7 +195,7 @@ npm run test:cov      # Relatório de cobertura
 
 ---
 
-## 11. Arquitetura MTC (Exigência Acadêmica)
+## 11. Arquitetura MTC (Exigência da Disciplina de Programação II)
 
 A modelagem de dados e responsabilidades da aplicação se alinha conceitualmente ao padrão **MTC (Model-Template-Controller)**:
 
@@ -205,4 +205,4 @@ A modelagem de dados e responsabilidades da aplicação se alinha conceitualment
 
 ---
 
-*Desenvolvido pela equipe Front-Enzos para a Hackathon de Programação II.*
+*Desenvolvido pela equipe Front-Enzos para a Hackathon IFRO ADS 2026.*
