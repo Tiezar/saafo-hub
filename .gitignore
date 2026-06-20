@@ -39,3 +39,18 @@ generated/prisma
 saafo-design/
 .agents/
 docs/
+
+# Hackathon / Academic Planning & Deliverable files (not for GitHub)
+findings.md
+progress.md
+task_plan.md
+ux-polish-plan.md
+roteiro_preenchido.md
+documento_final.md
+ProgramacaoII_Hackathon_SAAFOHUB.pdf
+preview_reminder_email.html
+preview_verification_email.html
+
+# Local Dev helper scripts
+backend/prisma/create-test-user.ts
+backend/prisma/seed-test-data.ts
