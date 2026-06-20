@@ -18,7 +18,7 @@ O SAAFO HUB é uma plataforma integrada de suporte acadêmico desenvolvida para 
     *   **Matrícula:** `2025105100022`
     *   **E-mail:** i.malher@estudante.ifro.edu.br
 3.  **Ruan Jhefferson Moura Galdino**
-    *   **Matrícula:** `2025105100015`
+    *   **Matrícula:** `2025105100017`
     *   **E-mail:** ruan.galdino@estudante.ifro.edu.br
 4.  **Paulo Cesar da Silva Marrane**
     *   **Matrícula:** `2025105100015`
