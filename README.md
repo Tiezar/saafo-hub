@@ -48,7 +48,7 @@ O SAAFO HUB unifica e potencializa o ambiente de estudo em uma plataforma intuit
 A aplicação encontra-se implantada em ambiente de produção e está totalmente operacional:
 
 *   **Link de Acesso (Frontend):** [https://saafo-dev.tiezar.pro](https://saafo-dev.tiezar.pro)
-*   **Link da API (Backend):** [https://saafo-api.tiezar.pro](https://saafo-api.tiezar.pro)
+*   **Link da API (Backend):** [https://saafo-dev-api.tiezar.pro](https://saafo-dev-api.tiezar.pro)
 
 ### Instruções para Avaliação do Sistema
 
