@@ -47,14 +47,14 @@ O SAAFO HUB unifica e potencializa o ambiente de estudo em uma plataforma intuit
 
 A aplicação encontra-se implantada em ambiente de produção e está totalmente operacional:
 
-*   **Link de Acesso (Frontend):** [https://saafo.tiezar.pro](https://saafo.tiezar.pro)
+*   **Link de Acesso (Frontend):** [https://saafo-dev.tiezar.pro](https://saafo-dev.tiezar.pro)
 *   **Link da API (Backend):** [https://saafo-api.tiezar.pro](https://saafo-api.tiezar.pro)
 
 ### Instruções para Avaliação do Sistema
 
 Para avaliar o MVP sem a necessidade de instalação local, siga os passos abaixo:
 
-1.  **Acesso ao portal:** Entre no link do frontend: [https://saafo.tiezar.pro](https://saafo.tiezar.pro).
+1.  **Acesso ao portal:** Entre no link do frontend: [https://saafo-dev.tiezar.pro](https://saafo-dev.tiezar.pro).
 2.  **Credenciais de Acesso:**
     *   Cadastre uma nova conta clicando em **Registrar** ou faça login de forma rápida usando o botão **Google OAuth**.
     *   Alternativamente, utilize a credencial de teste homologada no banco de dados:
