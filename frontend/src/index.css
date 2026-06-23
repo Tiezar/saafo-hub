@@ -775,7 +775,7 @@ textarea.form-input { resize: vertical; }
 
   /* Main content: full width + top padding for hamburger + bottom navigation clearance */
   .app-main {
-    padding: 16px 16px 120px;
+    padding: 16px 16px 180px;
     width: 100%;
   }
   .main-content { padding: var(--sp-5); }
@@ -798,7 +798,7 @@ textarea.form-input { resize: vertical; }
 }
 
 @media (max-width: 480px) {
-  .app-main { padding: 12px 12px 120px; }
+  .app-main { padding: 12px 12px 180px; }
 
   /* Buttons: ensure minimum tap target */
   .btn-primary, .btn-secondary, .btn-oxblood, .btn-outline-custom {
