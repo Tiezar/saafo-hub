@@ -38,6 +38,8 @@ export interface GeminiGenerateOptions {
   theme?: string;
   count?: number;
   existingCards?: { front: string }[];
+  subjectName?: string;
+  topicName?: string;
 }
 
 const INLINE_SIZE_LIMIT = 5 * 1024 * 1024; // 5 MB — use Files API above this
@@ -92,10 +94,15 @@ export class GeminiService {
       ? `\n\nCARDS JÁ EXISTENTES NO TÓPICO (NÃO repita perguntas iguais ou muito similares a estas):\n${options.existingCards.map((c, i) => `${i + 1}. ${c.front}`).join('\n')}`
       : '';
 
+    const subjectContext = options.subjectName ? `Matéria: "${options.subjectName}"` : '';
+    const topicContext = options.topicName ? `Tópico de Estudo: "${options.topicName}"` : '';
+    const contextHeader = [subjectContext, topicContext].filter(Boolean).join(' | ');
+    const contextStr = contextHeader ? `CONTEXTO DE ESTUDO: ${contextHeader}\n\n` : '';
+
     const userTextPart = {
       text: options.text
-        ? `Analise o seguinte conteúdo de estudos e gere flashcards:${themeContext}${countInstruction}${dedupeInstruction}\n\n${options.text}`
-        : `Analise o conteúdo enviado e gere flashcards objetivos.${themeContext}${countInstruction}${dedupeInstruction}`,
+        ? `${contextStr}Analise o seguinte conteúdo de estudos e gere flashcards:${themeContext}${countInstruction}${dedupeInstruction}\n\n${options.text}`
+        : `${contextStr}Analise o conteúdo enviado e gere flashcards objetivos.${themeContext}${countInstruction}${dedupeInstruction}`,
     };
 
     const payload = {

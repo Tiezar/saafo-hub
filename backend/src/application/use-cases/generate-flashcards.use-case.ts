@@ -50,6 +50,8 @@ export class GenerateFlashcardsUseCase {
       theme: input.theme,
       count: input.count,
       existingCards: existingCards.map((c) => ({ front: c.front })),
+      subjectName: subject.name,
+      topicName: topic.name,
     });
 
     if (!generated.length) {
