@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Sparkles, RotateCw, CheckCircle, Upload, FileText,
-  Image as ImageIcon, Type, Trash2, Check, X, Pencil,
+  Image as ImageIcon, Type, Trash2, Check, X, Pencil, Info,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { API_URL } from '../lib/constants';
@@ -95,6 +95,7 @@ export default function AIGenerator() {
   const [genStep,    setGenStep]    = useState('');
   const [preview,    setPreview]    = useState<PreviewCard[] | null>(null);
   const [saving,     setSaving]     = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
   const generate = useCallback(async () => {
@@ -181,14 +182,24 @@ export default function AIGenerator() {
     <div className="page">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Gerar Flashcards com IA</h1>
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Gerar Flashcards com IA
+            <button
+              type="button"
+              onClick={() => setShowInfoModal(true)}
+              style={{ cursor: 'pointer', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', background: 'none', border: 'none' }}
+              title="Como funciona a geração com IA"
+            >
+              <Info size={18} />
+            </button>
+          </h1>
           <p className="page-subtitle">Transforme qualquer conteúdo em cards de revisão com IA</p>
         </div>
       </div>
 
       {/* ── Step 1: Destino ─────────────────────────────────────────────── */}
-      <div className="glass-card" style={{ marginBottom: 16, padding: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+      <div className="glass-card" style={{ marginBottom: 12, padding: isMobile ? '16px' : '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: isMobile ? 12 : 20 }}>
           <StepBadge n={1} done={step1Done} />
           <span style={{ fontWeight: 700, fontSize: 15 }}>Onde salvar os cards?</span>
         </div>
@@ -298,8 +309,8 @@ export default function AIGenerator() {
       </div>
 
       {/* ── Step 2: Conteúdo ─────────────────────────────────────────────── */}
-      <div className="glass-card" style={{ marginBottom: 16, padding: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div className="glass-card" style={{ marginBottom: 12, padding: isMobile ? '16px' : '24px' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between', gap: isMobile ? 12 : 20, marginBottom: isMobile ? 16 : 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <StepBadge n={2} done={step2Done} />
             <span style={{ fontWeight: 700, fontSize: 15 }}>Conteúdo para estudar</span>
@@ -354,6 +365,7 @@ export default function AIGenerator() {
           <div className="form-group">
             <div
               className={`ai-dropzone${aiDragOver ? ' dragover' : ''}${aiFile ? ' has-file' : ''}`}
+              style={{ minHeight: isMobile ? '120px' : '160px', padding: isMobile ? '16px' : 'var(--sp-10) var(--sp-6)' }}
               onDragOver={e => { e.preventDefault(); setAiDragOver(true); }}
               onDragLeave={() => setAiDragOver(false)}
               onDrop={e => { e.preventDefault(); setAiDragOver(false); const f = e.dataTransfer.files[0]; if (f) setAiFile(f); }}
@@ -363,7 +375,7 @@ export default function AIGenerator() {
                   {aiFile.type.startsWith('image/')
                     ? <ImageIcon size={32} style={{ color: 'var(--color-primary)', marginBottom: 8 }} />
                     : <FileText size={32} style={{ color: 'var(--color-primary)', marginBottom: 8 }} />}
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{aiFile.name}</div>
+                  <div style={{ fontWeight: 600, fontSize: 14, wordBreak: 'break-all', padding: '0 8px' }}>{aiFile.name}</div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
                     {(aiFile.size / 1024 / 1024).toFixed(2)} MB · {aiFile.type}
                   </div>
@@ -451,7 +463,7 @@ export default function AIGenerator() {
             {preview.map((card, i) => (
               <div key={i} className="glass-card"
                 style={{
-                  padding: '16px 18px',
+                  padding: isMobile ? '12px 14px' : '16px 18px',
                   border: `1px solid ${editIdx === i ? 'var(--color-primary)' : card.selected ? 'rgba(73,75,214,0.35)' : 'var(--border-color)'}`,
                   background: card.selected ? 'rgba(73,75,214,0.04)' : 'var(--bg-surface)',
                   opacity: card.selected ? 1 : 0.55,
@@ -532,7 +544,7 @@ export default function AIGenerator() {
           </div>
 
           {/* Save bar */}
-          <div className="glass-card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div className="glass-card" style={{ padding: isMobile ? '12px 16px' : '16px 20px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <button className="btn-primary" style={{ width: 'auto', padding: '11px 28px' }}
               onClick={handleSave} disabled={saving || selectedCount === 0}>
               {saving
@@ -549,6 +561,48 @@ export default function AIGenerator() {
               style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 13, marginLeft: 'auto' }}>
               Descartar prévia
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Info Modal for AI Generator */}
+      {showInfoModal && (
+        <div className="modal-overlay" onClick={() => setShowInfoModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 460 }}>
+            <div className="modal-header">
+              <span className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Sparkles size={16} style={{ color: 'var(--color-primary)' }} />
+                Gerador de Cards com IA
+              </span>
+              <button onClick={() => setShowInfoModal(false)} style={{ cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body" style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--text-secondary)' }}>
+              <p style={{ marginBottom: 12 }}>
+                O Gerador Inteligente extrai automaticamente os conceitos mais importantes do seu material e cria flashcards estruturados para estudo (pergunta na frente, resposta e explicação no verso).
+              </p>
+              <h4 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginTop: 14, marginBottom: 6 }}>Como Usar:</h4>
+              <ul style={{ paddingLeft: 20, marginBottom: 12 }}>
+                <li style={{ marginBottom: 6 }}>
+                  <strong>Texto:</strong> Cole resumos, anotações, transcrições ou artigos no campo. Para um resultado ótimo, recomendamos enviar um texto com pelo menos 80 palavras.
+                </li>
+                <li style={{ marginBottom: 6 }}>
+                  <strong>Arquivo:</strong> Envie PDFs ou Imagens de livros, cadernos manuais ou apostilas. A IA fará a leitura óptica do conteúdo do documento.
+                </li>
+                <li style={{ marginBottom: 6 }}>
+                  <strong>Foque nisso (Direcionamento):</strong> Use este campo para focar a criação em pontos específicos do material (ex: "focar em datas históricas" ou "ignorar a introdução").
+                </li>
+                <li style={{ marginBottom: 6 }}>
+                  <strong>Quantidade:</strong> Escolha quantos cards (5, 10, 15 ou 20) deseja gerar em um único lote.
+                </li>
+              </ul>
+            </div>
+            <div className="modal-footer" style={{ justifyContent: 'flex-end' }}>
+              <button className="btn-primary" style={{ padding: '8px 20px' }} onClick={() => setShowInfoModal(false)}>
+                Entendido
+              </button>
+            </div>
           </div>
         </div>
       )}
