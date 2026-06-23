@@ -42,7 +42,16 @@ export default function Auth() {
       showError(msgs[authError] ?? 'Erro na verificação.');
       window.history.replaceState({}, '', window.location.pathname);
     }
-  }, [showSuccess, showError]);
+  }, [showSuccess, showError, setPlanSelectionOpen]);
+
+  // Handle register mode from landing page CTA
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode');
+    if (mode === 'register') {
+      setIsRegistering(true);
+    }
+  }, []);
 
   const handleGoogleSuccess = useCallback(async (cr: CredentialResponse) => {
     if (!cr.credential) return;

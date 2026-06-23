@@ -11,6 +11,7 @@ import CheckoutModal from './components/CheckoutModal';
 import PlanSelectionModal from './components/PlanSelectionModal';
 
 import Auth        from './pages/Auth';
+import LandingPage from './pages/LandingPage';
 import Dashboard   from './pages/Dashboard';
 import Materials   from './pages/Materials';
 import MyCards     from './pages/MyCards';
@@ -56,23 +57,28 @@ function AppShell() {
     );
   }
 
-  if (!token) return <Auth />;
-
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<AppLayout />}>
-          <Route index        element={<Dashboard />}   />
-          <Route path="materiais" element={<Materials />}  />
-          <Route path="cards"     element={<MyCards />}    />
-          <Route path="ia"        element={<AIGenerator />}/>
-          <Route path="calendario" element={<CalendarPage />}/>
-          <Route path="pomodoro"  element={<Pomodoro />}   />
+        {/* Rotas Públicas */}
+        <Route path="/" element={token ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
+        <Route path="/auth" element={token ? <Navigate to="/dashboard" replace /> : <Auth />} />
+
+        {/* Rotas Privadas (dentro do Layout com Sidebar) */}
+        <Route element={token ? <AppLayout /> : <Navigate to="/auth" replace />}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="materiais" element={<Materials />} />
+          <Route path="cards"     element={<MyCards />} />
+          <Route path="ia"        element={<AIGenerator />} />
+          <Route path="calendario" element={<CalendarPage />} />
+          <Route path="pomodoro"  element={<Pomodoro />} />
           <Route path="provas"    element={<ExamSession />} />
-          <Route path="perfil"    element={<Profile />}    />
-          <Route path="admin"     element={<Admin />}      />
-          <Route path="*"         element={<Navigate to="/" replace />} />
+          <Route path="perfil"    element={<Profile />} />
+          <Route path="admin"     element={<Admin />} />
         </Route>
+
+        {/* Redirecionamento de Fallback */}
+        <Route path="*" element={<Navigate to={token ? "/dashboard" : "/"} replace />} />
       </Routes>
       <UpdateBanner visible={updateAvailable} />
       <UpgradeModal />

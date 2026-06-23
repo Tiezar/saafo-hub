@@ -475,7 +475,7 @@ export default function AppLayout() {
       {/* Mobile Bottom Navigation Bar */}
       {isMobile && (
         <nav className="mobile-bottom-nav">
-          <NavLink to="/" end className={({ isActive }) => `mobile-bottom-nav-item${isActive ? ' active' : ''}`}>
+          <NavLink to="/dashboard" end className={({ isActive }) => `mobile-bottom-nav-item${isActive ? ' active' : ''}`}>
             <LayoutDashboard size={20} />
             <span>Dash</span>
           </NavLink>

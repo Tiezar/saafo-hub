@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, BookOpen, Layers, Sparkles, Calendar,
-  Timer, Trophy, User as UserIcon, LogOut, Sun, Moon,
+  Timer, Trophy, LogOut, Sun, Moon,
   ChevronDown, Plus, Trash2, History, Shield,
 } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
@@ -99,7 +99,7 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
       <div className="sidebar-nav">
         {/* Dashboard Link (Always Top Level) */}
         <NavLink
-          to="/"
+          to="/dashboard"
           end
           className="sidebar-nav-item"
           onClick={onClose}
