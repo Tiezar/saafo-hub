@@ -74,7 +74,7 @@ export default function AppLayout() {
       container.id = 'yt-hidden-player';
       container.style.position = 'fixed';
       container.style.right = '24px';
-      container.style.zIndex = '9999';
+      container.style.zIndex = '300';
       container.style.borderRadius = '8px';
       container.style.overflow = 'hidden';
       container.style.boxShadow = '0 4px 20px rgba(0,0,0,0.25)';
@@ -91,51 +91,62 @@ export default function AppLayout() {
       document.body.appendChild(container);
     }
 
+    // Initialize YouTube player
+    if (ytPlayerRef.current) return;
+
     ytPlayerRef.current = new (window as any).YT.Player('yt-hidden-player', {
-      height: '100%',
-      width: '100%',
+      width: '0',
+      height: '0',
       videoId: selectedTrack.youtubeId,
       playerVars: {
-        autoplay: 0,
+        autoplay: playingAudio ? 1 : 0,
         controls: 0,
         disablekb: 1,
         fs: 0,
         modestbranding: 1,
         rel: 0,
         showinfo: 0,
+        iv_load_policy: 3,
+        origin: window.location.origin,
       },
       events: {
-        onReady: (e: any) => {
-          e.target.setVolume(volume);
-          if (playingAudio) e.target.playVideo();
+        onReady: () => {
+          if (playingAudio) {
+            ytPlayerRef.current.playVideo();
+          }
         },
         onStateChange: (e: any) => {
           if (e.data === (window as any).YT.PlayerState.ENDED) {
-            e.target.playVideo();
+            // Auto loop or stop
+            ytPlayerRef.current.seekTo(0);
+            ytPlayerRef.current.playVideo();
           }
-        },
-      },
+        }
+      }
     });
-  }, [ytReady, selectedTrack]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedTrack]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Synchronize expanded state styling on the document.body container
+  // Resize and position the hidden iframe dynamically if player is expanded
   useEffect(() => {
     const el = document.getElementById('yt-hidden-player');
     if (!el) return;
-    if (isMobile) {
-      el.style.bottom = '0px';
-      el.style.width = '0px';
-      el.style.height = '0px';
-      el.style.opacity = '0';
-      el.style.pointerEvents = 'none';
-    } else if (selectedTrack && playerExpanded) {
-      el.style.bottom = '136px'; // 24px bottom + 100px pill height + 12px gap
+
+    if (selectedTrack && !isMobile && playerExpanded) {
       el.style.width = '280px';
-      el.style.height = '157px';
+      el.style.height = '157px'; // 16:9 ratio
+      el.style.opacity = '1';
+      el.style.pointerEvents = 'auto';
+      el.style.bottom = '180px'; // sit above expanded control pill
+    } else if (selectedTrack && playerExpanded) {
+      // Mobile expanded state: show mini-player just above bottom bar
+      el.style.width = '100vw';
+      el.style.height = '120px';
+      el.style.left = '0';
+      el.style.right = '0';
+      el.style.bottom = '112px';
       el.style.opacity = '1';
       el.style.pointerEvents = 'auto';
     } else {
-      el.style.bottom = '84px'; // 24px bottom + 48px pill height + 12px gap
       el.style.width = '0px';
       el.style.height = '0px';
       el.style.opacity = '0';
@@ -143,7 +154,7 @@ export default function AppLayout() {
     }
   }, [playerExpanded, selectedTrack, isMobile]);
 
-  // Handle play/pause changes reactively
+  // Handle play/pause commands
   useEffect(() => {
     if (ytPlayerRef.current && typeof ytPlayerRef.current.getPlayerState === 'function') {
       if (playingAudio) {
@@ -154,7 +165,7 @@ export default function AppLayout() {
     }
   }, [playingAudio, ytPlayerRef]);
 
-  // Handle volume changes reactively
+  // Handle volume updates
   useEffect(() => {
     if (ytPlayerRef.current && typeof ytPlayerRef.current.setVolume === 'function') {
       ytPlayerRef.current.setVolume(volume);
@@ -199,7 +210,7 @@ export default function AppLayout() {
             bottom: isMobile ? '56px' : '24px',
             right: isMobile ? '0' : '24px',
             left: isMobile ? '0' : 'auto',
-            zIndex: 10000,
+            zIndex: 300,
             width: isMobile ? '100%' : '280px',
             background: 'var(--bg-surface)',
             border: isMobile ? 'none' : '1px solid var(--border-color)',
