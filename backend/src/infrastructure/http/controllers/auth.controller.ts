@@ -13,6 +13,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import * as crypto from 'crypto';
@@ -170,6 +171,7 @@ export class AuthController {
   // ── Resend verification ─────────────────────────────────────────────────
 
   @Post('resend-verification')
+  @Throttle({ default: { limit: 3, ttl: 3_600_000 } })
   async resendVerification(@Body() body: { email: string }) {
     if (!body.email) throw new BadRequestException('E-mail é obrigatório');
 

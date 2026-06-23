@@ -93,6 +93,7 @@ model Subject {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
+  @@index([userId])
   @@map("subjects")
 }
 
@@ -131,6 +132,7 @@ model CalendarEvent {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
+  @@index([userId, startAt])
   @@map("calendar_events")
 }
 
@@ -158,6 +160,7 @@ model Topic {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([subjectId])
   @@map("topics")
 }
 
@@ -169,17 +172,20 @@ model Card {
   topic       Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
   userId      String
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   // SM-2 Spaced Repetition Fields
   repetitions Int          @default(0)
   interval    Int          @default(0)
   easeFactor  Float        @default(2.5)
   nextReview  DateTime     @default(now())
-  
+
   reviews     CardReview[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
+  @@index([topicId])
+  @@index([userId, nextReview])
+  @@index([userId, createdAt])
   @@map("cards")
 }
 
@@ -193,6 +199,7 @@ model StudySession {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
+  @@index([userId])
   @@map("study_sessions")
 }
 
@@ -205,6 +212,8 @@ model CardReview {
   rating     Int
   reviewedAt DateTime     @default(now())
 
+  @@index([cardId, reviewedAt])
+  @@index([sessionId])
   @@map("card_reviews")
 }
 
@@ -222,6 +231,7 @@ model ExamRecord {
   createdAt  DateTime      @default(now())
   attempts   ExamAttempt[]
 
+  @@index([userId])
   @@map("exam_records")
 }
 

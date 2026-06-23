@@ -18,10 +18,18 @@ export class LoggingInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
     const { method, url, body, ip } = request;
 
-    // Obfuscate sensitive body fields (like password or google oauth token)
     const sanitizedBody = { ...body };
-    if (sanitizedBody.password) sanitizedBody.password = '***';
-    if (sanitizedBody.token) sanitizedBody.token = '***';
+    for (const f of ['password', 'token', 'number', 'ccv', 'cpfCnpj', 'postalCode']) {
+      if (sanitizedBody[f]) sanitizedBody[f] = '***';
+    }
+    if (sanitizedBody.card && typeof sanitizedBody.card === 'object') {
+      sanitizedBody.card = { ...sanitizedBody.card };
+      for (const f of ['number', 'ccv']) {
+        if (sanitizedBody.card[f]) sanitizedBody.card[f] = '***';
+      }
+    }
+    if (typeof sanitizedBody.text === 'string' && sanitizedBody.text.length > 200)
+      sanitizedBody.text = sanitizedBody.text.slice(0, 200) + `…[${sanitizedBody.text.length}]`;
 
     const startTime = Date.now();
 

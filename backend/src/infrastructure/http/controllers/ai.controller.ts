@@ -152,20 +152,28 @@ export class AiController {
   @Post('quiz')
   @Throttle({ default: { limit: 20, ttl: 604_800_000 } }) // 20 exams per week
   async generateQuiz(@Request() req: any, @Body() body: GenerateQuizDto) {
-    const allCards: { front: string; back: string }[] = [];
-
-    for (const topicId of body.topicIds) {
-      const topic = await this.topicRepository.findById(topicId);
+    const topics = await Promise.all(
+      body.topicIds.map((id) => this.topicRepository.findById(id)),
+    );
+    for (const [i, topic] of topics.entries()) {
       if (!topic)
-        throw new NotFoundException(`Tópico ${topicId} não encontrado.`);
+        throw new NotFoundException(`Tópico ${body.topicIds[i]} não encontrado.`);
+    }
 
-      const subject = await this.subjectRepository.findById(topic.subjectId);
+    const subjects = await Promise.all(
+      topics.map((t) => this.subjectRepository.findById(t!.subjectId)),
+    );
+    for (const subject of subjects) {
       if (!subject || subject.userId !== req.user.id)
         throw new ForbiddenException('Acesso não autorizado ao tópico.');
-
-      const cards = await this.cardRepository.findByTopicId(topicId);
-      allCards.push(...cards.map((c) => ({ front: c.front, back: c.back })));
     }
+
+    const cardArrays = await Promise.all(
+      body.topicIds.map((id) => this.cardRepository.findByTopicId(id)),
+    );
+    const allCards = cardArrays
+      .flat()
+      .map((c) => ({ front: c.front, back: c.back }));
 
     if (allCards.length < 3) {
       throw new BadRequestException(
@@ -303,10 +311,9 @@ export class AiController {
     }
     const cardsToSave = body.cards.slice(0, remaining);
 
-    const created: Card[] = [];
-    for (const card of cardsToSave) {
-      created.push(
-        await this.cardRepository.create({
+    const created = await Promise.all(
+      cardsToSave.map((card) =>
+        this.cardRepository.create({
           front: card.front,
           back: card.back,
           topicId: body.topicId,
@@ -316,8 +323,8 @@ export class AiController {
           easeFactor: 2.5,
           nextReview: new Date(),
         }),
-      );
-    }
+      ),
+    );
     return created;
   }
 

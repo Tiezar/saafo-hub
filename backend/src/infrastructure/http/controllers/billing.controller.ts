@@ -239,7 +239,7 @@ export class BillingController {
     @Headers('asaas-access-token') token: string,
   ) {
     const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN;
-    if (webhookToken && token !== webhookToken)
+    if (!webhookToken || token !== webhookToken)
       throw new UnauthorizedException('Webhook token inválido.');
 
     const event: string = body.event ?? '';
