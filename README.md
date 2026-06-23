@@ -241,8 +241,8 @@ npm run test:cov      # Relatório de cobertura
 
 ## 11. Apresentação e Pitch do Projeto
 
-*   **Link dos Slides da Apresentação:** `[Link para os slides de apresentação]`
-*   **Link do Vídeo de Pitch (YouTube / Drive):** `[Link para o vídeo de pitch]`
+*   **Link dos Slides da Apresentação:** `https://canva.link/mvjykcqaso3ko4j`
+*   **Link do Vídeo de Pitch (YouTube / Drive):** `https://www.youtube.com/watch?v=yCeWKauPEh8`
 
 ---
 
