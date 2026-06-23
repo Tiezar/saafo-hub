@@ -95,8 +95,8 @@ export default function AppLayout() {
     if (ytPlayerRef.current) return;
 
     ytPlayerRef.current = new (window as any).YT.Player('yt-hidden-player', {
-      width: '0',
-      height: '0',
+      width: '1',
+      height: '1',
       videoId: selectedTrack.youtubeId,
       playerVars: {
         autoplay: playingAudio ? 1 : 0,
@@ -143,14 +143,17 @@ export default function AppLayout() {
       el.style.height = '120px';
       el.style.left = '0';
       el.style.right = '0';
-      el.style.bottom = '112px';
+      el.style.bottom = '152px'; // sit exactly above expanded pill (56px + 96px)
       el.style.opacity = '1';
       el.style.pointerEvents = 'auto';
     } else {
-      el.style.width = '0px';
-      el.style.height = '0px';
-      el.style.opacity = '0';
+      el.style.width = '1px';
+      el.style.height = '1px';
+      el.style.opacity = '0.01';
       el.style.pointerEvents = 'none';
+      if (isMobile) {
+        el.style.left = '-100px'; // offscreen on mobile
+      }
     }
   }, [playerExpanded, selectedTrack, isMobile]);
 
@@ -219,56 +222,117 @@ export default function AppLayout() {
             boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.1)',
             overflow: 'hidden',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            height: isMobile ? '44px' : (playerExpanded ? '100px' : '48px'),
+            height: isMobile ? (playerExpanded ? '96px' : '44px') : (playerExpanded ? '100px' : '48px'),
             display: 'flex',
-            flexDirection: isMobile ? 'row' : 'column',
-            justifyContent: isMobile ? 'space-between' : 'flex-start',
-            alignItems: isMobile ? 'center' : 'stretch',
-            padding: isMobile ? '0 16px' : '0',
+            flexDirection: 'column',
+            justifyContent: 'flex-start',
+            alignItems: 'stretch',
+            padding: 0,
           }}
         >
           {isMobile ? (
             // Mobile Compact Player Layout
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', flex: 1 }}>
-                <Music 
-                  size={14} 
-                  style={{ 
-                    color: playingAudio ? 'var(--color-primary)' : 'var(--text-muted)',
-                    flexShrink: 0,
-                    animation: playingAudio ? 'spin 8s linear infinite' : 'none',
-                  }} 
-                />
-                <span 
-                  style={{ 
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {selectedTrack.name}
-                </span>
+              <div 
+                style={{ 
+                  height: '44px',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  padding: '0 16px',
+                  width: '100%',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setPlayerExpanded(!playerExpanded)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', flex: 1 }}>
+                  <Music 
+                    size={14} 
+                    style={{ 
+                      color: playingAudio ? 'var(--color-primary)' : 'var(--text-muted)',
+                      flexShrink: 0,
+                      animation: playingAudio ? 'spin 8s linear infinite' : 'none',
+                    }} 
+                  />
+                  <span 
+                    style={{ 
+                      fontFamily: 'var(--font-display)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {selectedTrack.name}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={e => e.stopPropagation()}>
+                  <button
+                    onClick={togglePlayAudio}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--text-primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '6px',
+                    }}
+                  >
+                    {playingAudio ? <Pause size={14} /> : <Play size={14} />}
+                  </button>
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <button
-                  onClick={togglePlayAudio}
+
+              {/* Mobile Volume Slider (visible when expanded) */}
+              <div
+                style={{
+                  height: playerExpanded ? '52px' : '0px',
+                  opacity: playerExpanded ? 1 : 0,
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '0 16px',
+                  background: 'var(--bg-surface)',
+                  borderTop: '1px solid var(--border-color)',
+                  width: '100%',
+                }}
+                onClick={e => e.stopPropagation()}
+              >
+                {volume === 0 ? (
+                  <VolumeX 
+                    size={14} 
+                    style={{ color: 'var(--text-muted)', cursor: 'pointer' }}
+                    onClick={() => setVolume(50)}
+                  />
+                ) : (
+                  <Volume2 
+                    size={14} 
+                    style={{ color: 'var(--color-primary)', cursor: 'pointer' }}
+                    onClick={() => setVolume(0)}
+                  />
+                )}
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={volume}
+                  onChange={e => setVolume(Number(e.target.value))}
                   style={{
-                    background: 'none',
-                    border: 'none',
+                    flex: 1,
+                    height: '4px',
+                    accentColor: 'var(--color-primary)',
                     cursor: 'pointer',
-                    color: 'var(--text-primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '6px',
                   }}
-                >
-                  {playingAudio ? <Pause size={14} /> : <Play size={14} />}
-                </button>
+                />
+                <span style={{ fontSize: '10px', fontFamily: 'var(--font-label)', color: 'var(--text-muted)', width: '28px', textAlign: 'right' }}>
+                  {volume}%
+                </span>
               </div>
             </>
           ) : (

@@ -66,6 +66,13 @@ export default function Pomodoro() {
   const [seconds,      setSeconds]       = useState(25 * 60);
   const [round,        setRound]         = useState(1);
   const [sessions,     setSessions]      = useState(0);
+  const [dailyGoal,    setDailyGoal]     = useState(() => Number(localStorage.getItem('pomo_daily_goal') || '8'));
+
+  const handleGoalChange = (newGoal: number) => {
+    const val = Math.max(1, Math.min(24, newGoal));
+    setDailyGoal(val);
+    localStorage.setItem('pomo_daily_goal', String(val));
+  };
 
   // Durations — stored in localStorage, applied to timer when not running
   const [focusMin,  setFocusMinState]  = useState(() => Number(localStorage.getItem('pomo_focus') ?? 25));
@@ -504,26 +511,72 @@ export default function Pomodoro() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Metric 1 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
                 <div>
                   <span className="academic-label" style={{ fontSize: 9, display: 'block', marginBottom: 4 }}>Sessões concluídas</span>
-                  <span style={{ fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-label)' }}>
-                    {sessions} <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>/ 8</span>
+                  <span style={{ fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-label)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    {sessions}
+                    <span style={{ fontSize: 13, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      /
+                      <input
+                        type="number"
+                        min="1"
+                        max="24"
+                        value={dailyGoal}
+                        onChange={e => handleGoalChange(Number(e.target.value))}
+                        style={{
+                          width: '38px',
+                          background: 'var(--bg-surface)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '4px',
+                          padding: '1px 2px',
+                          fontSize: '11px',
+                          color: 'var(--text-primary)',
+                          fontFamily: 'var(--font-label)',
+                          textAlign: 'center',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                        title="Alterar meta diária"
+                      />
+                      (meta)
+                    </span>
+                    {sessions >= dailyGoal && (
+                      <span style={{ 
+                        fontSize: 10, 
+                        color: 'var(--color-success)', 
+                        fontWeight: 700, 
+                        backgroundColor: 'var(--bg-surface)', 
+                        border: '1px solid var(--border-color)',
+                        padding: '2px 6px', 
+                        borderRadius: 4 
+                      }}>
+                        Meta Concluída! 🎉
+                      </span>
+                    )}
                   </span>
                 </div>
                 {/* Visual blocks */}
-                <div style={{ display: 'flex', gap: 4 }}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
-                    <div
-                      key={s}
-                      style={{
-                        width: 10,
-                        height: 20,
-                        backgroundColor: s <= sessions ? activeColor : 'var(--border-color)',
-                        borderRadius: '2px'
-                      }}
-                    />
-                  ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', maxWidth: '120px', justifyContent: 'flex-end' }}>
+                    {Array.from({ length: dailyGoal }, (_, i) => i + 1).map(s => (
+                      <div
+                        key={s}
+                        style={{
+                          width: 8,
+                          height: 16,
+                          backgroundColor: s <= sessions ? activeColor : 'var(--border-color)',
+                          borderRadius: '2px',
+                          transition: 'background-color 0.3s ease'
+                        }}
+                      />
+                    ))}
+                  </div>
+                  {sessions > dailyGoal && (
+                    <span style={{ fontSize: 12, fontWeight: 700, color: activeColor }}>
+                      +{sessions - dailyGoal}
+                    </span>
+                  )}
                 </div>
               </div>
               <div style={{ height: 1, backgroundColor: 'var(--border-subtle)' }} />
