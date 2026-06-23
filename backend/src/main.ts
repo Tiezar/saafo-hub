@@ -28,13 +28,22 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { logger });
 
   // 1. Configuração do Helmet para HTTP Headers de Segurança
-  app.use(helmet());
+  app.use(
+    helmet({
+      hsts: {
+        maxAge: 31_536_000,       // 1 ano
+        includeSubDomains: true,  // cobre subdomínios
+        preload: true,            // elegível para a HSTS preload list do Chrome
+      },
+    }),
+  );
   app.use(cookieParser());
 
   // 2. Configuração de CORS Restrito
   app.enableCors({
     origin: process.env.FRONTEND_URL!.split(',').map((o) => o.trim()),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
 
