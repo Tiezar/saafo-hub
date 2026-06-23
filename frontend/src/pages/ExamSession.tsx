@@ -3,9 +3,10 @@ import {
   Trophy, RotateCw, CheckCircle, X, SkipForward,
   GraduationCap, PenLine, Trash2, Clock, Star,
   Zap, Target, FileText, Play, Timer, AlertTriangle,
-  ListChecks, ChevronDown,
+  ListChecks, ChevronDown, Info,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import { useIsMobile } from '../hooks/useIsMobile';
 import type { QuizQuestion, ExamRecord } from '../types';
 import './ExamSession.css';
 import CustomSelect from '../components/CustomSelect';
@@ -107,10 +108,12 @@ interface EssayAnswer { userAnswer: string; evaluation: EssayEvaluation | null; 
 type Screen = 'setup' | 'session' | 'results';
 
 export default function ExamSession() {
+  const isMobile = useIsMobile();
   const { apiCall, visibleTopics, subjects, cards, showError } = useApp();
 
   // ── Screen
   const [screen, setScreen] = useState<Screen>('setup');
+  const [infoModalProfile, setInfoModalProfile] = useState<ProfileId | null>(null);
 
   // ── Creation
   const [subjectId,  setSubjectId]  = useState('');
@@ -381,7 +384,7 @@ export default function ExamSession() {
         </div>
 
         {/* ── Creation form ─────────────────────────────────────────── */}
-        <div className="glass-card" style={{ marginBottom: 32, padding: '28px 28px 24px' }}>
+        <div className="glass-card" style={{ marginBottom: 24, padding: isMobile ? '16px' : '28px 28px 24px' }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
             <GraduationCap size={16} style={{ color: 'var(--color-primary)' }} /> Gerar Nova Prova
           </h2>
@@ -444,16 +447,40 @@ export default function ExamSession() {
           {/* Profile picker */}
           <div className="form-group">
             <label className="form-label">Formato da prova</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 10 }}>
               {PROFILES.map(p => (
                 <button key={p.id} type="button" onClick={() => setProfileId(p.id)}
                   style={{
+                    position: 'relative',
                     padding: '14px 16px', borderRadius: 12, textAlign: 'left', cursor: 'pointer',
                     border: `2px solid ${profileId === p.id ? p.color : 'var(--border-color)'}`,
                     background: profileId === p.id ? `${p.color}14` : 'var(--bg-surface)',
                     transition: 'var(--transition)',
                   }}>
-                  <div style={{ color: profileId === p.id ? p.color : 'var(--text-muted)', marginBottom: 8 }}>{p.icon}</div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInfoModalProfile(p.id);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: 12,
+                      right: 12,
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 2,
+                    }}
+                    title="Ver detalhes do formato"
+                  >
+                    <Info size={16} />
+                  </button>
+                  <div style={{ color: profileId === p.id ? p.color : 'var(--text-muted)', marginBottom: 8, marginRight: 24 }}>{p.icon}</div>
                   <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 3, color: profileId === p.id ? p.color : 'var(--text-primary)' }}>{p.name}</div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>{p.desc}</div>
                 </button>
@@ -530,7 +557,7 @@ export default function ExamSession() {
               const isOpen   = startingId === record.id;
 
               return (
-                <div key={record.id} className="glass-card" style={{ padding: '16px 20px' }}>
+                <div key={record.id} className="glass-card" style={{ padding: isMobile ? '12px 14px' : '16px 20px' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
@@ -618,6 +645,55 @@ export default function ExamSession() {
                 </div>
               );
             })}
+          </div>
+        )}
+        {/* Info Modal for Exam Formats */}
+        {infoModalProfile && (
+          <div className="modal-overlay" onClick={() => setInfoModalProfile(null)}>
+            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 440 }}>
+              <div className="modal-header">
+                <span className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {PROFILES.find(p => p.id === infoModalProfile)?.icon}
+                  {PROFILES.find(p => p.id === infoModalProfile)?.name}
+                </span>
+                <button onClick={() => setInfoModalProfile(null)} style={{ cursor: 'pointer', color: 'var(--text-muted)' }}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="modal-body" style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--text-secondary)' }}>
+                {infoModalProfile === 'quick' && (
+                  <p>
+                    <strong>Revisão Rápida:</strong> Questões curtas e diretas de múltipla escolha. 
+                    Foca em testar se você reconhece os conceitos básicos e definições dos seus flashcards. 
+                    Ideal para uma memorização e fixação imediata sem demandar muito tempo de leitura.
+                  </p>
+                )}
+                {infoModalProfile === 'applied' && (
+                  <p>
+                    <strong>Prova Aplicada:</strong> Insere um pequeno cenário prático ou exemplo de uso cotidiano seguido de uma pergunta objetiva. 
+                    Avalia se você realmente compreendeu a matéria e sabe como colocar os conceitos teóricos dos flashcards em prática no dia a dia.
+                  </p>
+                )}
+                {infoModalProfile === 'contextual' && (
+                  <p>
+                    <strong>Situação-Problema:</strong> Questões mais complexas que apresentam textos base extensos, gráficos ou análises detalhadas. 
+                    Simula de forma fiel o estilo de provas como ENEM, vestibulares e grandes concursos públicos, exigindo maior interpretação e raciocínio lógico.
+                  </p>
+                )}
+                {infoModalProfile === 'essay' && (
+                  <p>
+                    <strong>Dissertativo:</strong> Questões discursivas de resposta aberta por extenso. 
+                    Nossa Inteligência Artificial lerá o que você escreveu e comparará detalhadamente com a resposta esperada dos seus flashcards. 
+                    Ela retornará uma nota percentual (0 a 100%) e um relatório completo com o que você acertou e sugestões do que faltou mencionar.
+                  </p>
+                )}
+              </div>
+              <div className="modal-footer" style={{ justifyContent: 'flex-end' }}>
+                <button className="btn-primary" style={{ padding: '8px 20px' }} onClick={() => setInfoModalProfile(null)}>
+                  Entendido
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
