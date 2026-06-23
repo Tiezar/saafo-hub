@@ -1192,3 +1192,15 @@ input[type="time"] {
   border-left: 1px solid var(--border-color);
   margin-bottom: 8px;
 }
+
+/* Garantir espaço no scroll do mobile para que o player e a barra inferior não cubram conteúdo */
+@media (max-width: 768px) {
+  .app-main {
+    padding-bottom: calc(160px + env(safe-area-inset-bottom)) !important;
+  }
+}
+@media (max-width: 480px) {
+  .app-main {
+    padding-bottom: calc(160px + env(safe-area-inset-bottom)) !important;
+  }
+}
