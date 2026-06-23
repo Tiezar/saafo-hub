@@ -121,6 +121,7 @@ export default function ExamSession() {
   const [profileId,  setProfileId]  = useState<ProfileId>('quick');
   const [count,      setCount]      = useState(10);
   const [creating,   setCreating]   = useState(false);
+  const [customName, setCustomName] = useState('');
 
   // ── History
   const [examHistory,  setExamHistory]  = useState<ExamRecord[]>([]);
@@ -245,6 +246,8 @@ export default function ExamSession() {
         ? `${subj?.name ?? ''} › ${topicNames[0]}`
         : `${subj?.name ?? ''} — ${topicNames.length} tópicos`;
 
+      const finalName = customName.trim() || scopeLabel;
+
       let questionsData: unknown;
 
       if (!isEssay) {
@@ -263,8 +266,8 @@ export default function ExamSession() {
         body: JSON.stringify({
           topicIds,
           topicId: topicIds[0] ?? null,
-          topicName: topicNames[0] ?? scopeLabel,
-          scopeLabel,
+          topicName: topicNames[0] ?? finalName,
+          scopeLabel: finalName,
           profileId,
           mode: profile.mode,
           questions: questionsData,
@@ -277,9 +280,10 @@ export default function ExamSession() {
       }
 
       setExamHistory(prev => [saved, ...prev]);
+      setCustomName('');
     } catch (e) { showError((e as Error).message); }
     finally { setCreating(false); }
-  }, [topicIds, profileId, count, subjectId, profile, subjects, visibleTopics, cards, allSelected, isEssay, apiCall, showError]);
+  }, [topicIds, profileId, count, subjectId, profile, subjects, visibleTopics, cards, allSelected, isEssay, apiCall, showError, customName]);
 
   const openStart = (id: string) => {
     setStartingId(startingId === id ? null : id);
@@ -507,6 +511,21 @@ export default function ExamSession() {
               <span>{minCount}</span>
               <span>{maxCount}</span>
             </div>
+          </div>
+
+          {/* Custom Name */}
+          <div className="form-group">
+            <label className="form-label">
+              Nome Personalizado da Prova <span style={{ color: 'var(--text-muted)', fontWeight: 'normal', fontSize: 11 }}>(Opcional)</span>
+            </label>
+            <input 
+              type="text" 
+              className="form-input" 
+              placeholder="Ex: Simulado Especial, Prova de Recuperação..." 
+              value={customName} 
+              onChange={e => setCustomName(e.target.value)}
+              style={{ width: '100%' }}
+            />
           </div>
 
           {/* Validation hints */}
