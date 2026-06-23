@@ -34,8 +34,27 @@ export default function App() {
 }
 
 function AppShell() {
-  const { token, checkoutOpen, setCheckoutOpen, planSelectionOpen, setPlanSelectionOpen } = useApp();
+  const { token, initializing, checkoutOpen, setCheckoutOpen, planSelectionOpen, setPlanSelectionOpen } = useApp();
   const updateAvailable = useVersionCheck();
+
+  if (initializing) {
+    return (
+      <div style={{
+        height: '100vh',
+        width: '100vw',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg-base)',
+        color: 'var(--text-primary)'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="logo-icon" style={{ width: 48, height: 48, margin: '0 auto 16px', fontSize: 24, display: 'grid', placeItems: 'center', animation: 'pulse 1.5s infinite ease-in-out' }}>S</div>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Carregando SAAFO HUB...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!token) return <Auth />;
 

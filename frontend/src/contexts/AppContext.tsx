@@ -17,6 +17,7 @@ interface AppContextValue {
   // Auth
   token: string | null;
   currentUser: User | null;
+  initializing: boolean;
   emailPending: string | null;
   setEmailPending: (v: string | null) => void;
   handleLogout: () => void;
@@ -167,6 +168,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Auth ──────────────────────────────────────────────────────────────────
   const [token,       setToken]       = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [initializing,setInitializing]= useState(true);
   const [emailPending,setEmailPending]= useState<string | null>(null);
 
   // Ref keeps access token readable inside async callbacks without stale closure issues
@@ -810,7 +812,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   // On mount: attempt to restore session from httpOnly refresh token cookie
-  useEffect(() => { tryRefresh(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        await tryRefresh();
+      } catch {
+        // silent
+      } finally {
+        setInitializing(false);
+      }
+    };
+    initAuth();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { if (token && !currentUser) fetchUserProfile(); }, [token, currentUser, fetchUserProfile]);
   useEffect(() => {
@@ -844,7 +857,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ─────────────────────────────────────────────────────────────────────────
 
   const value: AppContextValue = {
-    token, currentUser, emailPending, setEmailPending,
+    token, currentUser, initializing, emailPending, setEmailPending,
     handleLogout, storeAuth, apiCall,
     theme, toggleTheme,
     toasts, showSuccess, showError, dismissToast,
