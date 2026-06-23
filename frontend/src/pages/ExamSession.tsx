@@ -65,7 +65,7 @@ const TIME_OPTIONS: { label: string; value: number | null }[] = [
   { label: 'Livre',  value: null },
 ];
 
-const LETTERS = ['A', 'B', 'C', 'D'];
+const LETTERS = ['A', 'B', 'C', 'D', 'E'];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -235,6 +235,7 @@ export default function ExamSession() {
   const createExam = useCallback(async () => {
     if (topicIds.length === 0) return;
     setCreating(true);
+    const startTime = Date.now();
     try {
       const subj = subjects.find(s => s.id === subjectId);
       const topicNames = topicIds.map(tid => visibleTopics.find(t => t.id === tid)?.name ?? '').filter(Boolean);
@@ -269,6 +270,11 @@ export default function ExamSession() {
           questions: questionsData,
         }),
       }) as ExamRecord;
+
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 1500) {
+        await new Promise(resolve => setTimeout(resolve, 1500 - elapsed));
+      }
 
       setExamHistory(prev => [saved, ...prev]);
     } catch (e) { showError((e as Error).message); }

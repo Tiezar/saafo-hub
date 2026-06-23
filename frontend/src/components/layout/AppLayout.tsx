@@ -210,10 +210,10 @@ export default function AppLayout() {
           className={`floating-player-pill ${playerExpanded ? 'expanded' : 'collapsed'}`}
           style={{
             position: 'fixed',
-            bottom: isMobile ? '56px' : '24px',
+            bottom: isMobile ? 'calc(56px + env(safe-area-inset-bottom))' : '24px',
             right: isMobile ? '0' : '24px',
             left: isMobile ? '0' : 'auto',
-            zIndex: 300,
+            zIndex: sidebarOpen ? 10 : 300,
             width: isMobile ? '100%' : '280px',
             background: 'var(--bg-surface)',
             border: isMobile ? 'none' : '1px solid var(--border-color)',
@@ -228,6 +228,8 @@ export default function AppLayout() {
             justifyContent: 'flex-start',
             alignItems: 'stretch',
             padding: 0,
+            opacity: sidebarOpen && isMobile ? 0 : 1,
+            pointerEvents: sidebarOpen && isMobile ? 'none' : 'auto',
           }}
         >
           {isMobile ? (
