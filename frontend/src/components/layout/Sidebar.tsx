@@ -15,7 +15,7 @@ interface Props {
 const ESTUDOS_ITEMS = [
   { to: '/materiais', icon: BookOpen,        label: 'Matérias' },
   { to: '/cards',     icon: Layers,          label: 'Meus Cards' },
-  { to: '/ia',        icon: Sparkles,        label: 'Gerador IA' },
+  { to: '/ia',        icon: Sparkles,        label: 'Gerador de Cards' },
   { to: '/provas',    icon: Trophy,          label: 'Provas' },
 ];
 
