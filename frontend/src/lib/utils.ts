@@ -16,13 +16,16 @@ export function getCalendarDays(year: number, month: number): Date[] {
 }
 
 export function eventOccursOn(event: CalendarEvent, date: Date): boolean {
+  if (!event || !event.startAt) return false;
   const eventStart = new Date(event.startAt);
+  if (isNaN(eventStart.getTime())) return false;
   const dateOnly   = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const startOnly  = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
-  if (event.recurrenceDays.length === 0) return dateOnly.getTime() === startOnly.getTime();
+  const recDays = event.recurrenceDays || [];
+  if (recDays.length === 0) return dateOnly.getTime() === startOnly.getTime();
   if (dateOnly < startOnly) return false;
   if (event.recurrenceEndsAt && dateOnly > new Date(event.recurrenceEndsAt)) return false;
-  return event.recurrenceDays.includes(date.getDay());
+  return recDays.includes(date.getDay());
 }
 
 export function toDatetimeLocal(iso: string) {

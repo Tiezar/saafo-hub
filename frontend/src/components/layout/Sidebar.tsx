@@ -12,15 +12,16 @@ interface Props {
   onClose?: () => void;
 }
 
-const NAV_ITEMS = [
-  { to: '/',          icon: LayoutDashboard, label: 'Dashboard' },
+const ESTUDOS_ITEMS = [
   { to: '/materiais', icon: BookOpen,        label: 'Matérias' },
   { to: '/cards',     icon: Layers,          label: 'Meus Cards' },
   { to: '/ia',        icon: Sparkles,        label: 'Gerador IA' },
+  { to: '/provas',    icon: Trophy,          label: 'Provas' },
+];
+
+const PROD_ITEMS = [
   { to: '/calendario',icon: Calendar,        label: 'Calendário'  },
   { to: '/pomodoro',  icon: Timer,           label: 'Pomodoro'    },
-  { to: '/provas',    icon: Trophy,          label: 'Provas' },
-  { to: '/perfil',    icon: UserIcon,        label: 'Perfil'      },
 ];
 
 const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS ?? '')
@@ -40,6 +41,8 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
   const showOnboardingDot = subjects.length === 0 && localStorage.getItem('onboarding_dismissed') !== '1';
 
   const [spacesOpen,   setSpacesOpen]   = React.useState(false);
+  const [estudosOpen,  setEstudosOpen]  = React.useState(true);
+  const [prodOpen,     setProdOpen]     = React.useState(true);
   const [spaceForm,    setSpaceForm]    = React.useState(false);
   const [newName,      setNewName]      = React.useState('');
   const [newColor,     setNewColor]     = React.useState('var(--color-primary)');
@@ -94,26 +97,79 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
 
       {/* Main Tabs */}
       <div className="sidebar-nav">
-        {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            className="sidebar-nav-item"
-            onClick={onClose}
-          >
-            <Icon size={18} />
-            <span>{label}</span>
-            {dueCount > 0 && (to === '/cards' || to === '/materiais') && (
-              <span style={{ marginLeft: 'auto', backgroundColor: 'var(--color-primary)', color: 'white', fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
-                {dueCount}
-              </span>
-            )}
-            {showOnboardingDot && to === '/materiais' && (
-              <span style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-primary)' }} />
-            )}
-          </NavLink>
-        ))}
+        {/* Dashboard Link (Always Top Level) */}
+        <NavLink
+          to="/"
+          end
+          className="sidebar-nav-item"
+          onClick={onClose}
+        >
+          <LayoutDashboard size={18} />
+          <span>Dashboard</span>
+        </NavLink>
+
+        {/* Estudos Section */}
+        <div className="sidebar-section">
+          <button className="sidebar-section-header" onClick={() => setEstudosOpen(o => !o)} style={{ marginBottom: estudosOpen ? 6 : 0 }}>
+            <span>Estudos</span>
+            <ChevronDown
+              size={12}
+              style={{ transform: estudosOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
+            />
+          </button>
+
+          {estudosOpen && (
+            <div className="sidebar-submenu-content">
+              {ESTUDOS_ITEMS.map(({ to, icon: Icon, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className="sidebar-nav-item"
+                  onClick={onClose}
+                >
+                  <Icon size={16} />
+                  <span>{label}</span>
+                  {dueCount > 0 && (to === '/cards' || to === '/materiais') && (
+                    <span style={{ marginLeft: 'auto', backgroundColor: 'var(--color-primary)', color: 'white', fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
+                      {dueCount}
+                    </span>
+                  )}
+                  {showOnboardingDot && to === '/materiais' && (
+                    <span style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-primary)' }} />
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Organização Section */}
+        <div className="sidebar-section">
+          <button className="sidebar-section-header" onClick={() => setProdOpen(o => !o)} style={{ marginBottom: prodOpen ? 6 : 0 }}>
+            <span>Organização</span>
+            <ChevronDown
+              size={12}
+              style={{ transform: prodOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
+            />
+          </button>
+
+          {prodOpen && (
+            <div className="sidebar-submenu-content">
+              {PROD_ITEMS.map(({ to, icon: Icon, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className="sidebar-nav-item"
+                  onClick={onClose}
+                >
+                  <Icon size={16} />
+                  <span>{label}</span>
+                </NavLink>
+              ))}
+            </div>
+          )}
+        </div>
+
 
         {/* Admin link — only visible to admins */}
         {isAdmin && (
@@ -191,15 +247,17 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
 
       {/* Footer */}
       <div className="sidebar-footer">
-        <div className="sidebar-user">
-          <div className="sidebar-user-avatar">
-            {(currentUser?.nickname ?? currentUser?.name ?? '?')[0].toUpperCase()}
+        <NavLink to="/perfil" onClick={onClose} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+          <div className="sidebar-user">
+            <div className="sidebar-user-avatar">
+              {(currentUser?.nickname ?? currentUser?.name ?? '?')[0].toUpperCase()}
+            </div>
+            <div className="sidebar-user-info">
+              <span className="sidebar-user-name">{currentUser?.nickname ?? currentUser?.name}</span>
+              <span className="sidebar-user-email">{currentUser?.email}</span>
+            </div>
           </div>
-          <div className="sidebar-user-info">
-            <span className="sidebar-user-name">{currentUser?.nickname ?? currentUser?.name}</span>
-            <span className="sidebar-user-email">{currentUser?.email}</span>
-          </div>
-        </div>
+        </NavLink>
 
         <div className="sidebar-actions">
           <button className="sidebar-icon-btn" onClick={toggleTheme} title="Alternar tema">

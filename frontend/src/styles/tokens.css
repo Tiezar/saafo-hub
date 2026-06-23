@@ -33,12 +33,12 @@
   --transition-slow: all 0.3s ease-in-out;
 
   /* LIGHT THEME — Marginália (Scholarly Paper) */
-  --bg-base:     #fff8f3;
-  --bg-deep:     #fff8f3;
-  --bg-surface:  #f8ecde;
+  --bg-base:     #fef2e4;
+  --bg-deep:     #fef2e4;
+  --bg-surface:  #f5e8d9;
   --bg-card:     #fef2e4;
-  --bg-card-high:#f2e6d8;
-  --bg-overlay:  #ece1d3;
+  --bg-card-high:#f2e5d6;
+  --bg-overlay:  #ece0d1;
 
   --text-primary:   #201b12;
   --text-secondary: #4b463f;
@@ -79,24 +79,24 @@
   --text-secondary: #cbc1b4;
   --text-muted:     #9b9286;
 
-  /* Accent Palette - Soft Coral/Oxblood */
-  --color-primary:        #fe807b;
-  --color-primary-text:   #73181b;
-  --color-primary-light:  #73181b;
-  --color-primary-dim:    #ffdad7;
-  --color-secondary:      #fe807b;
-  --color-secondary-dim:  #73181b;
-  --color-tertiary:       #b0cfa7;
-  --color-success:        #b0cfa7;
-  --color-danger:         #ffdad6;
+  /* Accent Palette - Rich Oxblood Red */
+  --color-primary:        #e24a46;
+  --color-primary-text:   #e24a46;
+  --color-primary-light:  #e24a46;
+  --color-primary-dim:    #b72c29;
+  --color-secondary:      #e24a46;
+  --color-secondary-dim:  #b72c29;
+  --color-tertiary:       #8cb885;
+  --color-success:        #8cb885;
+  --color-danger:         #f05252;
   --color-warning:        #ffd166;
 
   /* Hairline borders */
   --border-color:  #443f39;
   --border-subtle: #2c2824;
-  --border-active: #fe807b;
+  --border-active: #e24a46;
 
   --glow-primary: 0 0 0 1px #443f39;
-  --glow-active:  0 0 0 2px #fe807b;
-  --grad-primary: #fe807b;
+  --glow-active:  0 0 0 2px #e24a46;
+  --grad-primary: #e24a46;
 }

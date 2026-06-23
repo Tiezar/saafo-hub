@@ -4,6 +4,7 @@ import {
   ChevronDown, ChevronUp, Settings, Pencil, Trash2, Calendar,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { DAYS_PT_SHORT, MONTHS_PT, getEventMeta, REMINDER_PRESETS } from '../lib/constants';
 import { getCalendarDays, eventOccursOn, formatEventTime } from '../lib/utils';
 import { EventIcon, AVAILABLE_EVENT_ICONS } from '../components/EventIcon';
@@ -13,6 +14,7 @@ import CustomSelect from '../components/CustomSelect';
 
 
 export default function CalendarPage() {
+  const isMobile = useIsMobile();
   const {
     calendarEvents, calendarMonth, setCalendarMonth,
     eventModalOpen, eventDraft, setEventDraft, draftSaving,
@@ -127,8 +129,8 @@ export default function CalendarPage() {
   return (
     <div className="page" style={{ padding: 0 }}>
       {/* Quick Add Bar */}
-      <form onSubmit={handleQuickSubmit} className="hairline-b" style={{ backgroundColor: 'var(--bg-surface)', padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+      <form onSubmit={handleQuickSubmit} className="hairline-b calendar-quick-add-form">
+        <div className="calendar-quick-add-row">
           <div style={{ flex: 1, minWidth: 240 }}>
             <label className="academic-label">Novo Evento</label>
             <input
@@ -141,7 +143,7 @@ export default function CalendarPage() {
               onChange={e => setQuickTitle(e.target.value)}
             />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div className="calendar-quick-add-controls">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span className="academic-label" style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 0 }}>
                 <Clock size={14} /> Data:
@@ -186,20 +188,20 @@ export default function CalendarPage() {
                 );
               })}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderLeft: '1px solid var(--border-color)', paddingLeft: 16 }}>
+            <div className="calendar-quick-add-actions">
               <button
                 type="button"
                 onClick={handleMoreOptions}
                 style={{
                   fontSize: 12,
                   fontFamily: 'var(--font-label)',
+                  textUnderlineOffset: '4px',
+                  textDecoration: 'underline',
                   textTransform: 'uppercase',
                   color: 'var(--text-secondary)',
                   cursor: 'pointer',
                   background: 'none',
                   border: 'none',
-                  textDecoration: 'underline',
-                  textUnderlineOffset: '4px',
                 }}
               >
                 Mais opções
@@ -218,9 +220,22 @@ export default function CalendarPage() {
       </form>
 
       {/* Toolbar & Navigation */}
-      <div style={{ padding: '24px 24px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 300, color: 'var(--text-primary)', margin: 0 }}>
+      <div style={{
+        padding: isMobile ? '16px 16px 12px' : '24px 24px 16px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: isMobile ? 'stretch' : 'center',
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: 16
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: isMobile ? 12 : 20,
+          flexWrap: 'wrap',
+          justifyContent: isMobile ? 'space-between' : 'flex-start'
+        }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 24 : 32, fontWeight: 300, color: 'var(--text-primary)', margin: 0 }}>
             {MONTHS_PT[month]} {year}
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -249,56 +264,116 @@ export default function CalendarPage() {
               <ChevronRight size={20} />
             </button>
           </div>
-          <button className="btn-outline-custom" onClick={() => setCalendarMonth(new Date())}>
+          <button className="btn-outline-custom" onClick={() => setCalendarMonth(new Date())} style={{ padding: isMobile ? '6px 12px' : '8px 16px', fontSize: isMobile ? 11 : 12 }}>
             Hoje
           </button>
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'var(--font-label)', fontWeight: 600, marginRight: 8 }}>
-            <input
-              type="checkbox"
-              checked={showRoutine}
-              onChange={e => handleToggleRoutine(e.target.checked)}
-              style={{ accentColor: 'var(--color-primary)' }}
-            />
-            MOSTRAR ROTINA
-          </label>
-          <button className="btn-outline-custom" onClick={() => setTypesModalOpen(true)} style={{ gap: 8 }}>
-            <Settings size={14} /> Tipos de Evento
-          </button>
-          <div style={{ display: 'flex', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 3, backgroundColor: 'var(--bg-surface)' }}>
-            <button
-              onClick={() => setTab('month')}
-              style={{
-                padding: '6px 16px', borderRadius: 'var(--radius-sm)', fontSize: 13, cursor: 'pointer', transition: 'all 0.2s',
-                fontFamily: 'var(--font-body)',
-                backgroundColor: tab === 'month' ? 'var(--bg-card-high)' : 'transparent',
-                color: tab === 'month' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                boxShadow: 'none',
-                fontWeight: tab === 'month' ? 600 : 500,
-              }}
-            >
-              Mês
-            </button>
-            <button
-              onClick={() => setTab('agenda')}
-              style={{
-                padding: '6px 16px', borderRadius: 'var(--radius-sm)', fontSize: 13, cursor: 'pointer', transition: 'all 0.2s',
-                fontFamily: 'var(--font-body)',
-                backgroundColor: tab === 'agenda' ? 'var(--bg-card-high)' : 'transparent',
-                color: tab === 'agenda' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                boxShadow: 'none',
-                fontWeight: tab === 'agenda' ? 600 : 500,
-              }}
-            >
-              Agenda
-            </button>
-          </div>
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: 12,
+          alignItems: isMobile ? 'stretch' : 'center',
+          width: isMobile ? '100%' : 'auto'
+        }}>
+          {isMobile ? (
+            <>
+              {/* Row 1: Checkbox & Button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'var(--font-label)', fontWeight: 600 }}>
+                  <input
+                    type="checkbox"
+                    checked={showRoutine}
+                    onChange={e => handleToggleRoutine(e.target.checked)}
+                    style={{ accentColor: 'var(--color-primary)' }}
+                  />
+                  MOSTRAR ROTINA
+                </label>
+                <button className="btn-outline-custom" onClick={() => setTypesModalOpen(true)} style={{ gap: 8, padding: '6px 12px', fontSize: 11 }}>
+                  <Settings size={12} /> Tipos
+                </button>
+              </div>
+
+              {/* Row 2: Tabs Switcher */}
+              <div style={{ display: 'flex', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 3, backgroundColor: 'var(--bg-surface)', width: '100%' }}>
+                <button
+                  onClick={() => setTab('month')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 16px', borderRadius: 'var(--radius-sm)', fontSize: 13, cursor: 'pointer', transition: 'all 0.2s',
+                    fontFamily: 'var(--font-body)',
+                    backgroundColor: tab === 'month' ? 'var(--bg-card-high)' : 'transparent',
+                    color: tab === 'month' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    boxShadow: 'none',
+                    fontWeight: tab === 'month' ? 600 : 500,
+                  }}
+                >
+                  Mês
+                </button>
+                <button
+                  onClick={() => setTab('agenda')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 16px', borderRadius: 'var(--radius-sm)', fontSize: 13, cursor: 'pointer', transition: 'all 0.2s',
+                    fontFamily: 'var(--font-body)',
+                    backgroundColor: tab === 'agenda' ? 'var(--bg-card-high)' : 'transparent',
+                    color: tab === 'agenda' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    boxShadow: 'none',
+                    fontWeight: tab === 'agenda' ? 600 : 500,
+                  }}
+                >
+                  Agenda
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'var(--font-label)', fontWeight: 600, marginRight: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={showRoutine}
+                  onChange={e => handleToggleRoutine(e.target.checked)}
+                  style={{ accentColor: 'var(--color-primary)' }}
+                />
+                MOSTRAR ROTINA
+              </label>
+              <button className="btn-outline-custom" onClick={() => setTypesModalOpen(true)} style={{ gap: 8 }}>
+                <Settings size={14} /> Tipos de Evento
+              </button>
+              <div style={{ display: 'flex', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 3, backgroundColor: 'var(--bg-surface)' }}>
+                <button
+                  onClick={() => setTab('month')}
+                  style={{
+                    padding: '6px 16px', borderRadius: 'var(--radius-sm)', fontSize: 13, cursor: 'pointer', transition: 'all 0.2s',
+                    fontFamily: 'var(--font-body)',
+                    backgroundColor: tab === 'month' ? 'var(--bg-card-high)' : 'transparent',
+                    color: tab === 'month' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    boxShadow: 'none',
+                    fontWeight: tab === 'month' ? 600 : 500,
+                  }}
+                >
+                  Mês
+                </button>
+                <button
+                  onClick={() => setTab('agenda')}
+                  style={{
+                    padding: '6px 16px', borderRadius: 'var(--radius-sm)', fontSize: 13, cursor: 'pointer', transition: 'all 0.2s',
+                    fontFamily: 'var(--font-body)',
+                    backgroundColor: tab === 'agenda' ? 'var(--bg-card-high)' : 'transparent',
+                    color: tab === 'agenda' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    boxShadow: 'none',
+                    fontWeight: tab === 'agenda' ? 600 : 500,
+                  }}
+                >
+                  Agenda
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       {/* Main Grid View Area */}
-      <div style={{ padding: '0 24px 48px' }}>
+      <div style={{ padding: isMobile ? '0 12px 24px' : '0 24px 48px' }}>
         {tab === 'month' ? (
           <>
             <div className="cal-grid" style={{ borderBottom: 'none' }}>
@@ -328,7 +403,7 @@ export default function CalendarPage() {
 
                 return (
                   <div key={i}
-                    className={`cal-cell ${isCurrent ? '' : 'other-month'} ${isToday ? 'today' : ''}`}
+                    className={`cal-cell ${isCurrent ? '' : 'other-month'} ${isToday ? 'today' : ''} ${totalEventsCount > 0 ? 'has-events' : ''}`}
                     onClick={() => handleDayClick(day)}>
                     <div className="cal-cell-number">{day.getDate()}</div>
                     <div className="calendar-events-list">
@@ -741,14 +816,14 @@ function AgendaView({
     const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
     const evts = events.filter(ev => eventOccursOn(ev, d));
 
-    const realItems: AgendaItem[] = evts.map(ev => {
+    const realItems: AgendaItem[] = (evts || []).map(ev => {
       const meta = getEventMeta(ev.type, eventTypes);
-      const subj = subjects.find(s => s.id === ev.subjectId);
+      const subj = (subjects || []).find(s => s.id === ev.subjectId);
       const timeLabel = formatEventTime(ev);
-      const sortTime = ev.allDay ? '00:00' : (ev.startAt.split('T')[1] || '00:00');
+      const sortTime = ev.allDay ? '00:00' : (ev.startAt && typeof ev.startAt === 'string' && ev.startAt.includes('T') ? (ev.startAt.split('T')[1] || '00:00') : '00:00');
       return {
         id: ev.id,
-        title: ev.title,
+        title: ev.title || 'Sem título',
         timeLabel,
         sortTime,
         color: meta.color,
@@ -760,23 +835,23 @@ function AgendaView({
     });
 
     const routineItems: AgendaItem[] = showRoutine
-      ? weeklyRoutines
-          .filter(r => r.days.includes(d.getDay()))
-          .flatMap(r => r.slots.map(s => {
-            const timeLabel = `${s.startTime} – ${s.endTime}`;
+      ? (weeklyRoutines || [])
+          .filter(r => r && r.days && Array.isArray(r.days) && r.days.includes(d.getDay()))
+          .flatMap(r => (r.slots || []).map(s => {
+            const timeLabel = `${s.startTime || ''} – ${s.endTime || ''}`;
             return {
-              id: `routine-${r.id}-${s.startTime}`,
-              title: r.label,
+              id: `routine-${r.id}-${s.startTime || ''}`,
+              title: r.label || 'Rotina',
               timeLabel,
-              sortTime: s.startTime,
-              color: r.color,
+              sortTime: s.startTime || '00:00',
+              color: r.color || 'var(--color-primary)',
               isRoutine: true,
               typeLabel: 'Rotina',
             };
           }))
       : [];
 
-    const allItems = [...realItems, ...routineItems].sort((a, b) => a.sortTime.localeCompare(b.sortTime));
+    const allItems = [...realItems, ...routineItems].sort((a, b) => (a.sortTime || '').localeCompare(b.sortTime || ''));
     if (allItems.length) agendaDays.push({ date: d, items: allItems });
   }
 

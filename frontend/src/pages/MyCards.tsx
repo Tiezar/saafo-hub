@@ -3,8 +3,10 @@ import { Search, Trash2, RotateCw, Pencil, Check, X, Plus, BookOpen, Sparkles } 
 import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import CustomSelect from '../components/CustomSelect';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function MyCards() {
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const {
     cards, topics, subjects, currentUser,
@@ -155,7 +157,7 @@ export default function MyCards() {
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 12 }}>
             <div>
               <label className="form-label" style={{ marginBottom: 4 }}>Matéria *</label>
               <CustomSelect
@@ -179,7 +181,7 @@ export default function MyCards() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 16 }}>
             <div>
               <label className="form-label" style={{ marginBottom: 4 }}>Frente (pergunta) *</label>
               <textarea
@@ -281,7 +283,7 @@ export default function MyCards() {
           </h3>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {filtered.map(c => {
             const topic   = topics.find(t => t.id === c.topicId);
             const subject = topic ? subjects.find(s => s.id === topic.subjectId) : null;
@@ -290,13 +292,17 @@ export default function MyCards() {
             return (
               <div key={c.id}
                 style={{
-                  padding: 16, background: 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${editingCardId === c.id ? 'var(--color-primary)' : isDue ? 'var(--color-primary)' : 'var(--border-color)'}`,
-                  borderRadius: 10, transition: 'border-color 0.15s',
+                  padding: isMobile ? 18 : 22,
+                  background: 'var(--bg-card)',
+                  border: `1px solid ${editingCardId === c.id ? 'var(--color-primary)' : isDue ? 'var(--color-primary-light)' : 'var(--border-color)'}`,
+                  boxShadow: 'var(--shadow-sm)',
+                  borderRadius: 'var(--radius-md)',
+                  transition: 'all 0.15s ease-in-out',
+                  position: 'relative'
                 }}>
                 {editingCardId === c.id ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
                       <textarea className="form-input" rows={3}
                         style={{ resize: 'vertical', fontFamily: 'var(--font-body)', fontSize: 14 }}
                         placeholder="Frente" value={editFront}
@@ -318,62 +324,127 @@ export default function MyCards() {
                     </div>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-                    <div style={{ flexGrow: 1, minWidth: 0 }}>
-                      {/* Breadcrumb + status */}
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {/* Header Row: Badges on the left, Actions on the right */}
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      width: '100%',
+                      gap: 12,
+                      borderBottom: '1px solid var(--border-subtle)',
+                      paddingBottom: 10
+                    }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                         {subject && (
                           <span className="badge"
-                            style={{ background: `${subject.color ?? 'var(--color-primary)'}22`, color: subject.color ?? 'var(--color-primary-light)', border: `1px solid ${subject.color ?? 'var(--color-primary)'}44`, fontSize: 11, padding: '3px 8px' }}>
+                            style={{ 
+                              background: `${subject.color ?? 'var(--color-primary)'}12`, 
+                              color: subject.color ?? 'var(--color-primary-light)', 
+                              border: `1px solid ${subject.color ?? 'var(--color-primary)'}33`, 
+                              fontSize: 11, 
+                              fontWeight: 600,
+                              padding: '2px 8px' 
+                            }}>
                             {subject.name}
                           </span>
                         )}
                         {topic && (
                           <span className="badge"
-                            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', fontSize: 11, padding: '3px 8px' }}>
+                            style={{ 
+                              background: 'var(--bg-surface)', 
+                              color: 'var(--text-secondary)', 
+                              border: '1px solid var(--border-color)', 
+                              fontSize: 11, 
+                              padding: '2px 8px' 
+                            }}>
                             {topic.name}
                           </span>
                         )}
                         {isDue ? (
-                          <span style={{ fontSize: 11, color: 'var(--color-danger)', fontWeight: 600 }}>
-                            · Revisar agora
+                          <span style={{ 
+                            fontSize: 11, 
+                            color: 'var(--color-danger)', 
+                            fontWeight: 700, 
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)', 
+                            padding: '2px 8px', 
+                            borderRadius: '4px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4
+                          }}>
+                            ● Pendente
                           </span>
                         ) : (
-                          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                            · {(() => {
-                              const reviewDate = new Date(c.nextReview);
-                              const diff = Math.floor((reviewDate.getTime() - now.getTime()) / 86400000);
-                              const time = reviewDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                              if (diff <= 0) return `Hoje às ${time}`;
-                              if (diff === 1) return `Amanhã às ${time}`;
-                              return `Em ${diff} dias às ${time}`;
-                            })()}
+                          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500 }}>
+                            • {(() => {
+                                const reviewDate = new Date(c.nextReview);
+                                const diff = Math.floor((reviewDate.getTime() - now.getTime()) / 86400000);
+                                const time = reviewDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                                if (diff <= 0) return `Hoje às ${time}`;
+                                if (diff === 1) return `Amanhã às ${time}`;
+                                return `Em ${diff} dias às ${time}`;
+                              })()}
                           </span>
                         )}
                       </div>
-                      {/* Front / Back */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                        <div>
-                          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: 4 }}>Frente</div>
-                          <div style={{ fontSize: 14, fontWeight: 600 }}>{c.front}</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: 4 }}>Verso</div>
-                          <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{c.back}</div>
-                        </div>
+                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                        <button onClick={() => startEdit(c.id, c.front, c.back)}
+                          title="Editar"
+                          style={{ 
+                            color: 'var(--text-secondary)', 
+                            background: 'var(--bg-surface)', 
+                            border: '1px solid var(--border-color)',
+                            padding: '6px 10px', 
+                            borderRadius: 6, 
+                            cursor: 'pointer', 
+                            display: 'flex', 
+                            alignItems: 'center',
+                            transition: 'all 0.15s ease'
+                          }}>
+                          <Pencil size={14} />
+                        </button>
+                        <button onClick={() => { if (window.confirm('Excluir este card?')) handleDeleteCard(c.id); }}
+                          title="Excluir"
+                          style={{ 
+                            color: 'var(--color-danger)', 
+                            background: 'rgba(239, 68, 68, 0.05)', 
+                            border: '1px solid rgba(239, 68, 68, 0.15)',
+                            padding: '6px 10px', 
+                            borderRadius: 6, 
+                            cursor: 'pointer', 
+                            display: 'flex', 
+                            alignItems: 'center',
+                            transition: 'all 0.15s ease'
+                          }}>
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                      <button onClick={() => startEdit(c.id, c.front, c.back)}
-                        title="Editar"
-                        style={{ color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                        <Pencil size={14} />
-                      </button>
-                      <button onClick={() => { if (window.confirm('Excluir este card?')) handleDeleteCard(c.id); }}
-                        title="Excluir"
-                        style={{ color: 'var(--color-danger)', background: 'rgba(255,180,171,0.08)', padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                        <Trash2 size={14} />
-                      </button>
+
+                    {/* Content Row: Spans full width of the card */}
+                    <div style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+                      gap: isMobile ? 16 : 24,
+                      width: '100%'
+                    }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>Frente</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.4 }}>{c.front}</div>
+                      </div>
+                      <div style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: 4, 
+                        borderTop: isMobile ? '1px solid var(--border-subtle)' : 'none', 
+                        paddingTop: isMobile ? 16 : 0, 
+                        borderLeft: !isMobile ? '1px solid var(--border-subtle)' : 'none', 
+                        paddingLeft: !isMobile ? 24 : 0 
+                      }}>
+                        <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>Verso</div>
+                        <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{c.back}</div>
+                      </div>
                     </div>
                   </div>
                 )}

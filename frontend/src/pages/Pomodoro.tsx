@@ -216,17 +216,17 @@ export default function Pomodoro() {
     <div className="page" style={{ padding: '24px 24px 48px' }}>
       {/* Page Header */}
       <header style={{ marginBottom: 40, borderBottom: '1px solid var(--border-color)', paddingBottom: 24 }}>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 300, color: 'var(--text-primary)', margin: 0 }}>Pomodoro</h2>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Pomodoro</h2>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, color: 'var(--text-muted)', marginTop: 8 }}>
           Sessões de foco alternadas com intervalos para otimização da absorção e retenção.
         </p>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48, alignItems: 'start' }}>
+      <div className="pomodoro-grid">
         {/* Left Column: Timer & Controls */}
-        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRight: '1px solid var(--border-color)', paddingRight: 32 }}>
+        <div className="pomodoro-left-column">
           {/* Marginalia Note */}
-          <div style={{ position: 'absolute', top: 0, left: 0, maxWidth: 140, display: 'flex', flexDirection: 'column', gap: 4 }} className="pomo-sidenote">
+          <div className="pomo-sidenote">
             <span className="academic-label" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{sideNoteTitle}</span>
             <p className="academic-label" style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'none', letterSpacing: 'normal', lineHeight: 1.4 }}>
               {sideNoteDesc}
@@ -234,7 +234,7 @@ export default function Pomodoro() {
           </div>
 
           {/* Segmented Control */}
-          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)', padding: 2, marginBottom: 48, marginTop: 8, borderRadius: '6px' }}>
+          <div className="pomodoro-segmented-control">
             {([
               { phase: 'focus' as Phase, label: 'Foco' },
               { phase: 'short-break' as Phase, label: 'Pausa' },
@@ -244,17 +244,8 @@ export default function Pomodoro() {
                 key={p.phase}
                 onClick={() => switchPhase(p.phase)}
                 style={{
-                  padding: '8px 20px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: 10,
-                  fontFamily: 'var(--font-label)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                  borderRadius: '6px',
                   backgroundColor: phase === p.phase ? activeColor : 'transparent',
                   color: phase === p.phase ? '#fff' : 'var(--text-secondary)',
-                  transition: 'all 0.2s',
                 }}
               >
                 {p.label}
@@ -604,7 +595,7 @@ export default function Pomodoro() {
                   value={customName}
                   onChange={e => setCustomName(e.target.value)}
                   placeholder="Ex: Minha Playlist de Foco"
-                  style={{ width: '100%', padding: '9px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', fontSize: 13, color: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '9px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', fontSize: 13, color: 'inherit', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
               <div>
@@ -614,7 +605,7 @@ export default function Pomodoro() {
                   value={customUrl}
                   onChange={e => setCustomUrl(e.target.value)}
                   placeholder="Ex: https://www.youtube.com/watch?v=..."
-                  style={{ width: '100%', padding: '9px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', fontSize: 13, color: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '9px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', fontSize: 13, color: 'inherit', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
               <button

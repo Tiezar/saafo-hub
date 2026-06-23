@@ -165,7 +165,7 @@
 }
 
 @media (max-width: 768px) {
-  .study-overlay { padding: 12px; align-items: flex-end; }
+  .study-overlay { padding: 12px; align-items: center; }
   .study-overlay-inner { max-width: 100%; }
   .study-card-flip { height: 220px; }
   .study-card-flip .study-card-front,
