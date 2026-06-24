@@ -116,6 +116,7 @@ Embora o SAAFO HUB adote uma arquitetura de microsserviços desacoplada (REST AP
     *   **StudySession / CardReview:** Monitora a duração das sessões e armazena os logs individuais de avaliação de resposta.
     *   **CalendarEvent:** Contém os dados de eventos agendados pelo estudante, incluindo integrações para disparos de lembretes.
 *   **Template (Interface Visual / View):** Telas desenvolvidas em React consumidas pelo navegador do usuário:
+    *   **LandingPage:** Apresentação institucional responsiva com seções Hero, Recursos, Como Funciona, Planos de Preços e alternância de temas (Claro/Escuro).
     *   **Dashboard:** Tela inicial que exibe relatórios gráficos, mapa de calor de engajamento e insights automatizados.
     *   **Materials:** Ambiente para criação, edição e visualização de matérias e tópicos.
     *   **AIGenerator:** Tela para submissão de materiais didáticos (PDF ou texto) e visualização de flashcards gerados por IA.
@@ -205,6 +206,10 @@ A estabilidade e eficiência do SAAFO HUB foram avaliadas sob quatro frentes est
 
 ### Demonstração Visual do MVP (Telas da Aplicação)
 
+| **Landing Page - Tema Claro** | **Landing Page - Tema Escuro** |
+|:---:|:---:|
+| ![Landing Page - Tema Claro](./frontend/public/screenshots/landing_light.png) | ![Landing Page - Tema Escuro](./frontend/public/screenshots/landing_dark.png) |
+
 | **Dashboard Principal (Insights & Heatmap)** | **Gerenciador de Matérias & Tópicos** |
 |:---:|:---:|
 | ![Dashboard](./frontend/public/screenshots/dashboard.png) | ![Materials](./frontend/public/screenshots/materials.png) |
@@ -248,6 +253,7 @@ npm run test:cov      # Relatório de cobertura
 
 ## 12. O que funciona (Funcionalidades Operacionais)
 
+*   **Landing Page de Alta Conversão:** Página de apresentação do produto totalmente responsiva, integrada ao sistema de temas (claro/escuro) e com fluxos de navegação focados em conversão acadêmica.
 *   **Cadastro e Autenticação:** Fluxo completo de criação de conta, login convencional com JWT, suporte a OAuth 2.0 e controle de planos e faturamento integrado ao gateway Asaas.
 *   **Gerenciamento de Matérias e Tópicos:** Criação e categorização de disciplinas com cores personalizadas para organizar o plano de estudo.
 *   **Geração Automatizada de Flashcards por IA:** Extração automática de perguntas e respostas a partir de textos digitados ou de arquivos anexados (PDFs e Imagens de até 50MB) através da API do Google Gemini Pro.
