@@ -437,7 +437,7 @@ export default function ExamSession() {
                       style={{
                         padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                         border: `1px solid ${sel ? 'var(--color-primary)' : 'var(--border-color)'}`,
-                        background: sel ? 'rgba(73,75,214,0.12)' : 'transparent',
+                        background: sel ? 'color-mix(in srgb, var(--color-primary) 10%, transparent)' : 'transparent',
                         color: sel ? 'var(--color-primary)' : 'var(--text-secondary)',
                       }}>
                       {t.name}
@@ -624,7 +624,7 @@ export default function ExamSession() {
                           display: 'flex', alignItems: 'center', gap: 6,
                           padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                           border: `1px solid var(--color-primary)`,
-                          background: isOpen ? 'rgba(73,75,214,0.15)' : 'rgba(73,75,214,0.07)',
+                          background: isOpen ? 'color-mix(in srgb, var(--color-primary) 12%, transparent)' : 'transparent',
                           color: 'var(--color-primary)',
                         }}>
                         <Play size={12} /> Iniciar <ChevronDown size={12} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
@@ -653,7 +653,7 @@ export default function ExamSession() {
                             style={{
                               padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                               border: `1px solid ${chosenLimit === opt.value ? 'var(--color-primary)' : 'var(--border-color)'}`,
-                              background: chosenLimit === opt.value ? 'rgba(73,75,214,0.15)' : 'transparent',
+                              background: chosenLimit === opt.value ? 'color-mix(in srgb, var(--color-primary) 10%, transparent)' : 'transparent',
                               color: chosenLimit === opt.value ? 'var(--color-primary)' : 'var(--text-secondary)',
                             }}>
                             {opt.label}

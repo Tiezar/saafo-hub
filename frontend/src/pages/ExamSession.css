@@ -18,7 +18,7 @@
 
 .exam-option:hover:not(:disabled) {
   border-color: var(--color-primary-light);
-  background: rgba(192, 193, 255, 0.04);
+  background: color-mix(in srgb, var(--color-primary) 4%, transparent);
 }
 
 .exam-option:disabled {
@@ -27,7 +27,7 @@
 
 .exam-option.correct {
   border-color: var(--color-tertiary);
-  background: rgba(47, 217, 244, 0.06);
+  background: color-mix(in srgb, var(--color-tertiary) 8%, transparent);
   color: var(--color-tertiary);
 }
 
@@ -91,7 +91,7 @@
   margin-top: var(--sp-4);
   padding: 14px 18px;
   border-radius: var(--radius-md);
-  background: rgba(192, 193, 255, 0.04);
+  background: color-mix(in srgb, var(--color-primary) 4%, transparent);
   border-left: 3px solid var(--color-primary-light);
   font-size: 13px;
   line-height: 1.6;
