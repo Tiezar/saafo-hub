@@ -9,9 +9,12 @@ import UpdateBanner from './components/UpdateBanner';
 import UpgradeModal from './components/UpgradeModal';
 import CheckoutModal from './components/CheckoutModal';
 import PlanSelectionModal from './components/PlanSelectionModal';
+import CookieConsent from './components/CookieConsent';
 
-import Auth        from './pages/Auth';
-import LandingPage from './pages/LandingPage';
+import Auth          from './pages/Auth';
+import LandingPage   from './pages/LandingPage';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import Dashboard   from './pages/Dashboard';
 import Materials   from './pages/Materials';
 import MyCards     from './pages/MyCards';
@@ -63,6 +66,8 @@ function AppShell() {
         {/* Rotas Públicas */}
         <Route path="/" element={token ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
         <Route path="/auth" element={token ? <Navigate to="/dashboard" replace /> : <Auth />} />
+        <Route path="/privacidade" element={<PrivacyPolicy />} />
+        <Route path="/termos" element={<TermsOfService />} />
 
         {/* Rotas Privadas (dentro do Layout com Sidebar) */}
         <Route element={token ? <AppLayout /> : <Navigate to="/auth" replace />}>
@@ -80,6 +85,7 @@ function AppShell() {
         {/* Redirecionamento de Fallback */}
         <Route path="*" element={<Navigate to={token ? "/dashboard" : "/"} replace />} />
       </Routes>
+      <CookieConsent />
       <UpdateBanner visible={updateAvailable} />
       <UpgradeModal />
       <CheckoutModal open={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
