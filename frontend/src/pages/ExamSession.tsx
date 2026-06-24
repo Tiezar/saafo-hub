@@ -22,7 +22,7 @@ const PROFILES = [
     name: 'Revisão Rápida',
     desc: 'Questões curtas e diretas — reconhecimento de conceitos',
     icon: <Zap size={22} />,
-    color: '#10b981',
+    colorVar: '--color-tertiary',
     mode: 'multiple' as const,
     tag: 'Rápida',
   },
@@ -31,7 +31,7 @@ const PROFILES = [
     name: 'Prova Aplicada',
     desc: 'Cenário curto + questão — exige aplicar o conceito',
     icon: <Target size={22} />,
-    color: '#3b82f6',
+    colorVar: '--color-primary',
     mode: 'multiple' as const,
     tag: 'Aplicada',
   },
@@ -40,7 +40,7 @@ const PROFILES = [
     name: 'Situação-Problema',
     desc: 'Texto-base longo + análise — estilo vestibular/concurso',
     icon: <FileText size={22} />,
-    color: '#8b5cf6',
+    colorVar: '--color-warning',
     mode: 'multiple' as const,
     tag: 'Contextual',
   },
@@ -49,7 +49,7 @@ const PROFILES = [
     name: 'Dissertativo',
     desc: 'Resposta aberta avaliada pela IA com nota e feedback',
     icon: <PenLine size={22} />,
-    color: '#f97316',
+    colorVar: '--color-danger',
     mode: 'essay' as const,
     tag: 'Dissertativo',
   },
@@ -425,7 +425,7 @@ export default function ExamSession() {
                   style={{
                     padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                     border: `1px solid ${allSelected ? 'var(--color-primary)' : 'var(--border-color)'}`,
-                    background: allSelected ? 'rgba(73,75,214,0.15)' : 'transparent',
+                    background: allSelected ? 'color-mix(in srgb, var(--color-primary) 12%, transparent)' : 'transparent',
                     color: allSelected ? 'var(--color-primary)' : 'var(--text-secondary)',
                   }}>
                   Todos
@@ -457,44 +457,43 @@ export default function ExamSession() {
           {/* Profile picker */}
           <div className="form-group">
             <label className="form-label">Formato da prova</label>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 10 }}>
-              {PROFILES.map(p => (
-                <button key={p.id} type="button" onClick={() => setProfileId(p.id)}
-                  style={{
-                    position: 'relative',
-                    padding: '14px 16px', borderRadius: 12, textAlign: 'left', cursor: 'pointer',
-                    border: `2px solid ${profileId === p.id ? p.color : 'var(--border-color)'}`,
-                    background: profileId === p.id ? `${p.color}14` : 'var(--bg-surface)',
-                    transition: 'var(--transition)',
-                  }}>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setInfoModalProfile(p.id);
-                    }}
+            <div className="profile-grid">
+              {PROFILES.map(p => {
+                const isSelected = profileId === p.id;
+                return (
+                  <div key={p.id}
+                    onClick={() => setProfileId(p.id)}
+                    className={`profile-card ${isSelected ? 'active' : ''}`}
                     style={{
-                      position: 'absolute',
-                      top: 12,
-                      right: 12,
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-muted)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      zIndex: 2,
-                    }}
-                    title="Ver detalhes do formato"
-                  >
-                    <Info size={16} />
-                  </button>
-                  <div style={{ color: profileId === p.id ? p.color : 'var(--text-muted)', marginBottom: 8, marginRight: 24 }}>{p.icon}</div>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 3, color: profileId === p.id ? p.color : 'var(--text-primary)' }}>{p.name}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>{p.desc}</div>
-                </button>
-              ))}
+                      borderColor: isSelected ? `var(${p.colorVar})` : undefined,
+                      boxShadow: isSelected ? `0 0 0 1px var(${p.colorVar})` : undefined,
+                      background: isSelected ? `color-mix(in srgb, var(${p.colorVar}) 8%, var(--bg-card))` : undefined
+                    }}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInfoModalProfile(p.id);
+                      }}
+                      className="profile-card-info-btn"
+                      title="Ver detalhes do formato"
+                    >
+                      <Info size={14} />
+                    </button>
+                    <div className="profile-card-header">
+                      <div className="profile-card-icon" style={{ color: isSelected ? `var(${p.colorVar})` : undefined }}>
+                        {p.icon}
+                      </div>
+                      <span className="profile-card-title" style={{ color: isSelected ? `var(${p.colorVar})` : undefined }}>
+                        {p.name}
+                      </span>
+                    </div>
+                    <div className="profile-card-desc">
+                      {p.desc}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -589,7 +588,8 @@ export default function ExamSession() {
                         {prof && (
                           <span style={{
                             fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20,
-                            background: `${prof.color}20`, color: prof.color,
+                            background: `color-mix(in srgb, var(${prof.colorVar}) 12%, transparent)`,
+                            color: `var(${prof.colorVar})`,
                             textTransform: 'uppercase', letterSpacing: '0.05em',
                           }}>
                             {prof.tag}
@@ -775,7 +775,7 @@ export default function ExamSession() {
           <div style={{ maxWidth: 720, margin: '0 auto' }}>
             {/* Progress bar */}
             <div className="quiz-progress-bar" style={{ marginBottom: 20 }}>
-              <div className="quiz-progress-fill" style={{ width: `${progressPct}%`, background: activeProf?.color ?? 'var(--color-primary)' }} />
+              <div className="quiz-progress-fill" style={{ width: `${progressPct}%`, background: activeProf ? `var(${activeProf.colorVar})` : 'var(--color-primary)' }} />
             </div>
 
             <div className="glass-card" style={{ padding: 28, marginBottom: 16 }}>
@@ -784,9 +784,9 @@ export default function ExamSession() {
                 <div style={{
                   padding: '14px 18px', borderRadius: 10, marginBottom: 22,
                   background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)',
-                  borderLeft: `4px solid ${activeProf?.color ?? 'var(--color-primary)'}`,
+                  borderLeft: `4px solid ${activeProf ? `var(${activeProf.colorVar})` : 'var(--color-primary)'}`,
                 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: activeProf?.color ?? 'var(--color-primary)', marginBottom: 10 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: activeProf ? `var(${activeProf.colorVar})` : 'var(--color-primary)', marginBottom: 10 }}>
                     Texto-base
                   </div>
                   <p style={{ fontSize: 13.5, lineHeight: 1.75, color: 'var(--text-secondary)', margin: 0, whiteSpace: 'pre-wrap' }}>
@@ -802,7 +802,7 @@ export default function ExamSession() {
                   let bg = 'transparent', color = 'var(--text-primary)', border = 'var(--border-subtle)';
                   if (revealed) {
                     if (idx === q.correctIndex)    { bg = 'var(--bg-surface)'; color = 'var(--color-success)'; border = 'var(--color-success)'; }
-                    else if (idx === selected)     { bg = 'rgba(255,100,100,0.08)'; color = 'var(--color-danger)'; border = 'var(--color-danger)'; }
+                    else if (idx === selected)     { bg = 'color-mix(in srgb, var(--color-danger) 8%, transparent)'; color = 'var(--color-danger)'; border = 'var(--color-danger)'; }
                   }
                   return (
                     <button key={idx} onClick={() => mcAnswer(idx)} disabled={revealed}
@@ -926,7 +926,7 @@ export default function ExamSession() {
                     </div>
                   )}
                   {currentEval.missing.length > 0 && (
-                    <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(255,100,100,0.05)', border: '1px solid rgba(255,100,100,0.15)' }}>
+                    <div style={{ padding: '10px 12px', borderRadius: 8, background: 'color-mix(in srgb, var(--color-danger) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 15%, transparent)' }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-danger)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>✗ Faltou</div>
                       {currentEval.missing.map((m, i) => <div key={i} style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 3 }}>· {m}</div>)}
                     </div>
@@ -989,7 +989,7 @@ export default function ExamSession() {
             {/* Profile badge */}
             {activeProf && (
               <div style={{ marginTop: 14 }}>
-                <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: `${activeProf.color}20`, color: activeProf.color, fontWeight: 700 }}>
+                <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: `color-mix(in srgb, var(${activeProf.colorVar}) 12%, transparent)`, color: `var(${activeProf.colorVar})`, fontWeight: 700 }}>
                   {activeProf.name}
                 </span>
               </div>
@@ -1082,7 +1082,7 @@ export default function ExamSession() {
                         </div>
                       )}
                       {ev.missing.length > 0 && (
-                        <div style={{ padding: '8px 10px', borderRadius: 8, background: 'rgba(255,100,100,0.05)', border: '1px solid rgba(255,100,100,0.15)' }}>
+                        <div style={{ padding: '8px 10px', borderRadius: 8, background: 'color-mix(in srgb, var(--color-danger) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 15%, transparent)' }}>
                           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-danger)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>✗ Faltou</div>
                           {ev.missing.map((m, mi) => <div key={mi} style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 2 }}>· {m}</div>)}
                         </div>
