@@ -20,6 +20,7 @@ COPY nest-cli.json ./
 COPY prisma.config.ts ./
 COPY prisma ./prisma
 COPY src ./src
+COPY scripts ./scripts
 
 # Generate Prisma Client
 RUN npx prisma generate
@@ -45,6 +46,7 @@ COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/prisma ./prisma
 COPY --from=builder /usr/src/app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder /usr/src/app/scripts ./scripts
 
 # Create startup script for migrations and application startup
 RUN echo '#!/bin/sh' > start.sh && \
