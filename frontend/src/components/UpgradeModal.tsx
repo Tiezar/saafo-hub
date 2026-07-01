@@ -1,9 +1,9 @@
 import React from 'react';
-import { Star, RotateCw, CreditCard, X, Bot, ClipboardList, Lightbulb, MessageCircle, FileUp, CalendarDays, Timer, Layers } from 'lucide-react';
+import { Star, X, Bot, ClipboardList, Lightbulb, MessageCircle, FileUp, CalendarDays, Timer, Layers } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 export default function UpgradeModal() {
-  const { upgradeModalOpen, setUpgradeModalOpen, handleCheckout, checkoutLoading } = useApp();
+  const { upgradeModalOpen, setUpgradeModalOpen } = useApp();
 
   if (!upgradeModalOpen) return null;
 

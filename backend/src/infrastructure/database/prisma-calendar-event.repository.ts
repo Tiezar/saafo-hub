@@ -127,6 +127,7 @@ export class PrismaCalendarEventRepository implements ICalendarEventRepository {
         allDay: input.allDay ?? false,
         spaceId: input.spaceId,
         subjectId: input.subjectId,
+        userAreaId: input.userAreaId,
         notes: input.notes,
         color: input.color,
         recurrenceDays: input.recurrenceDays ?? [],
@@ -180,6 +181,7 @@ export class PrismaCalendarEventRepository implements ICalendarEventRepository {
         ...(input.allDay !== undefined && { allDay: input.allDay }),
         ...(input.spaceId !== undefined && { spaceId: input.spaceId }),
         ...(input.subjectId !== undefined && { subjectId: input.subjectId }),
+        ...(input.userAreaId !== undefined && { userAreaId: input.userAreaId }),
         ...(input.notes !== undefined && { notes: input.notes }),
         ...(input.color !== undefined && { color: input.color }),
         ...(input.recurrenceDays !== undefined && {

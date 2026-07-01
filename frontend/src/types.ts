@@ -1,6 +1,8 @@
 export interface User {
   id: string; email: string; name: string;
   nickname: string | null; institutionId: string | null; phone: string | null;
+  role: 'USER' | 'ADMIN';
+  onboardingStatus: 'PENDING' | 'CHOSEN_AREA' | 'COMPLETED';
 }
 
 export interface Institution { id: string; name: string; sigla: string; uf: string; domains: string[] }
@@ -9,11 +11,12 @@ export interface StudySpace { id: string; userId: string; name: string; color: s
 
 export interface Subject { id: string; name: string; color: string | null; spaceId: string | null }
 
-export interface Topic { id: string; name: string; subjectId: string }
+export interface Topic { id: string; name: string; subjectId: string; isActive?: boolean }
 
 export interface Card {
   id: string; front: string; back: string; topicId: string;
   interval: number; repetition: number; efactor: number; nextReview: string;
+  isActive?: boolean;
 }
 
 export interface EventReminderSummary {

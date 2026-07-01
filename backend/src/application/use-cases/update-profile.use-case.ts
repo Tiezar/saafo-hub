@@ -1,6 +1,8 @@
 import { IUserRepository } from '../../domain/repositories/user-repository.interface';
 import { User } from '../../domain/entities/user';
 import * as bcrypt from 'bcrypt';
+import { ResourceNotFoundException } from '../../domain/exceptions/resource-not-found.exception';
+import { BusinessRuleException } from '../../domain/exceptions/business-rule.exception';
 
 export interface UpdateProfileInput {
   name?: string;
@@ -16,17 +18,18 @@ export class UpdateProfileUseCase {
   async execute(userId: string, data: UpdateProfileInput): Promise<User> {
     const user = await this.userRepository.findById(userId);
     if (!user) {
-      throw new Error('User not found');
+      throw new ResourceNotFoundException('User not found');
     }
 
     const updateData: Partial<User> = {};
     if (data.name !== undefined) {
-      if (data.name.trim() === '') throw new Error('Name cannot be empty');
+      if (data.name.trim() === '')
+        throw new BusinessRuleException('Name cannot be empty');
       updateData.name = data.name.trim();
     }
     if (data.nickname !== undefined) {
       if (data.nickname.trim() === '')
-        throw new Error('Nickname cannot be empty');
+        throw new BusinessRuleException('Nickname cannot be empty');
       updateData.nickname = data.nickname.trim();
     }
     if (data.institutionId !== undefined)

@@ -2,10 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AppProvider, useApp } from './contexts/AppContext';
-import { useVersionCheck } from './hooks/useVersionCheck';
-
 import AppLayout from './components/layout/AppLayout';
-import UpdateBanner from './components/UpdateBanner';
 import UpgradeModal from './components/UpgradeModal';
 import CheckoutModal from './components/CheckoutModal';
 import PlanSelectionModal from './components/PlanSelectionModal';
@@ -24,6 +21,8 @@ import Pomodoro    from './pages/Pomodoro';
 import ExamSession  from './pages/ExamSession';
 import Profile     from './pages/Profile';
 import Admin      from './pages/Admin';
+import Onboarding from './pages/Onboarding';
+import Cronograma from './pages/Cronograma';
 
 const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || '';
 
@@ -37,9 +36,12 @@ export default function App() {
   );
 }
 
+function canAccess(user: import('./types').User | null) {
+  return user?.role === 'ADMIN' || user?.onboardingStatus === 'COMPLETED';
+}
+
 function AppShell() {
-  const { token, initializing, checkoutOpen, setCheckoutOpen, planSelectionOpen, setPlanSelectionOpen } = useApp();
-  const updateAvailable = useVersionCheck();
+  const { token, currentUser, initializing, checkoutOpen, setCheckoutOpen, planSelectionOpen, setPlanSelectionOpen } = useApp();
 
   if (initializing) {
     return (
@@ -71,22 +73,23 @@ function AppShell() {
 
         {/* Rotas Privadas (dentro do Layout com Sidebar) */}
         <Route element={token ? <AppLayout /> : <Navigate to="/auth" replace />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="materiais" element={<Materials />} />
-          <Route path="cards"     element={<MyCards />} />
-          <Route path="ia"        element={<AIGenerator />} />
-          <Route path="calendario" element={<CalendarPage />} />
-          <Route path="pomodoro"  element={<Pomodoro />} />
-          <Route path="provas"    element={<ExamSession />} />
-          <Route path="perfil"    element={<Profile />} />
-          <Route path="admin"     element={<Admin />} />
+          <Route path="dashboard"  element={canAccess(currentUser) ? <Dashboard />   : <Navigate to="/onboarding" replace />} />
+          <Route path="materiais"  element={canAccess(currentUser) ? <Materials />   : <Navigate to="/onboarding" replace />} />
+          <Route path="cards"      element={canAccess(currentUser) ? <MyCards />     : <Navigate to="/onboarding" replace />} />
+          <Route path="ia"         element={canAccess(currentUser) ? <AIGenerator /> : <Navigate to="/onboarding" replace />} />
+          <Route path="calendario" element={canAccess(currentUser) ? <CalendarPage />: <Navigate to="/onboarding" replace />} />
+          <Route path="cronograma" element={canAccess(currentUser) ? <Cronograma />  : <Navigate to="/onboarding" replace />} />
+          <Route path="pomodoro"   element={canAccess(currentUser) ? <Pomodoro />    : <Navigate to="/onboarding" replace />} />
+          <Route path="provas"     element={canAccess(currentUser) ? <ExamSession /> : <Navigate to="/onboarding" replace />} />
+          <Route path="perfil"     element={canAccess(currentUser) ? <Profile />     : <Navigate to="/onboarding" replace />} />
+          <Route path="admin"      element={currentUser?.role === 'ADMIN' ? <Admin /> : <Navigate to="/dashboard" replace />} />
         </Route>
+        <Route path="/onboarding" element={token ? <Onboarding /> : <Navigate to="/auth" replace />} />
 
         {/* Redirecionamento de Fallback */}
-        <Route path="*" element={<Navigate to={token ? "/dashboard" : "/"} replace />} />
+        <Route path="*" element={<Navigate to={token ? (canAccess(currentUser) ? "/dashboard" : "/onboarding") : "/"} replace />} />
       </Routes>
       <CookieConsent />
-      <UpdateBanner visible={updateAvailable} />
       <UpgradeModal />
       <CheckoutModal open={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
       <PlanSelectionModal

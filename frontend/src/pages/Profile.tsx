@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Star, RotateCw, AlertTriangle, RefreshCw, Check, Bot, FileText, CheckCircle, Trash2, Plus, Edit3, Clock, X, User, CreditCard, Calendar, Phone } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { RotateCw, Check, Bot, FileText, CheckCircle, Trash2, Plus, Edit3, Clock, X, User, CreditCard, Calendar, Phone } from 'lucide-react';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useApp } from '../contexts/AppContext';
 import type { Institution, UserWeeklyRoutine } from '../types';
+import TimeInput from '../components/TimeInput';
 import './Profile.css';
 import CustomSelect from '../components/CustomSelect';
 import DeleteAccountModal from '../components/DeleteAccountModal';
@@ -40,8 +41,8 @@ function toRawPhone(display: string): string {
 export default function Profile() {
   const {
     currentUser, planStatus, institutions,
-    fetchInstitutions, handleUpdateProfile,
-    setUpgradeModalOpen, setCheckoutOpen, fetchPlanStatus,
+    handleUpdateProfile,
+    setCheckoutOpen, fetchPlanStatus,
     apiCall, showSuccess, showError, handleLogout,
     weeklyRoutines, createWeeklyRoutine, updateWeeklyRoutine, deleteWeeklyRoutine,
   } = useApp();
@@ -264,7 +265,7 @@ export default function Profile() {
           body: JSON.stringify({ name: 'Instituto Federal de Rondônia', sigla: 'IFRO' })
         }) as Institution;
         setSelectedInst(res);
-      } catch (err) {
+      } catch {
         showError('Erro ao carregar instituição IFRO.');
       }
     } else if (val === 'UNIR') {
@@ -276,7 +277,7 @@ export default function Profile() {
           body: JSON.stringify({ name: 'Universidade Federal de Rondônia', sigla: 'UNIR' })
         }) as Institution;
         setSelectedInst(res);
-      } catch (err) {
+      } catch {
         showError('Erro ao carregar instituição UNIR.');
       }
     } else if (val === 'OTHER') {
@@ -340,45 +341,20 @@ export default function Profile() {
       </header>
 
       {/* Sub-menu Tabs */}
-      <div style={{
-        display: 'flex',
-        borderBottom: '1px solid var(--border-color)',
-        marginBottom: 32,
-        width: '100%'
-      }}>
+      <div className="profile-tabs">
         {[
-          { id: 'conta', label: 'Conta', icon: <User size={isMobile ? 20 : 18} /> },
-          { id: 'assinatura', label: 'Assinatura', icon: <CreditCard size={isMobile ? 20 : 18} /> },
-          { id: 'rotina', label: 'Rotina', icon: <Calendar size={isMobile ? 20 : 18} /> }
+          { id: 'conta', label: 'Conta', icon: <User size={16} /> },
+          { id: 'assinatura', label: 'Assinatura', icon: <CreditCard size={16} /> },
+          { id: 'rotina', label: 'Rotina', icon: <Calendar size={16} /> }
         ].map(t => (
           <button
             key={t.id}
             type="button"
             onClick={() => setActiveSubTab(t.id as any)}
-            title={t.label}
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              padding: isMobile ? '16px 8px' : '14px 24px',
-              cursor: 'pointer',
-              border: 'none',
-              background: 'transparent',
-              fontFamily: 'var(--font-label)',
-              fontSize: isMobile ? 11 : 13,
-              fontWeight: activeSubTab === t.id ? 700 : 500,
-              color: activeSubTab === t.id ? 'var(--color-primary)' : 'var(--text-secondary)',
-              borderBottom: activeSubTab === t.id ? '2px solid var(--color-primary)' : '2px solid transparent',
-              marginBottom: -1,
-              transition: 'all 0.15s ease-in-out',
-              whiteSpace: 'nowrap'
-            }}
+            className={`profile-tab-pill${activeSubTab === t.id ? ' active' : ''}`}
           >
             {t.icon}
-            {!isMobile && <span>{t.label.toUpperCase()}</span>}
+            <span style={{ marginLeft: 6 }}>{t.label}</span>
           </button>
         ))}
       </div>
@@ -535,110 +511,90 @@ export default function Profile() {
             <h3 className="academic-label" style={{ color: 'var(--text-secondary)' }}>Painel de Assinatura</h3>
 
             {planStatus && (
-              <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 24 }}>
-                <span className="academic-label" style={{ display: 'block', marginBottom: 8, fontSize: 10 }}>Plano Ativo</span>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontStyle: 'italic', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 20 }}>
-                  {planStatus.plan === 'STUDENT' ? 'Estudante' : planStatus.isActive ? 'Período de Experiência' : 'Assinatura Expirada'}
-                </div>
+              <>
+                {/* Active STUDENT plan with subDetails — dark premium card */}
+                {planStatus.plan === 'STUDENT' && subDetails && !subLoading ? (
+                  <div className="sub-active-card">
+                    <span className="sub-active-label">● Plano Ativo</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+                      <p className="sub-active-plan-name">Estudante</p>
+                      <span className="sub-active-price">R$ {subDetails.value?.toFixed(2).replace('.', ',')}<span style={{ font: '400 14px var(--font-body)', opacity: 0.7 }}>/mês</span></span>
+                    </div>
 
-                {planStatus.plan !== 'STUDENT' && (
-                  <div style={{ marginTop: 16 }}>
-                    <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.5 }}>
-                      {planStatus.isActive
-                        ? `Você possui ${planStatus.trialDaysLeft} dias restantes em seu período gratuito.`
-                        : 'Seu período de teste expirou. Assine o plano Estudante para reaver o acesso à IA, WhatsApp e flashcards ilimitados.'}
-                    </p>
-                    <div style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius-md)', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>
-                      🔒 Pagamentos disponíveis em breve
+                    <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 6, opacity: 0.8, fontSize: 13 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Próximo vencimento</span>
+                        <strong>
+                          {subDetails.nextDueDate
+                            ? new Date(subDetails.nextDueDate + 'T12:00:00').toLocaleDateString('pt-BR')
+                            : '—'}
+                        </strong>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Forma de pagamento</span>
+                        <strong>
+                          {billingLabel(subDetails.billingType)}
+                          {subDetails.creditCardBrand && ` ${subDetails.creditCardBrand}`}
+                          {subDetails.creditCardLastFour && ` •••• ${subDetails.creditCardLastFour}`}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="sub-active-actions">
+                      <button className="sub-active-btn-update" onClick={() => setCheckoutOpen(true)}>
+                        Atualizar pagamento
+                      </button>
+                      {!cancelConfirm ? (
+                        <button className="sub-active-btn-cancel" onClick={() => setCancelConfirm(true)}>
+                          Cancelar
+                        </button>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', marginTop: 4, border: '1px solid rgba(245,237,227,0.3)', padding: 12, borderRadius: 10 }}>
+                          <span style={{ fontSize: 13, color: '#f5ede3', textAlign: 'center', fontWeight: 600 }}>Tem certeza que deseja cancelar?</span>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button
+                              style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: 'var(--color-danger)', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-label)', fontSize: 11, textTransform: 'uppercase' }}
+                              onClick={handleCancel} disabled={cancelling}>
+                              {cancelling ? <RotateCw size={12} className="animate-spin" /> : 'Sim, cancelar'}
+                            </button>
+                            <button
+                              style={{ flex: 1, padding: '8px', borderRadius: 8, border: '1px solid rgba(245,237,227,0.4)', background: 'transparent', color: '#f5ede3', cursor: 'pointer', fontFamily: 'var(--font-label)', fontSize: 11 }}
+                              onClick={() => setCancelConfirm(false)}>
+                              Voltar
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
+                ) : (
+                  <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 24 }}>
+                    <span className="academic-label" style={{ display: 'block', marginBottom: 8, fontSize: 10 }}>Plano Ativo</span>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontStyle: 'italic', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 20 }}>
+                      {planStatus.plan === 'STUDENT' ? 'Estudante' : planStatus.isActive ? 'Período de Experiência' : 'Assinatura Expirada'}
+                    </div>
 
-                {planStatus.plan === 'STUDENT' && (
-                  <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {subLoading && (
+                    {planStatus.plan !== 'STUDENT' && (
+                      <div style={{ marginTop: 16 }}>
+                        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.5 }}>
+                          {planStatus.isActive
+                            ? `Você possui ${planStatus.trialDaysLeft} dias restantes em seu período gratuito.`
+                            : 'Seu período de teste expirou. Assine o plano Estudante para reaver o acesso à IA, WhatsApp e flashcards ilimitados.'}
+                        </p>
+                        <div style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius-md)', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>
+                          🔒 Pagamentos disponíveis em breve
+                        </div>
+                      </div>
+                    )}
+
+                    {planStatus.plan === 'STUDENT' && subLoading && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-muted)' }}>
                         <RotateCw size={14} className="animate-spin" /> Carregando detalhes...
                       </div>
                     )}
-
-                    {subDetails && !subLoading && (
-                      <>
-                        <div>
-                          <span className="academic-label" style={{ display: 'block', fontSize: 10, marginBottom: 4 }}>Bloco de Cobrança</span>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>Próximo Vencimento:</span>
-                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                              {subDetails.nextDueDate
-                                ? new Date(subDetails.nextDueDate + 'T12:00:00').toLocaleDateString('pt-BR')
-                                : '—'}
-                            </span>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>Valor:</span>
-                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                              R$ {subDetails.value?.toFixed(2).replace('.', ',')}/mês
-                            </span>
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, backgroundColor: 'var(--bg-surface)', padding: 12, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', marginTop: 8 }}>
-                          <CreditCard size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
-                            {billingLabel(subDetails.billingType)}
-                            {subDetails.creditCardBrand && ` ${subDetails.creditCardBrand}`}
-                            {subDetails.creditCardLastFour && ` •••• ${subDetails.creditCardLastFour}`}
-                          </span>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
-                          <button
-                            className="btn-outline-custom"
-                            style={{ width: '100%', padding: '10px' }}
-                            onClick={() => setCheckoutOpen(true)}>
-                            Atualizar cartão
-                          </button>
-                          <button
-                            className="btn-outline-custom"
-                            style={{ width: '100%', padding: '10px' }}
-                            onClick={fetchSubDetails}>
-                            <RefreshCw size={12} style={{ marginRight: 6, display: 'inline' }} /> Atualizar Informações
-                          </button>
-
-                          {!cancelConfirm ? (
-                            <button
-                              style={{
-                                width: '100%', padding: '10px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em',
-                                borderRadius: 'var(--radius-md)', border: '1px solid var(--color-danger)', background: 'transparent',
-                                color: 'var(--color-danger)', cursor: 'pointer', fontFamily: 'var(--font-label)', marginTop: 8
-                              }}
-                              onClick={() => setCancelConfirm(true)}>
-                              Cancelar assinatura
-                            </button>
-                          ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, border: '1px solid var(--color-danger)', padding: 12, borderRadius: 'var(--radius-md)', marginTop: 8 }}>
-                              <span style={{ fontSize: 13, color: 'var(--color-danger)', textAlign: 'center', fontWeight: 600 }}>Tem certeza que deseja cancelar?</span>
-                              <div style={{ display: 'flex', gap: 8 }}>
-                                <button
-                                  style={{ flex: 1, padding: '8px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--color-danger)', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-label)', fontSize: 11, textTransform: 'uppercase' }}
-                                  onClick={handleCancel} disabled={cancelling}>
-                                  {cancelling ? <RotateCw size={12} className="animate-spin" /> : 'Sim, cancelar'}
-                                </button>
-                                <button
-                                  className="btn-outline-custom"
-                                  style={{ flex: 1, padding: '8px' }}
-                                  onClick={() => setCancelConfirm(false)}>
-                                  Voltar
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
                   </div>
                 )}
-              </div>
+              </>
             )}
           </div>
 
@@ -949,24 +905,16 @@ export default function Profile() {
                     <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>De</span>
-                        <input
-                          type="time"
-                          className="academic-input"
-                          style={{ fontSize: 13, height: 34, padding: '4px 8px' }}
+                        <TimeInput
                           value={slot.startTime}
-                          onChange={e => handleSlotChange(idx, 'startTime', e.target.value)}
-                          required
+                          onChange={v => handleSlotChange(idx, 'startTime', v)}
                         />
                       </div>
                       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Até</span>
-                        <input
-                          type="time"
-                          className="academic-input"
-                          style={{ fontSize: 13, height: 34, padding: '4px 8px' }}
+                        <TimeInput
                           value={slot.endTime}
-                          onChange={e => handleSlotChange(idx, 'endTime', e.target.value)}
-                          required
+                          onChange={v => handleSlotChange(idx, 'endTime', v)}
                         />
                       </div>
                       <button

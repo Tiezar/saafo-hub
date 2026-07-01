@@ -56,7 +56,17 @@ function fmtDateTime(iso: string | null | undefined) {
 
 // ── Detail Modal ─────────────────────────────────────────────────────────────
 
-function UserModal({ user, onClose }: { user: AdminUser; onClose: () => void }) {
+function UserModal({
+  user,
+  onClose,
+  apiCall,
+  onUpdated,
+}: {
+  user: AdminUser;
+  onClose: () => void;
+  apiCall: any;
+  onUpdated: () => void;
+}) {
   const isMobile = useIsMobile();
   const plan = planLabel(user.plan, user.trialEndsAt);
 
@@ -119,8 +129,57 @@ function UserModal({ user, onClose }: { user: AdminUser; onClose: () => void }) 
             </div>
           </div>
 
-          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            Última atividade: {fmtDateTime(user.usage.lastActivityAt)}
+          {/* Admin Actions */}
+          <div style={{ paddingTop: 16, borderTop: '1px dashed var(--border-color)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <p className="academic-label" style={{ marginBottom: 4 }}>Ações Administrativas</p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                className="btn btn-secondary"
+                style={{ fontSize: 12, padding: '8px 14px', width: 'auto', background: 'var(--bg-surface)' }}
+                onClick={async () => {
+                  const targetRole = window.confirm(`Deseja alterar as permissões administrativas deste usuário?`) ? 'ADMIN' : 'USER';
+                  try {
+                    await apiCall(`/admin/users/${user.id}/role`, {
+                      method: 'POST',
+                      body: JSON.stringify({ role: targetRole })
+                    });
+                    alert('Permissão alterada com sucesso!');
+                    onUpdated();
+                  } catch (e) {
+                    alert((e as Error).message);
+                  }
+                }}
+              >
+                🔐 Alterar Permissões (Admin/User)
+              </button>
+
+              <button
+                className="btn btn-secondary"
+                style={{ fontSize: 12, padding: '8px 14px', width: 'auto', background: 'var(--bg-surface)' }}
+                onClick={async () => {
+                  const toStudent = user.plan !== 'STUDENT';
+                  try {
+                    await apiCall(`/admin/users/${user.id}/plan`, {
+                      method: 'POST',
+                      body: JSON.stringify({
+                        plan: toStudent ? 'STUDENT' : 'FREE_TRIAL',
+                        trialDays: toStudent ? undefined : 14
+                      })
+                    });
+                    alert('Plano atualizado!');
+                    onUpdated();
+                  } catch (e) {
+                    alert((e as Error).message);
+                  }
+                }}
+              >
+                💳 Alternar Plano ({user.plan === 'STUDENT' ? 'Expirar/Trial' : 'Tornar Assinante'})
+              </button>
+            </div>
+          </div>
+
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+            <span>Última atividade: {fmtDateTime(user.usage.lastActivityAt)}</span>
           </div>
         </div>
       </div>
@@ -158,7 +217,7 @@ export default function Admin() {
   const { apiCall, currentUser } = useApp();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'users' | 'tracks'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'tracks' | 'templates' | 'import'>('users');
   const [users, setUsers]     = useState<AdminUser[]>([]);
   const [meta, setMeta]       = useState<Meta>({ total: 0, page: 1, pageSize: 50, pages: 1 });
   const [loading, setLoading] = useState(true);
@@ -177,7 +236,107 @@ export default function Admin() {
   const [tracksLoading, setTracksLoading] = useState(false);
   const [editingTrack, setEditingTrack] = useState<{ id: string; name: string; youtubeId: string } | null>(null);
 
-  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email?.toLowerCase() ?? '');
+  // Bancas & Templates states
+  const [bancas, setBancas] = useState<any[]>([]);
+  const [bancaName, setBancaName] = useState('');
+  const [bancaDesc, setBancaDesc] = useState('');
+  const [areaTemplates, setAreaTemplates] = useState<any[]>([]);
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [newTemplateBancaId, setNewTemplateBancaId] = useState('');
+  const [newTemplateSubjectsJson, setNewTemplateSubjectsJson] = useState('[\n  {\n    "name": "Português",\n    "color": "#4F46E5",\n    "topics": ["Interpretação de Texto", "Sintaxe"]\n  }\n]');
+
+  // Import states
+  const [importTestId, setImportTestId] = useState('');
+  const [importQuestionsJson, setImportQuestionsJson] = useState('[\n  {\n    "subjectName": "Português",\n    "topicName": "Interpretação de Texto",\n    "statement": "Qual é a ideia central do texto?",\n    "options": ["Opção A", "Opção B", "Opção C", "Opção D", "Opção E"],\n    "correctOptionIdx": 0,\n    "explanation": "Explicação detalhada da alternativa A."\n  }\n]');
+  const [importing, setImporting] = useState(false);
+
+  const loadTemplatesTab = useCallback(async () => {
+    try {
+      const b = await apiCall('/admin/bancas') as any[];
+      setBancas(b || []);
+      const t = await apiCall('/areas/templates') as any[];
+      setAreaTemplates(t || []);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [apiCall]);
+
+  const handleCreateBanca = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bancaName.trim()) return;
+    try {
+      await apiCall('/admin/bancas', {
+        method: 'POST',
+        body: JSON.stringify({ name: bancaName.trim(), description: bancaDesc.trim() }),
+      });
+      setBancaName('');
+      setBancaDesc('');
+      alert('Banca cadastrada com sucesso!');
+      loadTemplatesTab();
+    } catch (err) {
+      alert((err as Error).message);
+    }
+  };
+
+  const handleCreateTemplate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTemplateName.trim()) return;
+    try {
+      const parsedSubjects = JSON.parse(newTemplateSubjectsJson);
+      await apiCall('/admin/areas/templates', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: newTemplateName.trim(),
+          bancaId: newTemplateBancaId || undefined,
+          subjects: parsedSubjects,
+        }),
+      });
+      setNewTemplateName('');
+      setNewTemplateBancaId('');
+      alert('Template de área curricular criado!');
+      loadTemplatesTab();
+    } catch (err) {
+      alert('Erro no JSON ou na criação do template: ' + (err as Error).message);
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    if (!confirm('Deseja excluir este template de área?')) return;
+    try {
+      await apiCall(`/admin/areas/templates/${id}`, { method: 'DELETE' });
+      alert('Template de área removido!');
+      loadTemplatesTab();
+    } catch (err) {
+      alert((err as Error).message);
+    }
+  };
+
+  const handleImportQuestions = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!importTestId.trim()) {
+      alert('ID do teste diagnóstico é obrigatório.');
+      return;
+    }
+    setImporting(true);
+    try {
+      const parsedQs = JSON.parse(importQuestionsJson);
+      const res = await apiCall('/admin/questions/import', {
+        method: 'POST',
+        body: JSON.stringify({
+          testId: importTestId.trim(),
+          questions: parsedQs,
+        }),
+      }) as { success: boolean; count: number };
+      alert(`Sucesso! ${res.count} questões diagnósticas carregadas.`);
+      setImportQuestionsJson('[]');
+    } catch (err) {
+      alert('Erro na carga em lote: ' + (err as Error).message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email?.toLowerCase() ?? '') || currentUser?.role === 'ADMIN';
 
   async function testWhatsApp() {
     setWaSending(true);
@@ -227,10 +386,12 @@ export default function Admin() {
     if (!isAdmin) { setForbidden(true); setLoading(false); return; }
     if (activeTab === 'users') {
       load(page, search, plan);
-    } else {
+    } else if (activeTab === 'tracks') {
       loadTracks();
+    } else if (activeTab === 'templates') {
+      loadTemplatesTab();
     }
-  }, [page, plan, activeTab, isAdmin, load, loadTracks]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [page, plan, activeTab, isAdmin, load, loadTracks, loadTemplatesTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debounce search
   useEffect(() => {
@@ -337,7 +498,7 @@ export default function Admin() {
       </header>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 16, borderBottom: '1px solid var(--border-color)', marginBottom: 24 }}>
+      <div style={{ display: 'flex', gap: 16, borderBottom: '1px solid var(--border-color)', marginBottom: 24, overflowX: 'auto', paddingBottom: 4 }}>
         <button
           onClick={() => setActiveTab('users')}
           style={{
@@ -349,6 +510,7 @@ export default function Admin() {
             cursor: 'pointer',
             fontWeight: activeTab === 'users' ? 600 : 400,
             fontSize: 14,
+            whiteSpace: 'nowrap'
           }}
         >
           Usuários
@@ -364,13 +526,46 @@ export default function Admin() {
             cursor: 'pointer',
             fontWeight: activeTab === 'tracks' ? 600 : 400,
             fontSize: 14,
+            whiteSpace: 'nowrap'
           }}
         >
           Sons Pomodoro
         </button>
+        <button
+          onClick={() => setActiveTab('templates')}
+          style={{
+            padding: '10px 16px',
+            background: 'none',
+            border: 'none',
+            borderBottom: activeTab === 'templates' ? '2px solid var(--color-primary)' : '2px solid transparent',
+            color: activeTab === 'templates' ? 'var(--text-primary)' : 'var(--text-muted)',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'templates' ? 600 : 400,
+            fontSize: 14,
+            whiteSpace: 'nowrap'
+          }}
+        >
+          Bancas & Templates
+        </button>
+        <button
+          onClick={() => setActiveTab('import')}
+          style={{
+            padding: '10px 16px',
+            background: 'none',
+            border: 'none',
+            borderBottom: activeTab === 'import' ? '2px solid var(--color-primary)' : '2px solid transparent',
+            color: activeTab === 'import' ? 'var(--text-primary)' : 'var(--text-muted)',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'import' ? 600 : 400,
+            fontSize: 14,
+            whiteSpace: 'nowrap'
+          }}
+        >
+          Carga em Lote
+        </button>
       </div>
 
-      {activeTab === 'users' ? (
+      {activeTab === 'users' && (
         <>
           {/* Summary stats */}
           <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 0, borderBottom: '1px solid var(--border-color)', marginBottom: 32, paddingBottom: 24 }}>
@@ -477,7 +672,9 @@ export default function Admin() {
             </div>
           )}
         </>
-      ) : (
+      )}
+
+      {activeTab === 'tracks' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
           {/* Add/Edit Track Form */}
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', padding: 24 }}>
@@ -592,7 +789,172 @@ export default function Admin() {
         </div>
       )}
 
-      {selected && <UserModal user={selected} onClose={() => setSelected(null)} />}
+      {activeTab === 'templates' && (
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 24 }}>
+          {/* Bancas registration and list */}
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', padding: 24 }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 600, fontFamily: 'var(--font-display)', color: 'var(--color-primary)' }}>
+              Cadastrar Banca Organizadora
+            </h3>
+            <form onSubmit={handleCreateBanca} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+              <div>
+                <label className="form-label" style={{ marginBottom: 4 }}>Nome da Banca *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Ex: FCC, CESGRANRIO, FGV"
+                  value={bancaName}
+                  onChange={e => setBancaName(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="form-label" style={{ marginBottom: 4 }}>Descrição / Detalhes</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Ex: Fundação Carlos Chagas"
+                  value={bancaDesc}
+                  onChange={e => setBancaDesc(e.target.value)}
+                />
+              </div>
+              <button type="submit" className="btn-primary" style={{ width: 'auto', alignSelf: 'flex-start', padding: '8px 20px' }}>
+                Cadastrar Banca
+              </button>
+            </form>
+
+            <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Bancas Cadastradas ({bancas.length})</h4>
+            <div style={{ maxHeight: 200, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {bancas.map((b: any) => (
+                <div key={b.id} style={{ padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong style={{ fontSize: 13 }}>{b.name}</strong>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>{b.description}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Curricular Templates */}
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', padding: 24 }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 600, fontFamily: 'var(--font-display)', color: 'var(--color-primary)' }}>
+              Cadastrar Template de Edital (Foco)
+            </h3>
+            <form onSubmit={handleCreateTemplate} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+              <div>
+                <label className="form-label" style={{ marginBottom: 4 }}>Nome do Edital / Prova *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Ex: Concurso Banco do Brasil - Escriturário"
+                  value={newTemplateName}
+                  onChange={e => setNewTemplateName(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="form-label" style={{ marginBottom: 4 }}>Banca Associada</label>
+                <select
+                  value={newTemplateBancaId}
+                  onChange={e => setNewTemplateBancaId(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', color: 'inherit', cursor: 'pointer', outline: 'none' }}
+                >
+                  <option value="">Nenhuma banca</option>
+                  {bancas.map((b: any) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="form-label" style={{ marginBottom: 4 }}>Estrutura de Disciplinas & Tópicos (JSON) *</label>
+                <textarea
+                  className="form-input"
+                  rows={6}
+                  style={{ fontFamily: 'monospace', fontSize: 12 }}
+                  value={newTemplateSubjectsJson}
+                  onChange={e => setNewTemplateSubjectsJson(e.target.value)}
+                  required
+                />
+              </div>
+              <button type="submit" className="btn-primary" style={{ width: 'auto', alignSelf: 'flex-start', padding: '8px 20px' }}>
+                Criar Template
+              </button>
+            </form>
+
+            <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Templates Curriculares ({areaTemplates.length})</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {areaTemplates.map((t: any) => (
+                <div key={t.id} style={{ padding: '10px 14px', border: '1px solid var(--border-color)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong style={{ fontSize: 13 }}>{t.name}</strong>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                      Banca: {t.banca?.name || 'Geral'} • {t.subjects?.length || 0} disciplinas cadastrados
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteTemplate(t.id)}
+                    style={{ background: 'none', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+                  >
+                    Excluir
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'import' && (
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', padding: 24, maxWidth: 640, margin: '0 auto' }}>
+          <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 600, fontFamily: 'var(--font-display)', color: 'var(--color-primary)' }}>
+            Carga Massiva de Questões Diagnósticas
+          </h3>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
+            Utilize esta interface para carregar em lote o banco oficial de perguntas de nivelamento para um teste diagnóstico associado a uma banca ou template.
+          </p>
+
+          <form onSubmit={handleImportQuestions} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <label className="form-label" style={{ marginBottom: 4 }}>ID do Teste Diagnóstico (Test ID) *</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Insira o ID do DiagnosticTest"
+                value={importTestId}
+                onChange={e => setImportTestId(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="form-label" style={{ marginBottom: 4 }}>Lista de Questões (Array de objetos JSON) *</label>
+              <textarea
+                className="form-input"
+                rows={10}
+                style={{ fontFamily: 'monospace', fontSize: 12 }}
+                value={importQuestionsJson}
+                onChange={e => setImportQuestionsJson(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit" className="btn-primary" disabled={importing} style={{ width: 'auto', alignSelf: 'flex-start', padding: '10px 24px' }}>
+              {importing ? 'Importando...' : 'Carregar Questões diagnósticas'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {selected && (
+        <UserModal
+          user={selected}
+          onClose={() => setSelected(null)}
+          apiCall={apiCall}
+          onUpdated={() => {
+            setSelected(null);
+            load(page, search, plan);
+          }}
+        />
+      )}
     </div>
   );
 }

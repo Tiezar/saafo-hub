@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import {
-  ChevronRight, RotateCw, AlertCircle, CheckCircle,
+  ChevronRight, AlertCircle, CheckCircle,
   Sun, Moon, Mail,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import { Button, Input } from '../components/ui';
 import './Auth.css';
 
 export default function Auth() {
@@ -138,15 +139,14 @@ export default function Auth() {
             Clique no link do email para ativar sua conta.<br />O link expira em 24 horas.
           </p>
           <div className="auth-pending-actions">
-            <button className="btn-secondary" style={{ width: 'auto', padding: '10px 20px' }}
+            <Button variant="secondary" style={{ width: 'auto' }}
               onClick={() => setEmailPending(null)}>
               Voltar ao login
-            </button>
-            <button className="btn-primary" style={{ width: 'auto', padding: '10px 20px' }}
-              onClick={handleResendEmail} disabled={resendLoading}>
-              {resendLoading && <RotateCw size={14} className="animate-spin" />}
+            </Button>
+            <Button variant="primary" style={{ width: 'auto' }}
+              onClick={handleResendEmail} loading={resendLoading}>
               Reenviar e-mail
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -180,30 +180,39 @@ export default function Auth() {
 
         <form onSubmit={handleAuth}>
           {isRegistering && (
-            <div className="form-group">
-              <label className="form-label">Nome Completo</label>
-              <input type="text" className="form-input" value={authName}
-                onChange={e => setAuthName(e.target.value)}
-                placeholder="Seu nome" required disabled={authLoading} />
-            </div>
+            <Input
+              type="text"
+              label="Nome Completo"
+              value={authName}
+              onChange={e => setAuthName(e.target.value)}
+              placeholder="Seu nome"
+              required
+              disabled={authLoading}
+            />
           )}
-          <div className="form-group">
-            <label className="form-label">E-mail</label>
-            <input type="email" className="form-input" value={authEmail}
-              onChange={e => setAuthEmail(e.target.value)}
-              placeholder="estudante@instituicao.edu.br" required disabled={authLoading} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Senha</label>
-            <input type="password" className="form-input" value={authPassword}
-              onChange={e => setAuthPassword(e.target.value)}
-              placeholder="Mínimo 6 caracteres" required minLength={6} disabled={authLoading} />
-          </div>
-          <button type="submit" className="btn-primary" disabled={authLoading}>
-            {authLoading && <RotateCw size={16} className="animate-spin" />}
+          <Input
+            type="email"
+            label="E-mail"
+            value={authEmail}
+            onChange={e => setAuthEmail(e.target.value)}
+            placeholder="estudante@instituicao.edu.br"
+            required
+            disabled={authLoading}
+          />
+          <Input
+            type="password"
+            label="Senha"
+            value={authPassword}
+            onChange={e => setAuthPassword(e.target.value)}
+            placeholder="Mínimo 6 caracteres"
+            required
+            minLength={6}
+            disabled={authLoading}
+          />
+          <Button type="submit" variant="primary" loading={authLoading} fullWidth>
             {isRegistering ? 'Criar Conta' : 'Entrar'}
             {!authLoading && <ChevronRight size={16} />}
-          </button>
+          </Button>
         </form>
 
         <div className="auth-divider">ou continue com</div>

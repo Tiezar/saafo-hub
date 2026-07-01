@@ -14,6 +14,8 @@ import { AdminModule } from './infrastructure/http/modules/admin.module';
 import { LoggerModule } from './infrastructure/logger/logger.module';
 import { LoggingInterceptor } from './infrastructure/logger/logging.interceptor';
 import { PomodoroModule } from './infrastructure/http/modules/pomodoro.module';
+import { AIModule } from './infrastructure/ai/ai.module';
+import { AreasModule } from './infrastructure/http/modules/areas.module';
 
 @Module({
   imports: [
@@ -26,6 +28,7 @@ import { PomodoroModule } from './infrastructure/http/modules/pomodoro.module';
       },
     ]),
     DatabaseModule,
+    AIModule,
     AuthModule,
     ProfileModule,
     MaterialsMemoryModule,
@@ -35,6 +38,7 @@ import { PomodoroModule } from './infrastructure/http/modules/pomodoro.module';
     AdminModule,
     PomodoroModule,
     LoggerModule,
+    AreasModule,
   ],
   providers: [
     {

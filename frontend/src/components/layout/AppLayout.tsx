@@ -51,20 +51,25 @@ export default function AppLayout() {
     if (!ytReady || !selectedTrack) return;
 
     if (ytPlayerRef.current) {
-      const currentVideoId = typeof ytPlayerRef.current.getVideoData === 'function'
-        ? ytPlayerRef.current.getVideoData()?.video_id
-        : null;
+      // Guard: player may be stale/partially-initialised (e.g. React Strict Mode double-invoke)
+      if (typeof ytPlayerRef.current.cueVideoById !== 'function') {
+        ytPlayerRef.current = null; // reset and fall through to re-create the player
+      } else {
+        const currentVideoId = typeof ytPlayerRef.current.getVideoData === 'function'
+          ? ytPlayerRef.current.getVideoData()?.video_id
+          : null;
 
-      if (currentVideoId !== selectedTrack.youtubeId) {
-        ytPlayerRef.current.cueVideoById({
-          videoId: selectedTrack.youtubeId,
-          startSeconds: 0,
-        });
-        if (playingAudio) {
-          ytPlayerRef.current.playVideo();
+        if (currentVideoId !== selectedTrack.youtubeId) {
+          ytPlayerRef.current.cueVideoById({
+            videoId: selectedTrack.youtubeId,
+            startSeconds: 0,
+          });
+          if (playingAudio && typeof ytPlayerRef.current.playVideo === 'function') {
+            ytPlayerRef.current.playVideo();
+          }
         }
+        return;
       }
-      return;
     }
 
     // Create the container dynamically on document.body (outside React root)

@@ -8,7 +8,6 @@ import {
   Request,
   Inject,
   NotFoundException,
-  BadRequestException,
   HttpCode,
   Post,
   Put,
@@ -16,9 +15,23 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UpdateProfileUseCase } from '../../../application/use-cases/update-profile.use-case';
-import type { IUserRepository } from '../../../domain/repositories/user-repository.interface';
+import { DeleteUserUseCase } from '../../../application/use-cases/delete-user.use-case';
 import { PrismaService } from '../../database/prisma.service';
-import { IsString, IsOptional, MinLength, IsArray, IsNumber, ValidateNested } from 'class-validator';
+import { GetWeeklyRoutinesUseCase } from '../../../application/use-cases/get-weekly-routines.use-case';
+import { CreateWeeklyRoutineUseCase } from '../../../application/use-cases/create-weekly-routine.use-case';
+import { UpdateWeeklyRoutineUseCase } from '../../../application/use-cases/update-weekly-routine.use-case';
+import { DeleteWeeklyRoutineUseCase } from '../../../application/use-cases/delete-weekly-routine.use-case';
+import type { IUserRepository } from '../../../domain/repositories/user-repository.interface';
+import type { IWeeklyRoutineRepository } from '../../../domain/repositories/weekly-routine-repository.interface';
+import type { IPaymentService } from '../../../domain/services/payment-service.interface';
+import {
+  IsString,
+  IsOptional,
+  MinLength,
+  IsArray,
+  IsNumber,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class UpdateProfileDto {
@@ -93,21 +106,74 @@ class UpdateRoutineDto {
 @Controller('profile')
 export class ProfileController {
   private updateProfileUseCase: UpdateProfileUseCase;
+  private deleteUserUseCase: DeleteUserUseCase;
+  private getWeeklyRoutinesUseCase: GetWeeklyRoutinesUseCase;
+  private createWeeklyRoutineUseCase: CreateWeeklyRoutineUseCase;
+  private updateWeeklyRoutineUseCase: UpdateWeeklyRoutineUseCase;
+  private deleteWeeklyRoutineUseCase: DeleteWeeklyRoutineUseCase;
 
   constructor(
     @Inject('IUserRepository') private userRepository: IUserRepository,
-    private prisma: PrismaService,
+    @Inject('IPaymentService') private paymentService: IPaymentService,
+    @Inject('IWeeklyRoutineRepository')
+    private weeklyRoutineRepository: IWeeklyRoutineRepository,
+    private readonly prisma: PrismaService,
   ) {
     this.updateProfileUseCase = new UpdateProfileUseCase(userRepository);
+    this.deleteUserUseCase = new DeleteUserUseCase(
+      userRepository,
+      paymentService,
+    );
+    this.getWeeklyRoutinesUseCase = new GetWeeklyRoutinesUseCase(
+      weeklyRoutineRepository,
+    );
+    this.createWeeklyRoutineUseCase = new CreateWeeklyRoutineUseCase(
+      weeklyRoutineRepository,
+    );
+    this.updateWeeklyRoutineUseCase = new UpdateWeeklyRoutineUseCase(
+      weeklyRoutineRepository,
+    );
+    this.deleteWeeklyRoutineUseCase = new DeleteWeeklyRoutineUseCase(
+      weeklyRoutineRepository,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
   async getProfile(@Request() req: any) {
-    const user = await this.userRepository.findById(req.user.id);
+    const user = await this.prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { profile: true },
+    });
     if (!user) {
       throw new NotFoundException('Usuário não encontrado');
     }
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      nickname: user.nickname,
+      institutionId: user.institutionId,
+      phone: user.phone,
+      role: user.role,
+      onboardingStatus: user.profile?.onboardingStatus ?? 'PENDING',
+      activeUserAreaId: user.profile?.activeUserAreaId ?? null,
+      plan: user.plan,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete()
+  @HttpCode(200)
+  async deleteAccount(@Request() req: any) {
+    await this.deleteUserUseCase.execute(req.user.id);
+    return { ok: true };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch()
+  async updateProfile(@Request() req: any, @Body() body: UpdateProfileDto) {
+    const user = await this.updateProfileUseCase.execute(req.user.id, body);
     return {
       id: user.id,
       email: user.email,
@@ -119,86 +185,43 @@ export class ProfileController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Delete()
-  @HttpCode(200)
-  async deleteAccount(@Request() req: any) {
-    await this.prisma.user.delete({ where: { id: req.user.id } });
-    return { ok: true };
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Patch()
-  async updateProfile(@Request() req: any, @Body() body: UpdateProfileDto) {
-    try {
-      const user = await this.updateProfileUseCase.execute(req.user.id, body);
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        nickname: user.nickname,
-        institutionId: user.institutionId,
-        phone: user.phone,
-      };
-    } catch (err) {
-      const msg = (err as Error).message;
-      if (msg === 'User not found' || msg === 'Institution not found') {
-        throw new NotFoundException(msg);
-      }
-      throw new BadRequestException(msg);
-    }
-  }
-
-  @UseGuards(JwtAuthGuard)
   @Get('routines')
   async getRoutines(@Request() req: any) {
-    return this.prisma.userWeeklyRoutine.findMany({
-      where: { userId: req.user.id },
-      orderBy: { createdAt: 'asc' },
-    });
+    return this.getWeeklyRoutinesUseCase.execute(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('routines')
   async createRoutine(@Request() req: any, @Body() body: CreateRoutineDto) {
-    return this.prisma.userWeeklyRoutine.create({
-      data: {
-        userId: req.user.id,
-        label: body.label,
-        color: body.color,
-        days: body.days,
-        slots: body.slots as any,
-      },
+    return this.createWeeklyRoutineUseCase.execute({
+      userId: req.user.id,
+      label: body.label,
+      color: body.color,
+      days: body.days,
+      slots: body.slots,
     });
   }
 
   @UseGuards(JwtAuthGuard)
   @Put('routines/:id')
-  async updateRoutine(@Request() req: any, @Param('id') id: string, @Body() body: UpdateRoutineDto) {
-    const routine = await this.prisma.userWeeklyRoutine.findFirst({
-      where: { id, userId: req.user.id },
-    });
-    if (!routine) throw new NotFoundException('Rotina não encontrada');
-
-    return this.prisma.userWeeklyRoutine.update({
-      where: { id },
-      data: {
-        label: body.label,
-        color: body.color,
-        days: body.days,
-        slots: body.slots !== undefined ? (body.slots as any) : undefined,
-      },
+  async updateRoutine(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() body: UpdateRoutineDto,
+  ) {
+    return this.updateWeeklyRoutineUseCase.execute(id, {
+      userId: req.user.id,
+      label: body.label,
+      color: body.color,
+      days: body.days,
+      slots: body.slots,
     });
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete('routines/:id')
   async deleteRoutine(@Request() req: any, @Param('id') id: string) {
-    const routine = await this.prisma.userWeeklyRoutine.findFirst({
-      where: { id, userId: req.user.id },
-    });
-    if (!routine) throw new NotFoundException('Rotina não encontrada');
-
-    await this.prisma.userWeeklyRoutine.delete({ where: { id } });
+    await this.deleteWeeklyRoutineUseCase.execute(id, req.user.id);
     return { ok: true };
   }
 }

@@ -3,13 +3,14 @@ import {
   Trophy, RotateCw, CheckCircle, X, SkipForward,
   GraduationCap, PenLine, Trash2, Clock, Star,
   Zap, Target, FileText, Play, Timer, AlertTriangle,
-  ListChecks, ChevronDown, Info,
+  ChevronDown, Info, Camera,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import type { QuizQuestion, ExamRecord } from '../types';
 import './ExamSession.css';
 import CustomSelect from '../components/CustomSelect';
+import BubbleScanner from '../components/BubbleScanner';
 
 
 // ── Profile definitions ───────────────────────────────────────────────────────
@@ -122,6 +123,11 @@ export default function ExamSession() {
   const [count,      setCount]      = useState(10);
   const [creating,   setCreating]   = useState(false);
   const [customName, setCustomName] = useState('');
+  const [isOfficialSimulation, setIsOfficialSimulation] = useState(false);
+
+  // ── Webcam optical scanner
+  const [selectedExamForScanner, setSelectedExamForScanner] = useState<{ id: string; title: string } | null>(null);
+  const [scannerResult, setScannerResult] = useState<any | null>(null);
 
   // ── History
   const [examHistory,  setExamHistory]  = useState<ExamRecord[]>([]);
@@ -187,6 +193,20 @@ export default function ExamSession() {
     return () => clearInterval(id);
   }, [screen]);
 
+  const finishSession = useCallback((reason: 'complete' | 'timeout') => {
+    const taken = startedAt > 0 ? Math.round((Date.now() - startedAt) / 1000) : 0;
+    setResultTaken(taken);
+    if (reason === 'timeout' && sessionMode === 'multiple') {
+      setAnswers(prev => {
+        const padded = [...prev];
+        while (padded.length < questions.length) padded.push(false);
+        return padded;
+      });
+    }
+    deadlineRef.current = null;
+    setScreen('results');
+  }, [startedAt, sessionMode, questions.length]);
+
   // ── Auto-finish when time hits 0
   useEffect(() => {
     if (timeLeftSecs === 0 && screen === 'session' && deadlineRef.current !== null && !timeExpiredRef.current) {
@@ -199,15 +219,18 @@ export default function ExamSession() {
   useEffect(() => {
     if (screen !== 'results' || !activeRecord) return;
 
-    let score = 0;
-    if (sessionMode === 'multiple') {
-      score = questions.length > 0
-        ? Math.round(answers.filter(Boolean).length / questions.length * 100) : 0;
-    } else {
-      const evaled = essayAnswers.filter(a => a.evaluation);
-      score = evaled.length
-        ? Math.round(evaled.reduce((s, a) => s + (a.evaluation!.score), 0) / evaled.length * 10) : 0;
-    }
+    const score = (() => {
+      if (sessionMode === 'multiple') {
+        return questions.length > 0
+          ? Math.round(answers.filter(Boolean).length / questions.length * 100)
+          : 0;
+      } else {
+        const evaled = essayAnswers.filter(a => a.evaluation);
+        return evaled.length
+          ? Math.round(evaled.reduce((s, a) => s + a.evaluation!.score, 0) / evaled.length * 10)
+          : 0;
+      }
+    })();
 
     apiCall(`/exams/${activeRecord.id}/attempts`, {
       method: 'POST',
@@ -271,6 +294,7 @@ export default function ExamSession() {
           profileId,
           mode: profile.mode,
           questions: questionsData,
+          isOfficialSimulation,
         }),
       }) as ExamRecord;
 
@@ -351,19 +375,7 @@ export default function ExamSession() {
     setEssayIdx(i => i + 1); setEssayText(''); setCurrentEval(null);
   };
 
-  const finishSession = useCallback((reason: 'complete' | 'timeout') => {
-    const taken = startedAt > 0 ? Math.round((Date.now() - startedAt) / 1000) : 0;
-    setResultTaken(taken);
-    if (reason === 'timeout' && sessionMode === 'multiple') {
-      setAnswers(prev => {
-        const padded = [...prev];
-        while (padded.length < questions.length) padded.push(false);
-        return padded;
-      });
-    }
-    deadlineRef.current = null;
-    setScreen('results');
-  }, [startedAt, sessionMode, questions.length]);
+
 
   const resetToSetup = () => {
     setScreen('setup'); setActiveRecord(null);
@@ -527,6 +539,33 @@ export default function ExamSession() {
             />
           </div>
 
+          {/* Official simulation config */}
+          <div className="form-group" style={{ marginBottom: 20 }}>
+            <label className="form-label" style={{ marginBottom: 6 }}>Foco da Simulação</label>
+            <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                <input
+                  type="radio"
+                  name="simType"
+                  checked={!isOfficialSimulation}
+                  onChange={() => setIsOfficialSimulation(false)}
+                  style={{ accentColor: 'var(--color-primary)' }}
+                />
+                <span>Personalizado (IA adaptada aos seus cartões)</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                <input
+                  type="radio"
+                  name="simType"
+                  checked={isOfficialSimulation}
+                  onChange={() => setIsOfficialSimulation(true)}
+                  style={{ accentColor: 'var(--color-primary)' }}
+                />
+                <span>Simulado Oficial (Diagramação clássica da banca/edital)</span>
+              </label>
+            </div>
+          </div>
+
           {/* Validation hints */}
           {topicIds.length > 0 && !isEssay && totalCards < 3 && (
             <p style={{ fontSize: 13, color: 'var(--color-warning)', marginBottom: 12 }}>
@@ -618,21 +657,48 @@ export default function ExamSession() {
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                    <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center', flexWrap: 'wrap' }}>
                       <button onClick={() => openStart(record.id)}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 6,
-                          padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                          padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                           border: `1px solid var(--color-primary)`,
                           background: isOpen ? 'color-mix(in srgb, var(--color-primary) 12%, transparent)' : 'transparent',
                           color: 'var(--color-primary)',
                         }}>
                         <Play size={12} /> Iniciar <ChevronDown size={12} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                       </button>
+                      <a href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/exams/${record.id}/print`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border-subtle)',
+                          background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
+                          textDecoration: 'none'
+                        }}
+                        title="Imprimir Prova / Gabarito"
+                      >
+                        <FileText size={14} />
+                      </a>
+                      {record.mode !== 'essay' && (
+                        <button onClick={() => {
+                          setSelectedExamForScanner({ id: record.id, title: record.scopeLabel || record.topicName });
+                        }}
+                          style={{
+                            padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border-subtle)',
+                            background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: 4
+                          }}
+                          title="Escanear Cartão Resposta"
+                        >
+                          <Camera size={14} /> Escanear
+                        </button>
+                      )}
                       <button onClick={() => deleteRecord(record.id)}
                         style={{
-                          padding: '7px 10px', borderRadius: 8, fontSize: 12, cursor: 'pointer',
-                          border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--text-muted)',
+                          padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border-subtle)',
+                          background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
                           display: 'flex', alignItems: 'center',
                         }}>
                         <Trash2 size={14} />
@@ -721,6 +787,80 @@ export default function ExamSession() {
             </div>
           </div>
         )}
+        {/* Webcam scanner overlay */}
+        {selectedExamForScanner && (
+          <BubbleScanner
+            examId={selectedExamForScanner.id}
+            examTitle={selectedExamForScanner.title}
+            onClose={() => setSelectedExamForScanner(null)}
+            onGraded={(result) => {
+              setSelectedExamForScanner(null);
+              setScannerResult(result);
+              // Trigger history reload to show the new attempt
+              apiCall('/exams', { method: 'GET' })
+                .then(records => setExamHistory(records as ExamRecord[]))
+                .catch(() => {});
+            }}
+          />
+        )}
+
+        {/* Scanner result modal */}
+        {scannerResult && (
+          <div className="modal-overlay" style={{ zIndex: 1010, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="modal" style={{ maxWidth: 560, width: '90%' }}>
+              <div className="modal-header">
+                <span className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Trophy size={18} style={{ color: scoreColor(scannerResult.score) }} />
+                  Gabarito Escaneado com Sucesso!
+                </span>
+                <button onClick={() => setScannerResult(null)} style={{ cursor: 'pointer', color: 'var(--text-muted)' }}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="modal-body" style={{ textAlign: 'center' }}>
+                <div className="quiz-score-ring" style={{ color: scoreColor(scannerResult.score), margin: '10px auto' }}>
+                  {scannerResult.score}%
+                </div>
+                <p style={{ fontWeight: 600, fontSize: 16, marginTop: 12 }}>
+                  {scannerResult.correctCount} de {scannerResult.totalQuestions} acertos
+                </p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
+                  {scoreMsg(scannerResult.score)}
+                </p>
+
+                {/* Answers breakdown */}
+                <div style={{ maxHeight: 220, overflowY: 'auto', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 4 }}>
+                  {scannerResult.answers.map((ans: any) => (
+                    <div key={ans.question} style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', borderRadius: 8,
+                      background: 'var(--bg-surface)',
+                      border: `1px solid ${ans.isCorrect ? 'var(--color-success)' : 'var(--color-danger)'}`
+                    }}>
+                      {ans.isCorrect ? (
+                        <CheckCircle size={14} style={{ color: 'var(--color-success)', flexShrink: 0, marginTop: 1 }} />
+                      ) : (
+                        <X size={14} style={{ color: 'var(--color-danger)', flexShrink: 0, marginTop: 1 }} />
+                      )}
+                      <div style={{ fontSize: 12.5 }}>
+                        <strong>Q{ans.question}:</strong> Marcou <strong>{LETTERS[ans.selectedIdx]}</strong> (Gabarito: {LETTERS[ans.correctIdx]})
+                        {ans.explanation && (
+                          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            {ans.explanation}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="modal-footer" style={{ justifyContent: 'flex-end' }}>
+                <button className="btn-primary" style={{ padding: '8px 20px' }} onClick={() => setScannerResult(null)}>
+                  Fechar Resultado
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -774,79 +914,91 @@ export default function ExamSession() {
 
           <div style={{ maxWidth: 720, margin: '0 auto' }}>
             {/* Progress bar */}
-            <div className="quiz-progress-bar" style={{ marginBottom: 20 }}>
-              <div className="quiz-progress-fill" style={{ width: `${progressPct}%`, background: activeProf ? `var(${activeProf.colorVar})` : 'var(--color-primary)' }} />
+            <div className="exam-progress-outer" style={{ marginBottom: 20 }}>
+              <div className="exam-progress-inner" style={{ width: `${progressPct}%` }} />
             </div>
 
-            <div className="glass-card" style={{ padding: 28, marginBottom: 16 }}>
-              {/* Text-base for contextual questions */}
-              {q.textBase && q.textBase.trim() && (
-                <div style={{
-                  padding: '14px 18px', borderRadius: 10, marginBottom: 22,
-                  background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)',
-                  borderLeft: `4px solid ${activeProf ? `var(${activeProf.colorVar})` : 'var(--color-primary)'}`,
-                }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: activeProf ? `var(${activeProf.colorVar})` : 'var(--color-primary)', marginBottom: 10 }}>
-                    Texto-base
+            <div className="glass-card" style={{ overflow: 'hidden', marginBottom: 16 }}>
+              {/* Progress header */}
+              <div style={{ padding: '30px 40px 0' }}>
+                {/* Text-base for contextual questions */}
+                {q.textBase && q.textBase.trim() && (
+                  <div style={{
+                    padding: '14px 18px', borderRadius: 10, marginBottom: 22,
+                    background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)',
+                    borderLeft: `4px solid ${activeProf ? `var(${activeProf.colorVar})` : 'var(--color-primary)'}`,
+                  }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: activeProf ? `var(${activeProf.colorVar})` : 'var(--color-primary)', marginBottom: 10 }}>
+                      Texto-base
+                    </div>
+                    <p style={{ fontSize: 13.5, lineHeight: 1.75, color: 'var(--text-secondary)', margin: 0, whiteSpace: 'pre-wrap' }}>
+                      {q.textBase}
+                    </p>
                   </div>
-                  <p style={{ fontSize: 13.5, lineHeight: 1.75, color: 'var(--text-secondary)', margin: 0, whiteSpace: 'pre-wrap' }}>
-                    {q.textBase}
-                  </p>
+                )}
+
+                <div className="exam-session-head">
+                  <span className="exam-q-counter">
+                    Questão <strong>{qIdx + 1}</strong> de <strong>{questions.length}</strong>
+                  </span>
+                  {timeLeftSecs === null && (
+                    <span className="exam-timer-pill">
+                      <Timer size={13} />
+                      Livre
+                    </span>
+                  )}
                 </div>
-              )}
 
-              <p style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.6, marginBottom: 22 }}>{q.question}</p>
+                {/* Subject badge */}
+                {activeRecord?.scopeLabel && (
+                  <div style={{ font: '500 10px JetBrains Mono', letterSpacing: '.12em', color: 'var(--color-primary)', marginBottom: 12, textTransform: 'uppercase' }}>
+                    {activeRecord.scopeLabel}
+                  </div>
+                )}
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {q.options.map((opt, idx) => {
-                  let bg = 'transparent', color = 'var(--text-primary)', border = 'var(--border-subtle)';
-                  if (revealed) {
-                    if (idx === q.correctIndex)    { bg = 'var(--bg-surface)'; color = 'var(--color-success)'; border = 'var(--color-success)'; }
-                    else if (idx === selected)     { bg = 'color-mix(in srgb, var(--color-danger) 8%, transparent)'; color = 'var(--color-danger)'; border = 'var(--color-danger)'; }
-                  }
-                  return (
-                    <button key={idx} onClick={() => mcAnswer(idx)} disabled={revealed}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 14, padding: '13px 18px',
-                        borderRadius: 10, border: `1px solid ${border}`, background: bg, color,
-                        cursor: revealed ? 'default' : 'pointer', textAlign: 'left',
-                        fontSize: 14, fontWeight: 500, transition: 'var(--transition)',
-                      }}>
-                      <span style={{
-                        width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontWeight: 700, fontSize: 12,
-                        background: revealed && idx === q.correctIndex ? 'var(--color-success)'
-                          : revealed && idx === selected ? 'var(--color-danger)'
-                          : 'var(--bg-overlay)',
-                        color: revealed && (idx === q.correctIndex || idx === selected) ? 'white' : 'var(--text-muted)',
-                      }}>
-                        {LETTERS[idx]}
-                      </span>
-                      <span>{opt}</span>
+                {/* Question text */}
+                <p style={{ font: '500 23px/1.45 Literata serif', color: 'var(--text-primary)', margin: '0 0 28px' }}>{q.question}</p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 30 }}>
+                  {q.options.map((opt, idx) => {
+                    const isCorrect = revealed && idx === q.correctIndex;
+                    const isSelectedWrong = revealed && idx === selected && idx !== q.correctIndex;
+                    const isWrongOther = revealed && idx !== q.correctIndex && idx !== selected;
+
+                    let optClass = 'exam-option';
+                    if (isCorrect) optClass += ' exam-option-correct';
+                    else if (isSelectedWrong) optClass += ' exam-option-selected-wrong';
+                    else if (isWrongOther) optClass += ' exam-option-wrong';
+
+                    return (
+                      <button key={idx} className={optClass} onClick={() => mcAnswer(idx)} disabled={revealed}>
+                        <span className="exam-option-letter">{LETTERS[idx]}</span>
+                        <span className="exam-option-text">{opt}</span>
+                        {isCorrect && <span className="exam-correct-label">✓ CORRETA</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {revealed && (
+                  <div className="exam-explanation">
+                    <span className="exam-explanation-label">Por quê</span>
+                    <p>{q.explanation}</p>
+                  </div>
+                )}
+
+                {revealed && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 30, marginTop: 18 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: selected === q.correctIndex ? 'var(--color-tertiary)' : 'var(--color-danger)' }}>
+                      {selected === q.correctIndex ? '✓ Correto!' : '✗ Incorreto'}
+                    </div>
+                    <button className="btn-primary" style={{ width: 'auto', padding: '10px 28px' }} onClick={mcNext}>
+                      {qIdx + 1 >= questions.length ? 'Ver resultado' : 'Próxima'} <SkipForward size={15} />
                     </button>
-                  );
-                })}
+                  </div>
+                )}
               </div>
-
-              {revealed && (
-                <div style={{ marginTop: 18, padding: '12px 16px', borderRadius: 8, background: 'var(--bg-surface)', border: '1px solid var(--border-color)' }}>
-                  <strong style={{ fontSize: 12, color: 'var(--color-primary)' }}>Explicação: </strong>
-                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{q.explanation}</span>
-                </div>
-              )}
             </div>
-
-            {revealed && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: selected === q.correctIndex ? 'var(--color-success)' : 'var(--color-danger)' }}>
-                  {selected === q.correctIndex ? '✓ Correto!' : '✗ Incorreto'}
-                </div>
-                <button className="btn-primary" style={{ width: 'auto', padding: '10px 28px' }} onClick={mcNext}>
-                  {qIdx + 1 >= questions.length ? 'Ver resultado' : 'Próxima'} <SkipForward size={15} />
-                </button>
-              </div>
-            )}
           </div>
         </div>
       );

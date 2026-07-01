@@ -8,6 +8,7 @@ import type {
   CalendarEvent, Metrics, PlanStatus, Insight, EventDraft, UserEventType, UserWeeklyRoutine,
 } from '../types';
 import { blankDraft } from '../lib/utils';
+import { useVersionCheck } from '../hooks/useVersionCheck';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,9 @@ interface AppContextValue {
   // Theme
   theme: 'dark' | 'light';
   toggleTheme: () => void;
+  palette: 'marginalia' | 'cobalt' | 'musgo';
+  setPalette: (p: 'marginalia' | 'cobalt' | 'musgo') => void;
+  updateAvailable: boolean;
 
   // Toasts
   toasts: Toast[];
@@ -148,7 +152,14 @@ interface AppContextValue {
   ytPlayerRef: React.MutableRefObject<any>;
   togglePlayAudio: () => void;
   handleSelectTrack: (trackId: string) => void;
-  addCustomTrack: (name: string, url: string) => void;
+  addCustomTrack: (name: string, youtubeId: string) => void;
+  // Study Areas
+  activeArea: any;
+  myAreas: any[];
+  fetchActiveArea: () => Promise<void>;
+  fetchMyAreas: () => Promise<void>;
+  handleSwitchArea: (id: string) => Promise<void>;
+  handleDeleteArea: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -191,6 +202,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   const toggleTheme = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), []);
+
+  const [palette, setPaletteState] = useState<'marginalia' | 'cobalt' | 'musgo'>(() => {
+    const s = localStorage.getItem('palette');
+    if (s === 'cobalt' || s === 'musgo') return s;
+    return 'marginalia';
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('palette-cobalt', palette === 'cobalt');
+    document.documentElement.classList.toggle('palette-musgo',  palette === 'musgo');
+    localStorage.setItem('palette', palette);
+  }, [palette]);
+
+  const setPalette = useCallback((p: 'marginalia' | 'cobalt' | 'musgo') => setPaletteState(p), []);
+
+  const updateAvailable = useVersionCheck();
 
   // ── Toasts ────────────────────────────────────────────────────────────────
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -248,6 +275,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [checkoutOpen,      setCheckoutOpen]      = useState(false);
   const [planSelectionOpen, setPlanSelectionOpen] = useState(false);
   const [checkoutLoading]   = useState(false);
+
+  // ── Study Areas state (callbacks defined after apiCall) ─────────────────
+  const [activeArea, setActiveArea] = useState<any>(null);
+  const [myAreas, setMyAreas] = useState<any[]>([]);
+
   // ── Audio Player States ───────────────────────────────────────────────────
   const [ytReady, setYtReady] = useState(false);
   const [playingAudio, setPlayingAudio] = useState(false);
@@ -349,6 +381,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const text = await res.text();
     return text ? JSON.parse(text) : null;
   }, [tryRefresh, handleLogout]);
+
+  // ── Study Areas callbacks (placed after apiCall to avoid TDZ) ────────────
+  const fetchActiveArea = useCallback(async () => {
+    try {
+      const res = (await apiCall('/areas/active')) as { activeArea: any; onboardingStatus: string };
+      setActiveArea(res.activeArea);
+      if (currentUser && res.onboardingStatus && currentUser.onboardingStatus !== res.onboardingStatus) {
+        setCurrentUser(prev => prev ? { ...prev, onboardingStatus: res.onboardingStatus } : prev);
+      }
+    } catch { /* silent */ }
+  }, [apiCall, currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchMyAreas = useCallback(async () => {
+    try {
+      const res = (await apiCall('/areas/my-areas')) as any[];
+      setMyAreas(res || []);
+    } catch { /* silent */ }
+  }, [apiCall]);
 
   // ── Audio Player ──────────────────────────────────────────────────────────
 
@@ -607,7 +657,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (e) { showError((e as Error).message); }
   }, [apiCall, showError]);
 
+  // ── Study Areas — switch/delete (after all deps are declared) ─────────────
+  const handleSwitchArea = useCallback(async (id: string) => {
+    try {
+      await apiCall(`/areas/switch/${id}`, { method: 'POST' });
+      showSuccess('Área de estudos alterada!');
+      await fetchActiveArea();
+      await fetchMyAreas();
+      await fetchSubjects();
+      await fetchAllCards();
+      await fetchMetrics();
+    } catch (e) { showError((e as Error).message); }
+  }, [apiCall, fetchActiveArea, fetchMyAreas, fetchSubjects, fetchAllCards, fetchMetrics, showSuccess, showError]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleDeleteArea = useCallback(async (id: string) => {
+    if (!confirm('Excluir esta área de estudos e TODOS os dados relacionados permanentemente?')) return;
+    try {
+      await apiCall(`/areas/${id}`, { method: 'DELETE' });
+      showSuccess('Área de estudos excluída.');
+      await fetchActiveArea();
+      await fetchMyAreas();
+      await fetchSubjects();
+      await fetchAllCards();
+      await fetchMetrics();
+    } catch (e) { showError((e as Error).message); }
+  }, [apiCall, fetchActiveArea, fetchMyAreas, fetchSubjects, fetchAllCards, fetchMetrics, showSuccess, showError]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Event types ───────────────────────────────────────────────────────────
+
   const fetchEventTypes = useCallback(async () => {
     try {
       const list = await apiCall('/event-types') as UserEventType[];
@@ -811,11 +888,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-  // On mount: attempt to restore session from httpOnly refresh token cookie
+  // On mount: restore session and prefetch user so routes render with full context
   useEffect(() => {
     const initAuth = async () => {
       try {
-        await tryRefresh();
+        const at = await tryRefresh();
+        if (at) {
+          // Fetch profile before releasing the loading gate so canAccess()
+          // never evaluates with currentUser = null on a page reload.
+          try {
+            const res = await fetch(`${API_URL}/profile`, {
+              headers: { Authorization: `Bearer ${at}` },
+              credentials: 'include',
+            });
+            if (res.ok) {
+              const u = await res.json() as User;
+              setCurrentUser(u);
+            }
+          } catch { /* silent */ }
+        }
       } catch {
         // silent
       } finally {
@@ -835,6 +926,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       fetchEventTypes();
       fetchWeeklyRoutines();
       fetchPomodoroTracks();
+      fetchActiveArea();
+      fetchMyAreas();
     }
   }, [currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -859,7 +952,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const value: AppContextValue = {
     token, currentUser, initializing, emailPending, setEmailPending,
     handleLogout, storeAuth, apiCall,
-    theme, toggleTheme,
+    theme, toggleTheme, palette, setPalette, updateAvailable,
     toasts, showSuccess, showError, dismissToast,
     spaces, subjects, topics, cards, metrics, calendarEvents, eventTypes,
     institutions, planStatus, insights, insightsLoading, insightsLastUpdated,
@@ -890,6 +983,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ytReady, setYtReady, playingAudio, setPlayingAudio, selectedTrack, setSelectedTrack,
     volume, setVolume, curatedTracks, customTracks, ytPlayerRef, togglePlayAudio,
     handleSelectTrack, addCustomTrack,
+    activeArea, myAreas, fetchActiveArea, fetchMyAreas, handleSwitchArea, handleDeleteArea,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

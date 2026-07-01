@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, SkipForward, RotateCw, Clock, Coffee, Settings, ChevronDown, Music, Volume2, VolumeX, X } from 'lucide-react';
+import { Play, Pause, SkipForward, RotateCw, Settings, ChevronDown, Volume2, VolumeX, X } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import './Pomodoro.css';
 import CustomSelect from '../components/CustomSelect';
@@ -189,15 +189,15 @@ export default function Pomodoro() {
   // Apply duration change: if not running, reset seconds to new duration for current phase
   const applyFocus = (n: number) => {
     setFocusMin(n);
-    if (!running && phaseRef.current === 'focus') setSeconds(n * 60);
+    if (!running && phase === 'focus') setSeconds(n * 60);
   };
   const applyBreak = (n: number) => {
     setBreakMin(n);
-    if (!running && phaseRef.current === 'short-break') setSeconds(n * 60);
+    if (!running && phase === 'short-break') setSeconds(n * 60);
   };
   const applyLong = (n: number) => {
     setLongMin(n);
-    if (!running && phaseRef.current === 'long-break') setSeconds(n * 60);
+    if (!running && phase === 'long-break') setSeconds(n * 60);
   };
 
   const totalSecs  = phase === 'focus' ? focusMin * 60 : phase === 'short-break' ? breakMin * 60 : longMin * 60;
@@ -211,49 +211,32 @@ export default function Pomodoro() {
 
   const dueForTopic = topicId ? cards.filter(c => c.topicId === topicId && new Date(c.nextReview) <= new Date()).length : 0;
 
-  // Marginalia side note texts dynamically computed
-  const sideNoteTitle = phase === 'focus' ? '01. Foco' : phase === 'short-break' ? '02. Pausa' : '03. Pausa Longa';
-  const sideNoteDesc = phase === 'focus'
-    ? 'Mantenha a concentração plena durante este período. Evite interrupções externas.'
-    : phase === 'short-break'
-    ? 'Hora de afastar-se da tela. Beba água, faça um alongamento leve ou relaxe a mente.'
-    : 'Um descanso maior para consolidação da memória após várias sessões intensas.';
+
 
   return (
     <div className="page" style={{ padding: '24px 24px 48px' }}>
       {/* Page Header */}
-      <header style={{ marginBottom: 40, borderBottom: '1px solid var(--border-color)', paddingBottom: 24 }}>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Pomodoro</h2>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, color: 'var(--text-muted)', marginTop: 8 }}>
-          Sessões de foco alternadas com intervalos para otimização da absorção e retenção.
-        </p>
-      </header>
+      <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 22px' }}>
+        Pomodoro
+      </h2>
 
-      <div className="pomodoro-grid">
-        {/* Left Column: Timer & Controls */}
-        <div className="pomodoro-left-column">
-          {/* Marginalia Note */}
-          <div className="pomo-sidenote">
-            <span className="academic-label" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{sideNoteTitle}</span>
-            <p className="academic-label" style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'none', letterSpacing: 'normal', lineHeight: 1.4 }}>
-              {sideNoteDesc}
-            </p>
-          </div>
+      {/* Bento Grid */}
+      <div className="pomo-bento-grid">
+
+        {/* Left Card - Timer (spans 2 rows) */}
+        <div className="pomo-timer-card">
 
           {/* Segmented Control */}
-          <div className="pomodoro-segmented-control">
+          <div className="pomo-seg">
             {([
               { phase: 'focus' as Phase, label: 'Foco' },
-              { phase: 'short-break' as Phase, label: 'Pausa' },
-              { phase: 'long-break' as Phase, label: 'Pausa Longa' }
+              { phase: 'short-break' as Phase, label: 'Pausa Curta' },
+              { phase: 'long-break' as Phase, label: 'Longa' },
             ]).map(p => (
               <button
                 key={p.phase}
                 onClick={() => switchPhase(p.phase)}
-                style={{
-                  backgroundColor: phase === p.phase ? activeColor : 'transparent',
-                  color: phase === p.phase ? '#fff' : 'var(--text-secondary)',
-                }}
+                className={phase === p.phase ? 'active' : ''}
               >
                 {p.label}
               </button>
@@ -261,15 +244,15 @@ export default function Pomodoro() {
           </div>
 
           {/* Timer Ring */}
-          <div style={{ position: 'relative', width: 280, height: 280, display: 'flex', alignItems: 'center', justifyOrigin: 'center', justifyContent: 'center', marginBottom: 40 }}>
+          <div style={{ position: 'relative', width: 'min(260px, 100%)', aspectRatio: '1 / 1', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32 }}>
             <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', transform: 'rotate(-90deg)' }} viewBox="0 0 100 100">
-              <circle cx={50} cy={50} r={46} fill="none" stroke="var(--border-subtle)" strokeWidth="1.5" />
+              <circle cx={50} cy={50} r={46} fill="none" stroke="rgba(255,255,255,.2)" strokeWidth="1.5" />
               <circle
                 cx={50}
                 cy={50}
                 r={46}
                 fill="none"
-                stroke={activeColor}
+                stroke="rgba(254,242,228,.9)"
                 strokeWidth="2.5"
                 strokeDasharray={CIRCUMFERENCE}
                 strokeDashoffset={dashOffset}
@@ -279,42 +262,45 @@ export default function Pomodoro() {
             </svg>
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10, textAlign: 'center' }}>
+              {/* Phase indicator */}
               <span
                 style={{
                   fontSize: 11,
                   fontFamily: 'var(--font-label)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.15em',
-                  color: activeColor,
+                  color: 'var(--bg-base)',
                   display: 'flex',
                   alignItems: 'center',
-                  marginBottom: 8
+                  marginBottom: 8,
                 }}
               >
-                <span style={{ width: 6, height: 6, backgroundColor: activeColor, marginRight: 8, display: 'inline-block' }} />
+                <span style={{ width: 6, height: 6, backgroundColor: 'white', marginRight: 8, display: 'inline-block' }} />
                 {phase === 'focus' ? 'Foco' : phase === 'short-break' ? 'Pausa' : 'Pausa Longa'}
               </span>
-              <h2 style={{ fontSize: 72, fontFamily: 'var(--font-label)', fontWeight: 500, color: 'var(--text-primary)', margin: '0 0 16px', fontFeatureSettings: "'tnum'" }}>
+
+              {/* Timer digits */}
+              <h2 style={{ fontSize: 'clamp(42px, 12vw, 68px)', fontFamily: 'var(--font-label)', fontWeight: 500, color: 'var(--bg-base)', margin: '0 0 14px', fontFeatureSettings: "'tnum'" }}>
                 {mm}:{ss}
               </h2>
 
-              {/* Round indicators */}
+              {/* Round dots */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
                   {[1, 2, 3, 4].map(r => (
                     <div
                       key={r}
                       style={{
                         width: 8,
                         height: 8,
-                        border: `1px solid ${r <= round ? activeColor : 'var(--border-color)'}`,
-                        backgroundColor: r < round ? activeColor : r === round ? `${activeColor}55` : 'transparent',
-                        borderRadius: '1px'
+                        border: `1px solid ${r <= round ? 'white' : 'rgba(255,255,255,.4)'}`,
+                        backgroundColor: r < round ? 'white' : r === round ? 'rgba(255,255,255,.55)' : 'transparent',
+                        borderRadius: '1px',
                       }}
                     />
                   ))}
                 </div>
-                <span className="academic-label" style={{ fontSize: 9, color: 'var(--text-muted)' }}>
+                <span className="academic-label" style={{ fontSize: 9, color: 'rgba(255,255,255,.7)' }}>
                   Sessão {round} de 4
                 </span>
               </div>
@@ -322,315 +308,271 @@ export default function Pomodoro() {
           </div>
 
           {/* Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 32, marginBottom: 48 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <button
               onClick={reset}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
               title="Reiniciar"
+              style={{
+                background: 'rgba(255,255,255,.16)',
+                border: '1px solid rgba(255,255,255,.3)',
+                borderRadius: 9,
+                padding: '13px 18px',
+                color: 'var(--bg-base)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+              }}
             >
-              <RotateCw size={20} />
+              <RotateCw size={18} />
             </button>
+
             <button
               onClick={() => setRunning(r => !r)}
               style={{
-                width: 56,
-                height: 56,
-                backgroundColor: activeColor,
-                color: '#fff',
+                background: 'var(--bg-base)',
+                color: 'var(--color-primary)',
                 border: 'none',
+                borderRadius: 9,
+                padding: '13px 36px',
+                fontFamily: 'var(--font-label)',
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              {running ? <><Pause size={16} /> Pausar</> : <><Play size={16} style={{ marginLeft: 1 }} /> Iniciar</>}
+            </button>
+
+            <button
+              onClick={skip}
+              title="Pular fase"
+              style={{
+                background: 'rgba(255,255,255,.16)',
+                border: '1px solid rgba(255,255,255,.3)',
+                borderRadius: 9,
+                padding: '13px 18px',
+                color: 'var(--bg-base)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <SkipForward size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Top-right Card - Meta do dia */}
+        <div className="pomo-meta-card">
+          <span className="academic-label" style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block', marginBottom: 10 }}>
+            META DO DIA
+          </span>
+          <div style={{ fontSize: 36, fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16, display: 'flex', alignItems: 'baseline', gap: 4 }}>
+            {sessions}
+            <span style={{ fontSize: 20, color: 'var(--text-muted)', fontWeight: 400 }}>/</span>
+            <input
+              type="number"
+              min="1"
+              max="24"
+              value={dailyGoal}
+              onChange={e => handleGoalChange(Number(e.target.value))}
+              style={{
+                width: '42px',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '4px',
+                padding: '1px 4px',
+                fontSize: '20px',
+                fontFamily: 'var(--font-display)',
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                textAlign: 'center',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+              title="Alterar meta diária"
+            />
+          </div>
+
+          {/* Progress bars */}
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            {Array.from({ length: dailyGoal }, (_, i) => i + 1).map(s => (
+              <div
+                key={s}
+                style={{
+                  flex: '1 0 auto',
+                  minWidth: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: s <= sessions ? 'var(--color-primary)' : 'var(--border-subtle)',
+                  transition: 'background-color 0.3s ease',
+                }}
+              />
+            ))}
+          </div>
+
+          {sessions >= dailyGoal && (
+            <span style={{
+              display: 'inline-block',
+              marginTop: 10,
+              fontSize: 10,
+              color: 'var(--color-success)',
+              fontWeight: 700,
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-color)',
+              padding: '2px 8px',
+              borderRadius: 4,
+            }}>
+              Meta Concluída! 🎉
+            </span>
+          )}
+        </div>
+
+        {/* Bottom-right Card - Som Ambiente */}
+        <div className="pomo-sound-card">
+          <span style={{ fontSize: 10, fontFamily: 'var(--font-label)', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.75, display: 'block', marginBottom: 14 }}>
+            ♪ SOM AMBIENTE
+          </span>
+
+          {/* Track selector */}
+          <div style={{ marginBottom: 14 }}>
+            <CustomSelect
+              variant="default"
+              style={{ width: '100%' }}
+              value={selectedTrack?.youtubeId ?? ''}
+              onChange={onSelectTrack}
+              placeholder="Selecione um som..."
+              options={[
+                ...curatedTracks.map(t => ({ value: t.youtubeId, label: t.name })),
+                ...customTracks.map(t => ({ value: t.youtubeId, label: `[Meu] ${t.name}` })),
+                { value: 'add_custom', label: '+ Adicionar link personalizado...' },
+              ]}
+            />
+          </div>
+
+          {/* Player Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              onClick={togglePlayAudio}
+              disabled={!selectedTrack}
+              style={{
+                width: 36,
+                height: 36,
+                backgroundColor: 'rgba(255,255,255,.2)',
+                color: '#f5ede3',
+                border: '1px solid rgba(255,255,255,.3)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
                 borderRadius: '6px',
-                boxShadow: 'none',
+                opacity: selectedTrack ? 1 : 0.5,
+                flexShrink: 0,
               }}
+              title={playingAudio ? 'Pausar áudio' : 'Tocar áudio'}
             >
-              {running ? <Pause size={24} /> : <Play size={24} style={{ marginLeft: 2 }} />}
-            </button>
-            <button
-              onClick={skip}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-              title="Pular fase"
-            >
-              <SkipForward size={20} />
-            </button>
-          </div>
-
-          {/* Retractable Settings */}
-          <div style={{ width: '100%', borderTop: '1px solid var(--border-color)', paddingTop: 24 }}>
-            <button
-              onClick={() => setShowSettings(s => !s)}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-label)',
-                fontSize: 11,
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em'
-              }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Settings size={14} /> Configurações de tempo
-              </span>
-              <ChevronDown size={14} style={{ transform: showSettings ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+              {playingAudio ? <Pause size={15} /> : <Play size={15} style={{ marginLeft: 1 }} />}
             </button>
 
-            {showSettings && (
-              <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {/* eslint-disable-next-line react-hooks/refs */}
-                {([
-                  { label: 'Foco (min)',    value: focusMin, setter: applyFocus, min: 5,  max: 90 },
-                  { label: 'Pausa (min)',   value: breakMin, setter: applyBreak, min: 1,  max: 30 },
-                  { label: 'Pausa Longa',  value: longMin,  setter: applyLong,  min: 5,  max: 60 },
-                ] as { label: string; value: number; setter: (n: number) => void; min: number; max: number }[]).map(({ label, value, setter, min, max }) => (
-                  <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label className="academic-label" style={{ fontSize: 9 }}>{label}</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <input
-                        type="range"
-                        min={min}
-                        max={max}
-                        value={value}
-                        onChange={e => setter(Number(e.target.value))}
-                        style={{ flex: 1, accentColor: activeColor }}
-                      />
-                      <span style={{ fontSize: 13, fontWeight: 600, minWidth: 24, textAlign: 'center' }}>{value}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Pomodoro Audio Player */}
-          <div style={{ width: '100%', borderTop: '1px solid var(--border-color)', paddingTop: 24, marginTop: 24 }}>
-            <span className="academic-label" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', marginBottom: 16 }}>
-              <Music size={14} /> Som Ambiente
-            </span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Select Dropdown */}
-              <div style={{ display: 'flex', gap: 8, width: '100%' }}>
-                <CustomSelect
-                  variant="default"
-                  style={{ flex: 1 }}
-                  value={selectedTrack?.youtubeId ?? ''}
-                  onChange={onSelectTrack}
-                  placeholder="Selecione um som..."
-                  options={[
-                    ...curatedTracks.map(t => ({ value: t.youtubeId, label: t.name })),
-                    ...customTracks.map(t => ({ value: t.youtubeId, label: `[Meu] ${t.name}` })),
-                    { value: 'add_custom', label: '+ Adicionar link personalizado...' }
-                  ]}
-                />
-              </div>
-
-              {/* Player Controls */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <button
-                  onClick={togglePlayAudio}
-                  disabled={!selectedTrack}
-                  style={{
-                    width: 38,
-                    height: 38,
-                    backgroundColor: 'var(--color-primary)',
-                    color: '#fff',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    borderRadius: '6px',
-                    opacity: selectedTrack ? 1 : 0.5,
-                  }}
-                  title={playingAudio ? 'Pausar áudio' : 'Tocar áudio'}
-                >
-                  {playingAudio ? <Pause size={16} /> : <Play size={16} style={{ marginLeft: 1 }} />}
-                </button>
-
-                {/* Volume Slider */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-                  <button
-                    onClick={() => setVolume(volume === 0 ? 50 : 0)}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
-                  >
-                    {volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                  </button>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={volume}
-                    onChange={e => setVolume(Number(e.target.value))}
-                    style={{ flex: 1, accentColor: 'var(--color-primary)' }}
-                  />
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)', minWidth: 24, textAlign: 'right' }}>{volume}%</span>
-                </div>
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+              <button
+                onClick={() => setVolume(volume === 0 ? 50 : 0)}
+                style={{ background: 'none', border: 'none', color: '#f5ede3', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0, opacity: 0.8 }}
+              >
+                {volume === 0 ? <VolumeX size={15} /> : <Volume2 size={15} />}
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={volume}
+                onChange={e => setVolume(Number(e.target.value))}
+                style={{ flex: 1, accentColor: '#f5ede3' }}
+              />
+              <span style={{ fontSize: 11, color: 'rgba(245,237,227,.75)', minWidth: 28, textAlign: 'right' }}>{volume}%</span>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Context & Stats */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-          {/* Study Selector */}
-          <div>
-            <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 8 }}>Contexto de Estudo</label>
-            <CustomSelect
-              variant="notebook"
-              style={{ width: '100%' }}
-              value={topicId}
-              onChange={setTopicId}
-              options={[
-                { value: '', label: 'Sessão livre' },
-                ...visibleTopics.map(t => ({
-                  value: t.id,
-                  label: `${subjects.find(s => s.id === t.subjectId)?.name ?? ''} › ${t.name}`,
-                })),
-              ]}
-            />
-            {topicId && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)', marginTop: 16, borderRadius: '6px' }}>
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Cards pendentes nesta matéria</span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primary)' }}>{dueForTopic}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Daily Activity Metrics */}
-          <div>
-            <h3 className="academic-label" style={{ fontSize: 10, color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)', paddingBottom: 8, marginBottom: 16 }}>
-              Atividade Diária
-            </h3>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Metric 1 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
-                <div>
-                  <span className="academic-label" style={{ fontSize: 9, display: 'block', marginBottom: 4 }}>Sessões concluídas</span>
-                  <span style={{ fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-label)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    {sessions}
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                      /
-                      <input
-                        type="number"
-                        min="1"
-                        max="24"
-                        value={dailyGoal}
-                        onChange={e => handleGoalChange(Number(e.target.value))}
-                        style={{
-                          width: '38px',
-                          background: 'var(--bg-surface)',
-                          border: '1px solid var(--border-color)',
-                          borderRadius: '4px',
-                          padding: '1px 2px',
-                          fontSize: '11px',
-                          color: 'var(--text-primary)',
-                          fontFamily: 'var(--font-label)',
-                          textAlign: 'center',
-                          outline: 'none',
-                          cursor: 'pointer'
-                        }}
-                        title="Alterar meta diária"
-                      />
-                      (meta)
-                    </span>
-                    {sessions >= dailyGoal && (
-                      <span style={{ 
-                        fontSize: 10, 
-                        color: 'var(--color-success)', 
-                        fontWeight: 700, 
-                        backgroundColor: 'var(--bg-surface)', 
-                        border: '1px solid var(--border-color)',
-                        padding: '2px 6px', 
-                        borderRadius: 4 
-                      }}>
-                        Meta Concluída! 🎉
-                      </span>
-                    )}
-                  </span>
-                </div>
-                {/* Visual blocks */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', maxWidth: '120px', justifyContent: 'flex-end' }}>
-                    {Array.from({ length: dailyGoal }, (_, i) => i + 1).map(s => (
-                      <div
-                        key={s}
-                        style={{
-                          width: 8,
-                          height: 16,
-                          backgroundColor: s <= sessions ? activeColor : 'var(--border-color)',
-                          borderRadius: '2px',
-                          transition: 'background-color 0.3s ease'
-                        }}
-                      />
-                    ))}
-                  </div>
-                  {sessions > dailyGoal && (
-                    <span style={{ fontSize: 12, fontWeight: 700, color: activeColor }}>
-                      +{sessions - dailyGoal}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div style={{ height: 1, backgroundColor: 'var(--border-subtle)' }} />
-
-              {/* Metric 2 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <span className="academic-label" style={{ fontSize: 9, display: 'block', marginBottom: 4 }}>Tempo de foco acumulado</span>
-                  <span style={{ fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-label)' }}>
-                    {sessions * focusMin} <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>min</span>
-                  </span>
-                </div>
-                <Clock size={20} style={{ color: 'var(--text-muted)' }} />
-              </div>
-              <div style={{ height: 1, backgroundColor: 'var(--border-subtle)' }} />
-
-              {/* Metric 3 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <span className="academic-label" style={{ fontSize: 9, display: 'block', marginBottom: 4 }}>Próxima pausa em</span>
-                  <span style={{ fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-label)' }}>
-                    {phase === 'focus' ? `${mm}:${ss}` : 'Em pausa'}
-                  </span>
-                </div>
-                <Coffee size={20} style={{ color: 'var(--text-muted)' }} />
-              </div>
-            </div>
-          </div>
-
-          {/* Explanatory Panel */}
-          <div style={{ padding: 24, backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', marginTop: 'auto', borderRadius: '6px' }}>
-            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, margin: '0 0 12px' }}>Resumo do Ciclo</h4>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 16px' }}>
-              Seu método atual baseia-se em blocos de <strong>{focusMin} minutos</strong> de foco intenso, seguidos por breves pausas de <strong>{breakMin} minutos</strong> para assimilação.
-            </p>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <li style={{ display: 'flex', alignItems: 'center', fontSize: 10, fontFamily: 'var(--font-label)', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
-                <span style={{ width: 8, height: 8, backgroundColor: 'var(--color-primary)', marginRight: 12, borderRadius: '1px' }} />
-                Foco: {focusMin} min
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', fontSize: 10, fontFamily: 'var(--font-label)', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
-                <span style={{ width: 8, height: 8, backgroundColor: 'var(--color-tertiary)', marginRight: 12, borderRadius: '1px' }} />
-                Pausa Curta: {breakMin} min
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', fontSize: 10, fontFamily: 'var(--font-label)', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
-                <span style={{ width: 8, height: 8, backgroundColor: 'var(--text-muted)', marginRight: 12, borderRadius: '1px' }} />
-                Pausa Longa (após 4 sessões): {longMin} min
-              </li>
-            </ul>
-          </div>
-        </div>
       </div>
 
+      {/* Contexto de Estudo */}
+      <div style={{ marginBottom: 24 }}>
+        <label className="academic-label" style={{ fontSize: 10, display: 'block', marginBottom: 8 }}>Contexto de Estudo</label>
+        <CustomSelect
+          variant="notebook"
+          style={{ width: '100%' }}
+          value={topicId}
+          onChange={setTopicId}
+          options={[
+            { value: '', label: 'Sessão livre' },
+            ...visibleTopics.map(t => ({
+              value: t.id,
+              label: `${subjects.find(s => s.id === t.subjectId)?.name ?? ''} › ${t.name}`,
+            })),
+          ]}
+        />
+        {topicId && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)', marginTop: 12, borderRadius: '6px' }}>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Cards pendentes nesta matéria</span>
+            <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primary)' }}>{dueForTopic}</span>
+          </div>
+        )}
+      </div>
 
+      {/* Retractable Settings */}
+      <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 24 }}>
+        <button
+          onClick={() => setShowSettings(s => !s)}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: 'var(--text-primary)',
+            fontFamily: 'var(--font-label)',
+            fontSize: 11,
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Settings size={14} /> Configurações de tempo
+          </span>
+          <ChevronDown size={14} style={{ transform: showSettings ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+        </button>
+
+        {showSettings && (
+          <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {([
+              { label: 'Foco (min)',   value: focusMin, setter: applyFocus, min: 5,  max: 90 },
+              { label: 'Pausa (min)', value: breakMin, setter: applyBreak, min: 1,  max: 30 },
+              { label: 'Pausa Longa', value: longMin,  setter: applyLong,  min: 5,  max: 60 },
+            ] as { label: string; value: number; setter: (n: number) => void; min: number; max: number }[]).map(({ label, value, setter, min, max }) => (
+              <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label className="academic-label" style={{ fontSize: 9 }}>{label}</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <input
+                    type="range"
+                    min={min}
+                    max={max}
+                    value={value}
+                    onChange={e => setter(Number(e.target.value))}
+                    style={{ flex: 1, accentColor: activeColor }}
+                  />
+                  <span style={{ fontSize: 13, fontWeight: 600, minWidth: 24, textAlign: 'center' }}>{value}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Add Custom Track Modal */}
       {showCustomModal && (

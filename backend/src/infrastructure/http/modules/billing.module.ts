@@ -6,7 +6,10 @@ import { BillingController } from '../controllers/billing.controller';
 @Module({
   imports: [DatabaseModule],
   controllers: [BillingController],
-  providers: [AsaasService],
-  exports: [AsaasService],
+  providers: [
+    AsaasService,
+    { provide: 'IPaymentService', useClass: AsaasService },
+  ],
+  exports: [AsaasService, 'IPaymentService'],
 })
 export class BillingModule {}

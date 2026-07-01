@@ -26,20 +26,34 @@ export class PrismaSubjectRepository implements ISubjectRepository {
   }
 
   async findByUserId(userId: string): Promise<Subject[]> {
-    const subjects = await this.prisma.subject.findMany({
+    const profile = await this.prisma.userProfile.findUnique({
       where: { userId },
+    });
+
+    const subjects = await this.prisma.subject.findMany({
+      where: {
+        userId,
+        ...(profile?.activeUserAreaId
+          ? { userAreaId: profile.activeUserAreaId }
+          : { userAreaId: null }),
+      },
       orderBy: { name: 'asc' },
     });
     return subjects.map(this.toDomain);
   }
 
   async create(subject: Partial<Subject>): Promise<Subject> {
+    const profile = await this.prisma.userProfile.findUnique({
+      where: { userId: subject.userId! },
+    });
+
     const created = await this.prisma.subject.create({
       data: {
         name: subject.name!,
         color: subject.color,
         userId: subject.userId!,
         spaceId: subject.spaceId,
+        userAreaId: profile?.activeUserAreaId ?? null,
       },
     });
     return this.toDomain(created);

@@ -1,7 +1,7 @@
 import { GenerateFlashcardsUseCase } from './generate-flashcards.use-case';
 import type { ITopicRepository } from '../../domain/repositories/topic-repository.interface';
 import type { ISubjectRepository } from '../../domain/repositories/subject-repository.interface';
-import { GeminiService } from '../../infrastructure/ai/gemini.service';
+import { IAIService } from '../../domain/services/ai-service.interface';
 import { Topic } from '../../domain/entities/topic';
 import { Subject } from '../../domain/entities/subject';
 
@@ -9,16 +9,16 @@ describe('GenerateFlashcardsUseCase', () => {
   let useCase: GenerateFlashcardsUseCase;
   let topicRepository: jest.Mocked<ITopicRepository>;
   let subjectRepository: jest.Mocked<ISubjectRepository>;
-  let geminiService: jest.Mocked<GeminiService>;
+  let aiService: jest.Mocked<IAIService>;
 
   beforeEach(() => {
     topicRepository = { findById: jest.fn() } as any;
     subjectRepository = { findById: jest.fn() } as any;
-    geminiService = { generateFlashcards: jest.fn() } as any;
+    aiService = { generateFlashcards: jest.fn() } as any;
     useCase = new GenerateFlashcardsUseCase(
       topicRepository,
       subjectRepository,
-      geminiService,
+      aiService,
     );
   });
 
@@ -37,7 +37,7 @@ describe('GenerateFlashcardsUseCase', () => {
 
     subjectRepository.findById.mockResolvedValue(mockSubject);
     topicRepository.findById.mockResolvedValue(mockTopic);
-    geminiService.generateFlashcards.mockResolvedValue(mockGeneratedCards);
+    aiService.generateFlashcards.mockResolvedValue(mockGeneratedCards);
 
     const result = await useCase.execute({
       text: 'Este é o texto de estudos sobre direitos fundamentais e sociais.',

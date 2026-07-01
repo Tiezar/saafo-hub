@@ -2,8 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
-import cookieParser = require('cookie-parser');
+import cookieParser from 'cookie-parser';
 import { PinoLoggerService } from './infrastructure/logger/pino-logger.service';
+import { AppExceptionFilter } from './infrastructure/http/filters/app-exception.filter';
 
 function validateEnv(): void {
   const required = [
@@ -27,13 +28,15 @@ async function bootstrap() {
   const logger = new PinoLoggerService();
   const app = await NestFactory.create(AppModule, { logger });
 
+  app.useGlobalFilters(new AppExceptionFilter());
+
   // 1. Configuração do Helmet para HTTP Headers de Segurança
   app.use(
     helmet({
       hsts: {
-        maxAge: 31_536_000,       // 1 ano
-        includeSubDomains: true,  // cobre subdomínios
-        preload: true,            // elegível para a HSTS preload list do Chrome
+        maxAge: 31_536_000, // 1 ano
+        includeSubDomains: true, // cobre subdomínios
+        preload: true, // elegível para a HSTS preload list do Chrome
       },
     }),
   );

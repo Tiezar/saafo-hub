@@ -10,6 +10,7 @@ export function EventIcon({ name, size = 14, color, style }: { name: string } & 
   return <Comp size={size} color={color} style={style} />;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const AVAILABLE_EVENT_ICONS = [
   'GraduationCap', 'Flag', 'Layers', 'Bell', 'BookOpen',
   'Brain', 'Calendar', 'Clock', 'FileText', 'Star',

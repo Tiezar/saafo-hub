@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
   BadRequestException,
 } from '@nestjs/common';
+import { IPaymentService } from '../../domain/services/payment-service.interface';
 
 export interface AsaasCardData {
   holderName: string;
@@ -32,7 +33,7 @@ export interface AsaasSubscriptionDetails {
 }
 
 @Injectable()
-export class AsaasService {
+export class AsaasService implements IPaymentService {
   private readonly logger = new Logger(AsaasService.name);
   private readonly apiKey = process.env.ASAAS_API_KEY ?? '';
   private readonly baseUrl =

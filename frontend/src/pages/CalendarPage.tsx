@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ChevronLeft, ChevronRight, Plus, Clock, Repeat, Bell, X, Check, RotateCw,
-  ChevronDown, ChevronUp, Settings, Pencil, Trash2, Calendar,
+  ChevronDown, ChevronUp, Settings, Pencil, Trash2,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -11,6 +11,7 @@ import { EventIcon, AVAILABLE_EVENT_ICONS } from '../components/EventIcon';
 import type { UserEventType } from '../types';
 import './Calendar.css';
 import CustomSelect from '../components/CustomSelect';
+import TimeInput from '../components/TimeInput';
 
 
 export default function CalendarPage() {
@@ -101,10 +102,6 @@ export default function CalendarPage() {
     setEventDraft(d => ({ ...d, reminders: d.reminders.map((r, idx) => idx === i ? { ...r, ...patch } : r) }));
 
   // ── Type management modal helpers ─────────────────────────────────────────
-  function openNewType() {
-    setEditingType(null); setTypeName(''); setTypeColor('#6366f1'); setTypeIcon('Calendar');
-    setTypesModalOpen(true);
-  }
   function openEditType(t: UserEventType) {
     setEditingType(t); setTypeName(t.name); setTypeColor(t.color); setTypeIcon(t.icon);
     setTypesModalOpen(true);
@@ -547,10 +544,10 @@ export default function CalendarPage() {
                     {!eventDraft.allDay && (
                       <div style={{ gridColumn: 'span 12', marginBottom: 20 }}>
                         <label className="academic-label">Horário de término (opcional)</label>
-                        <input type="time" className="academic-input" style={{ fontFamily: 'var(--font-label)', fontSize: 14 }}
-                          value={eventDraft.endAt ? (eventDraft.endAt.split('T')[1] || '') : ''}
-                          onChange={e => {
-                            const newEndTime = e.target.value;
+                        <TimeInput
+                          value={eventDraft.endAt ? (eventDraft.endAt.split('T')[1]?.slice(0, 5) || '') : ''}
+                          placeholder="--:--"
+                          onChange={newEndTime => {
                             setEventDraft(d => {
                               if (!newEndTime) return { ...d, endAt: '' };
                               const datePart = d.startAt.split('T')[0];

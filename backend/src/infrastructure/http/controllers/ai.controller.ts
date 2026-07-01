@@ -21,7 +21,7 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { PlanGuard } from '../guards/plan.guard';
 import { Throttle } from '@nestjs/throttler';
 import { GenerateFlashcardsUseCase } from '../../../application/use-cases/generate-flashcards.use-case';
-import { GeminiService } from '../../ai/gemini.service';
+import type { IAIService } from '../../../domain/services/ai-service.interface';
 import type { ICardRepository } from '../../../domain/repositories/card-repository.interface';
 import type { ITopicRepository } from '../../../domain/repositories/topic-repository.interface';
 import type { ISubjectRepository } from '../../../domain/repositories/subject-repository.interface';
@@ -40,7 +40,6 @@ import {
   ArrayMaxSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Card } from '../../../domain/entities/card';
 
 const SUPPORTED_TYPES = new Set([
   'image/jpeg',
@@ -106,23 +105,15 @@ export class AiController {
     @Inject('ICardRepository') private cardRepository: ICardRepository,
     @Inject('ITopicRepository') private topicRepository: ITopicRepository,
     @Inject('ISubjectRepository') private subjectRepository: ISubjectRepository,
-    private geminiService: GeminiService,
+    @Inject('IAIService') private aiService: IAIService,
     private prisma: PrismaService,
   ) {
     this.useCase = new GenerateFlashcardsUseCase(
       topicRepository,
       subjectRepository,
-      geminiService,
+      aiService,
       cardRepository,
     );
-  }
-
-  private handleError(err: unknown): never {
-    const msg = (err as Error).message;
-    if (msg === 'Topic not found') throw new NotFoundException(msg);
-    if (msg === 'Unauthorized access to topic')
-      throw new ForbiddenException(msg);
-    throw new BadRequestException(msg);
   }
 
   @Get('usage')
@@ -157,7 +148,9 @@ export class AiController {
     );
     for (const [i, topic] of topics.entries()) {
       if (!topic)
-        throw new NotFoundException(`Tópico ${body.topicIds[i]} não encontrado.`);
+        throw new NotFoundException(
+          `Tópico ${body.topicIds[i]} não encontrado.`,
+        );
     }
 
     const subjects = await Promise.all(
@@ -186,15 +179,7 @@ export class AiController {
     const count =
       body.count ?? Math.min(10, Math.max(3, Math.floor(allCards.length / 2)));
 
-    try {
-      return await this.geminiService.generateExam(
-        shuffled,
-        body.profileId,
-        count,
-      );
-    } catch (err) {
-      this.handleError(err);
-    }
+    return this.aiService.generateExam(shuffled, body.profileId, count);
   }
 
   // Returns generated cards WITHOUT saving — frontend shows preview
@@ -213,17 +198,13 @@ export class AiController {
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
-    try {
-      return await this.useCase.execute({
-        text: body.text,
-        topicId: body.topicId,
-        userId: req.user.id,
-        theme: body.theme,
-        count: body.count,
-      });
-    } catch (err) {
-      this.handleError(err);
-    }
+    return this.useCase.execute({
+      text: body.text,
+      topicId: body.topicId,
+      userId: req.user.id,
+      theme: body.theme,
+      count: body.count,
+    });
   }
 
   // Returns generated cards WITHOUT saving — frontend shows preview
@@ -274,19 +255,15 @@ export class AiController {
 
     const count = body.count ? parseInt(body.count, 10) : undefined;
 
-    try {
-      return await this.useCase.execute({
-        text,
-        fileBuffer,
-        mimeType: fileBuffer ? mimeType : undefined,
-        topicId: body.topicId,
-        userId: req.user.id,
-        theme: body.theme,
-        count: count && !isNaN(count) ? count : undefined,
-      });
-    } catch (err) {
-      this.handleError(err);
-    }
+    return this.useCase.execute({
+      text,
+      fileBuffer,
+      mimeType: fileBuffer ? mimeType : undefined,
+      topicId: body.topicId,
+      userId: req.user.id,
+      theme: body.theme,
+      count: count && !isNaN(count) ? count : undefined,
+    });
   }
 
   // Saves user-confirmed card selection after preview
@@ -331,14 +308,10 @@ export class AiController {
   @Post('evaluate-essay')
   @Throttle({ default: { limit: 100, ttl: 86_400_000 } }) // 100/day
   async evaluateEssay(@Body() body: EvaluateEssayDto) {
-    try {
-      return await this.geminiService.evaluateEssayAnswer(
-        body.question,
-        body.expectedAnswer,
-        body.userAnswer,
-      );
-    } catch (err) {
-      this.handleError(err);
-    }
+    return this.aiService.evaluateEssayAnswer(
+      body.question,
+      body.expectedAnswer,
+      body.userAnswer,
+    );
   }
 }

@@ -11,13 +11,13 @@ import {
   Request,
   Inject,
   BadRequestException,
-  ForbiddenException,
-  NotFoundException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CreateCardUseCase } from '../../../application/use-cases/create-card.use-case';
 import { ListCardsUseCase } from '../../../application/use-cases/list-cards.use-case';
 import { DeleteCardUseCase } from '../../../application/use-cases/delete-card.use-case';
+import { UpdateCardUseCase } from '../../../application/use-cases/update-card.use-case';
+import { ListAllCardsUseCase } from '../../../application/use-cases/list-all-cards.use-case';
 import type { ICardRepository } from '../../../domain/repositories/card-repository.interface';
 import type { ITopicRepository } from '../../../domain/repositories/topic-repository.interface';
 import type { ISubjectRepository } from '../../../domain/repositories/subject-repository.interface';
@@ -40,6 +40,8 @@ export class CardController {
   private createCardUseCase: CreateCardUseCase;
   private listCardsUseCase: ListCardsUseCase;
   private deleteCardUseCase: DeleteCardUseCase;
+  private updateCardUseCase: UpdateCardUseCase;
+  private listAllCardsUseCase: ListAllCardsUseCase;
 
   constructor(
     @Inject('ICardRepository') private cardRepository: ICardRepository,
@@ -57,27 +59,18 @@ export class CardController {
       subjectRepository,
     );
     this.deleteCardUseCase = new DeleteCardUseCase(cardRepository);
+    this.updateCardUseCase = new UpdateCardUseCase(cardRepository);
+    this.listAllCardsUseCase = new ListAllCardsUseCase(cardRepository);
   }
 
   @Post()
   async create(@Request() req: any, @Body() body: CreateCardDto) {
-    try {
-      return await this.createCardUseCase.execute({
-        front: body.front,
-        back: body.back,
-        topicId: body.topicId,
-        userId: req.user.id,
-      });
-    } catch (err) {
-      const msg = (err as Error).message;
-      if (msg === 'Topic not found') {
-        throw new NotFoundException(msg);
-      }
-      if (msg === 'Unauthorized access to topic') {
-        throw new ForbiddenException(msg);
-      }
-      throw new BadRequestException(msg);
-    }
+    return this.createCardUseCase.execute({
+      front: body.front,
+      back: body.back,
+      topicId: body.topicId,
+      userId: req.user.id,
+    });
   }
 
   @Get()
@@ -85,20 +78,12 @@ export class CardController {
     if (!topicId) {
       throw new BadRequestException('topicId query parameter is required');
     }
-    try {
-      return await this.listCardsUseCase.execute(topicId, req.user.id);
-    } catch (err) {
-      const msg = (err as Error).message;
-      if (msg === 'Topic not found') throw new NotFoundException(msg);
-      if (msg === 'Unauthorized access to topic')
-        throw new ForbiddenException(msg);
-      throw new BadRequestException(msg);
-    }
+    return this.listCardsUseCase.execute(topicId, req.user.id);
   }
 
   @Get('all')
   async listAll(@Request() req: any) {
-    return this.cardRepository.findByUserId(req.user.id);
+    return this.listAllCardsUseCase.execute(req.user.id);
   }
 
   @Patch(':id')
@@ -107,13 +92,10 @@ export class CardController {
     @Param('id') id: string,
     @Body() body: UpdateCardDto,
   ) {
-    const card = await this.cardRepository.findById(id);
-    if (!card) throw new NotFoundException('Card not found');
-    if (card.userId !== req.user.id)
-      throw new ForbiddenException('Unauthorized access to card');
     if (!body.front && !body.back)
       throw new BadRequestException('Forneça front ou back para atualizar.');
-    return this.cardRepository.update(id, {
+    return this.updateCardUseCase.execute(id, {
+      userId: req.user.id,
       front: body.front,
       back: body.back,
     });
@@ -121,18 +103,7 @@ export class CardController {
 
   @Delete(':id')
   async delete(@Request() req: any, @Param('id') id: string) {
-    try {
-      await this.deleteCardUseCase.execute(id, req.user.id);
-      return { success: true };
-    } catch (err) {
-      const msg = (err as Error).message;
-      if (msg === 'Card not found') {
-        throw new NotFoundException(msg);
-      }
-      if (msg === 'Unauthorized access to card') {
-        throw new ForbiddenException(msg);
-      }
-      throw new BadRequestException(msg);
-    }
+    await this.deleteCardUseCase.execute(id, req.user.id);
+    return { success: true };
   }
 }

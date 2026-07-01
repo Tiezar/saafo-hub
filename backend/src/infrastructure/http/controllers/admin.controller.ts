@@ -8,6 +8,7 @@ import {
   UseGuards,
   NotFoundException,
   BadRequestException,
+  Delete,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { AdminGuard } from '../guards/admin.guard';
@@ -275,5 +276,177 @@ export class AdminController {
       where: { id },
     });
     return { ok: true };
+  }
+
+  // ── POST /admin/users/:id/role ─────────────────────────────────────────────
+  @Post('users/:id/role')
+  async updateUserRole(@Param('id') id: string, @Req() req: any) {
+    const { role } = req.body;
+    if (role !== 'USER' && role !== 'ADMIN') {
+      throw new BadRequestException('Role inválido. Deve ser USER ou ADMIN.');
+    }
+    return this.prisma.user.update({
+      where: { id },
+      data: { role },
+      select: { id: true, email: true, role: true },
+    });
+  }
+
+  // ── POST /admin/users/:id/plan ─────────────────────────────────────────────
+  @Post('users/:id/plan')
+  async updateUserPlan(@Param('id') id: string, @Req() req: any) {
+    const { plan, trialDays } = req.body;
+    const updateData: any = {};
+    if (plan !== undefined) {
+      updateData.plan = plan;
+    }
+    if (trialDays !== undefined) {
+      const endsAt = new Date();
+      endsAt.setDate(endsAt.getDate() + Number(trialDays));
+      updateData.trialEndsAt = endsAt;
+    }
+    return this.prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: { id: true, email: true, plan: true, trialEndsAt: true },
+    });
+  }
+
+  // ── GET /admin/bancas ──────────────────────────────────────────────────────
+  @Get('bancas')
+  async listBancas() {
+    return this.prisma.banca.findMany({
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  // ── POST /admin/bancas ─────────────────────────────────────────────────────
+  @Post('bancas')
+  async createBanca(@Req() req: any) {
+    const { name, description } = req.body;
+    if (!name) throw new BadRequestException('Nome da banca é obrigatório.');
+    return this.prisma.banca.create({
+      data: { name, description },
+    });
+  }
+
+  // ── POST /admin/areas/templates ────────────────────────────────────────────
+  @Post('areas/templates')
+  async createAreaTemplate(@Req() req: any) {
+    const { name, bancaId, subjects } = req.body;
+    if (!name) throw new BadRequestException('Nome da área é obrigatório.');
+
+    const area = await this.prisma.area.create({
+      data: {
+        name,
+        type: 'TEMPLATE',
+        isTemplate: true,
+        bancaId: bancaId || null,
+      },
+    });
+
+    if (subjects && Array.isArray(subjects)) {
+      const subjectMapping = new Map<string, string>();
+      const parentSubjects = subjects.filter((s: any) => !s.parentId);
+      const childSubjects = subjects.filter((s: any) => s.parentId);
+
+      for (const sub of parentSubjects) {
+        const dbSub = await this.prisma.areaSubject.create({
+          data: {
+            areaId: area.id,
+            name: sub.name,
+            color: sub.color || '#4F46E5',
+          },
+        });
+        subjectMapping.set(sub.id || sub.name, dbSub.id);
+
+        if (sub.topics && Array.isArray(sub.topics)) {
+          await this.prisma.areaTopic.createMany({
+            data: sub.topics.map((tName: string) => ({
+              areaSubjectId: dbSub.id,
+              name: tName,
+              priority: 3,
+            })),
+          });
+        }
+      }
+
+      for (const sub of childSubjects) {
+        const dbParentId = subjectMapping.get(sub.parentId);
+        if (!dbParentId) continue;
+
+        const dbSub = await this.prisma.areaSubject.create({
+          data: {
+            areaId: area.id,
+            name: sub.name,
+            color: sub.color || '#4F46E5',
+            parentId: dbParentId,
+          },
+        });
+        subjectMapping.set(sub.id || sub.name, dbSub.id);
+
+        if (sub.topics && Array.isArray(sub.topics)) {
+          await this.prisma.areaTopic.createMany({
+            data: sub.topics.map((tName: string) => ({
+              areaSubjectId: dbSub.id,
+              name: tName,
+              priority: 3,
+            })),
+          });
+        }
+      }
+    }
+
+    return this.prisma.area.findUnique({
+      where: { id: area.id },
+      include: {
+        banca: true,
+        subjects: {
+          include: { topics: true },
+        },
+      },
+    });
+  }
+
+  // ── DELETE /admin/areas/templates/:id ──────────────────────────────────────
+  @Delete('areas/templates/:id')
+  async deleteAreaTemplate(@Param('id') id: string) {
+    const area = await this.prisma.area.findUnique({ where: { id } });
+    if (!area || !area.isTemplate) {
+      throw new NotFoundException('Template de área não encontrado.');
+    }
+    await this.prisma.area.delete({ where: { id } });
+    return { success: true };
+  }
+
+  // ── POST /admin/questions/import ───────────────────────────────────────────
+  // Allows batch importing official past questions JSON
+  @Post('questions/import')
+  async importDiagnosticQuestions(@Req() req: any) {
+    const { testId, questions } = req.body;
+    if (!testId || !questions || !Array.isArray(questions)) {
+      throw new BadRequestException(
+        'Parâmetros testId e questions[] são obrigatórios.',
+      );
+    }
+
+    const test = await this.prisma.diagnosticTest.findUnique({
+      where: { id: testId },
+    });
+    if (!test) throw new NotFoundException('Teste diagnóstico não encontrado.');
+
+    const created = await this.prisma.diagnosticQuestion.createMany({
+      data: questions.map((q: any) => ({
+        testId,
+        subjectName: q.subjectName,
+        topicName: q.topicName,
+        statement: q.statement,
+        options: q.options,
+        correctOptionIdx: q.correctOptionIdx,
+        explanation: q.explanation || null,
+      })),
+    });
+
+    return { success: true, count: created.count };
   }
 }

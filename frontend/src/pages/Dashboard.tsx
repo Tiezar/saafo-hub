@@ -1,315 +1,293 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  RotateCw, Star, Calendar, ShieldAlert, Clock, Zap, RefreshCw,
-} from 'lucide-react';
+import { RotateCw, RefreshCw, ShieldAlert, Clock } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { getEventMeta } from '../lib/constants';
-import { EventIcon } from '../components/EventIcon';
 import GettingStartedCard from '../components/GettingStartedCard';
 import './Dashboard.css';
+
+const HEAT_DAYS = 84; // 12 weeks
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const {
+    currentUser,
     cards, metrics, insights, insightsLoading, insightsLastUpdated,
     calendarEvents, planStatus, eventTypes,
     fetchInsights, handleRefreshInsights,
-    setUpgradeModalOpen,
     openEditEvent, startStudySession,
   } = useApp();
 
-  useEffect(() => {
-    fetchInsights();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchInsights(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isMobile = useIsMobile();
-  const dueCount = cards.filter(c => new Date(c.nextReview) <= new Date()).length;
+  const now = new Date();
+
+  // Stats
+  const dueCount = cards.filter(c => new Date(c.nextReview) <= now).length;
+  const retention = Math.round(metrics?.retentionRate ?? 0);
 
   const streak = (() => {
     const days = [...(metrics?.dailyActivity ?? [])].reverse();
     let count = 0;
-    for (const d of days) {
-      if (d.count > 0) count++;
-      else break;
-    }
+    for (const d of days) { if (d.count > 0) count++; else break; }
     return count;
   })();
 
-  const upcoming = calendarEvents
-    .filter(e => new Date(e.startAt) >= new Date() || e.recurrenceDays.length > 0)
-    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
-    .slice(0, 4);
+  // Greeting
+  const hour = now.getHours();
+  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+  const firstName = currentUser?.nickname || currentUser?.name?.split(' ')[0] || '';
+  const formattedDate = now.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  const dateLabel = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+
+  // Today's agenda
+  const todayStr = now.toISOString().slice(0, 10);
+  const todayDow = now.getDay();
+  const todayEvents = calendarEvents
+    .filter(e => {
+      const isToday = e.startAt.slice(0, 10) === todayStr;
+      const isRecurringToday = e.recurrenceDays.includes(todayDow);
+      return isToday || isRecurringToday;
+    })
+    .sort((a, b) => a.startAt.localeCompare(b.startAt))
+    .slice(0, 3);
+
+  // Subject performance (top 3 by reviewed count)
+  const topSubjects = [...(metrics?.subjectsPerformance ?? [])]
+    .sort((a, b) => b.reviewedCards - a.reviewedCards)
+    .slice(0, 3);
+
+  // Heatmap — 84 days aligned to fill grid top-to-bottom
+  const actDays = metrics?.dailyActivity ?? [];
+  const heatData = Array.from({ length: HEAT_DAYS }, (_, i) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - (HEAT_DAYS - 1 - i));
+    const ds = d.toISOString().slice(0, 10);
+    return actDays.find(a => a.date === ds)?.count ?? 0;
+  });
+
+  const heatStart = new Date(now);
+  heatStart.setDate(heatStart.getDate() - HEAT_DAYS + 1);
+  const heatLabel = `${heatStart.toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase()} — ${now.toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase()}`;
+
+  // Primary AI insight
+  const topInsight = insights[0] ?? null;
 
   return (
-    <div className="page" style={{ padding: '24px 24px 48px' }}>
-      {/* Page Header */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40, borderBottom: '1px solid var(--border-color)', paddingBottom: 24, flexWrap: 'wrap', gap: 16 }}>
-        <div>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 26 : 36, fontWeight: 300, color: 'var(--text-primary)', margin: 0 }}>Dashboard</h2>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, color: 'var(--text-muted)', marginTop: 8, maxWidth: 500, lineHeight: 1.5 }}>
-            Visão geral do seu progresso acadêmico. Mantenha o foco na retenção e revisão regular.
-          </p>
-        </div>
-      </header>
-
-      {/* Plan banners */}
-      <PlanBanner planStatus={planStatus} onUpgrade={() => setUpgradeModalOpen(true)} />
-
+    <div className="page" style={{ padding: isMobile ? '16px 16px 48px' : '28px 32px 48px' }}>
+      <PlanBanner planStatus={planStatus} />
       <GettingStartedCard />
 
-      {/* Stats Grid (Swiss Grid Pattern) */}
-      <section style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(200px, 1fr))', borderBottom: '1px solid var(--border-color)', marginBottom: isMobile ? 24 : 40, paddingBottom: 24, gap: isMobile ? 12 : 24 }}>
-        {/* Stat 1 */}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: isMobile ? 'none' : '1px solid var(--border-color)', borderBottom: isMobile ? '1px solid var(--border-color)' : 'none', paddingRight: isMobile ? 0 : 16, paddingBottom: isMobile ? 12 : 0 }}>
-          <span className="academic-label" style={{ marginBottom: 8 }}>Cards Totais</span>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 32 : 44, fontWeight: 300, color: 'var(--text-primary)' }}>
-            {cards.length}
-          </div>
+      {/* ── Header ── */}
+      <div className="db-header">
+        <div style={{ flex: 1 }}>
+          <h2 className="db-greeting">{greeting}{firstName ? `, ${firstName}` : ''}</h2>
+          <p className="db-date">{dateLabel}</p>
         </div>
-        {/* Stat 2 */}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: isMobile ? 'none' : '1px solid var(--border-color)', borderBottom: isMobile ? '1px solid var(--border-color)' : 'none', paddingRight: isMobile ? 0 : 16, paddingBottom: isMobile ? 12 : 0 }}>
-          <span className="academic-label" style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-            Agendados
-            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--color-primary)', display: 'inline-block' }}></span>
-          </span>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 32 : 44, fontWeight: 300, color: 'var(--text-primary)' }}>
-            {dueCount}
-          </div>
-        </div>
-        {/* Stat 3 */}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: isMobile ? 'none' : '1px solid var(--border-color)', paddingRight: isMobile ? 0 : 16 }}>
-          <span className="academic-label" style={{ marginBottom: 8 }}>Streak Atual</span>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 32 : 44, fontWeight: 300, color: 'var(--text-primary)' }}>
-            {streak} <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>dias</span>
-          </div>
-        </div>
-        {/* Stat 4 */}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <span className="academic-label" style={{ marginBottom: 8 }}>Retenção Média</span>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 32 : 44, fontWeight: 300, color: 'var(--text-primary)' }}>
-            {metrics ? (metrics.retentionRate ?? 0).toFixed(1) : '0.0'} <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>%</span>
-          </div>
-        </div>
-      </section>
+        {!isMobile && (
+          <button className="btn btn-primary" onClick={() => startStudySession(undefined, true)}>
+            Estudar agora
+          </button>
+        )}
+      </div>
 
-      {/* Bento Grid: Middle Section */}
-      <section className="bento-grid">
-        {/* Heatmap (Span 8) */}
-        <div className="bento-col-8" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 24, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Atividade (28 dias)</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontFamily: 'var(--font-label)', color: 'var(--text-secondary)' }}>
-              <span>menos</span>
-              <div style={{ display: 'flex', gap: 4 }}>
-                <div style={{ width: 12, height: 12, borderRadius: 2, border: '1px solid var(--border-color)', backgroundColor: 'transparent' }}></div>
-                <div style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: 'var(--color-primary)', opacity: 0.3 }}></div>
-                <div style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: 'var(--color-primary)', opacity: 0.6 }}></div>
-                <div style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: 'var(--color-primary)', opacity: 1 }}></div>
-              </div>
-              <span>mais</span>
+      {/* ── Row 1: 4 stat cards ── */}
+      <div className="db-row db-row-4">
+
+        {/* Sequência */}
+        <div className="db-card db-card-primary">
+          <div className="db-card-label">SEQUÊNCIA 🔥</div>
+          <div className="db-card-num">{streak}</div>
+          <div className="db-card-sub">dias seguidos</div>
+        </div>
+
+        {/* Cards Hoje */}
+        <div className="db-card">
+          <div className="db-card-label">CARDS HOJE</div>
+          <div className="db-card-num">{dueCount}</div>
+          <div className="db-card-sub">pendentes</div>
+        </div>
+
+        {/* Retenção — donut */}
+        <div className="db-card db-card-flex">
+          <div
+            className="db-donut"
+            style={{
+              background: `conic-gradient(var(--color-tertiary) ${retention}%, var(--border-subtle) 0)`,
+            }}
+          >
+            <div className="db-donut-inner" style={{ color: 'var(--color-tertiary)' }}>
+              {retention}%
             </div>
           </div>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8, width: '100%', maxWidth: 360 }}>
-              {/* Week Days Headers */}
-              {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, idx) => (
-                <div key={idx} style={{ fontFamily: 'var(--font-label)', fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 4 }}>
-                  {day}
-                </div>
-              ))}
-              {/* Row cells */}
-              {(metrics?.dailyActivity ?? []).slice(-28).map((day, i) => {
-                const lv = day.count === 0 ? 0 : day.count < 3 ? 0.3 : day.count < 8 ? 0.6 : 1;
-                return (
-                  <div
-                    key={i}
-                    style={{
-                      aspectRatio: 1,
-                      borderRadius: 3,
-                      border: day.count === 0 ? '1px solid var(--border-color)' : 'none',
-                      backgroundColor: day.count === 0 ? 'transparent' : 'var(--color-primary)',
-                      opacity: day.count === 0 ? 1 : lv,
-                      transition: 'background-color var(--transition)',
-                    }}
-                    title={`${day.date}: ${day.count} revisões`}
-                  />
-                );
-              })}
-              {Array.from({ length: Math.max(0, 28 - (metrics?.dailyActivity.length ?? 0)) }).map((_, i) => (
-                <div
-                  key={`e${i}`}
-                  style={{
-                    aspectRatio: 1,
-                    borderRadius: 3,
-                    border: '1px solid var(--border-color)',
-                    backgroundColor: 'transparent',
-                  }}
-                />
-              ))}
-            </div>
+          <div>
+            <div className="db-card-label" style={{ marginBottom: 4 }}>RETENÇÃO</div>
+            <div className="db-card-sub" style={{ color: 'var(--color-tertiary)' }}>média geral</div>
           </div>
         </div>
 
-        {/* AI Insights Panel (Span 4) */}
-        <div className="bento-col-4" style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 24, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
-          <h3 className="academic-label" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)' }}>
-            <Zap size={14} style={{ color: 'var(--color-primary)' }} /> Insights da IA
-          </h3>
-
-          {!planStatus?.isActive ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <Zap size={32} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-              <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 4, color: 'var(--text-primary)' }}>Insights no Plano Estudante</p>
-              <p style={{ fontSize: 12, marginBottom: 16 }}>A IA analisa seu histórico e gera recomendações personalizadas.</p>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>🔒 Em breve</span>
-            </div>
-          ) : (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                {insightsLastUpdated && !insightsLoading && (
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                    atualizado às {insightsLastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                )}
-                <button onClick={handleRefreshInsights} disabled={insightsLoading}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, marginLeft: 'auto' }}>
-                  <RefreshCw size={12} className={insightsLoading ? 'animate-spin' : ''} /> Atualizar
-                </button>
-              </div>
-
-              {insightsLoading && !insights.length && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '24px 0', color: 'var(--text-secondary)' }}>
-                  <RotateCw size={16} className="animate-spin" />
-                  <span style={{ fontSize: 13 }}>Analisando estudos...</span>
-                </div>
-              )}
-
-              {!insightsLoading && !insights.length && (
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '16px 0', textAlign: 'center' }}>
-                  Nenhum insight ainda. Faça revisões regulares!
-                </p>
-              )}
-
-              {insights.length > 0 && (
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', borderTop: '1px solid var(--border-color)', overflowY: 'auto', maxH: '250px' }}>
-                  {insights.slice(0, 3).map((ins, i) => {
-                    return (
-                      <li key={i} style={{ padding: '12px 0', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'start', gap: 10 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: ins.priority === 'high' ? 'var(--color-danger)' : 'var(--color-primary)', marginTop: 8, flexShrink: 0 }}></span>
-                        <div>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 2px' }}>{ins.title}</p>
-                          <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>{ins.message}</p>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </>
-          )}
+        {/* Cards Totais */}
+        <div className="db-card">
+          <div className="db-card-label">CARDS TOTAIS</div>
+          <div className="db-card-num">{cards.length}</div>
+          <div className="db-card-sub">cadastrados</div>
         </div>
-      </section>
+      </div>
 
-      {/* Bottom Section: Performance & Upcoming Events split layout */}
-      <div className="bento-grid" style={{ marginBottom: 0 }}>
-        {/* Performance Table Section (Span 8) */}
-        <div className="bento-col-8" style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Desempenho por Matéria</h3>
-            <button
-              onClick={() => navigate('/materias')}
-              style={{
-                fontFamily: 'var(--font-label)', fontSize: 12, color: 'var(--text-muted)',
-                cursor: 'pointer', background: 'none', border: 'none', textDecoration: 'underline',
-                textUnderlineOffset: '4px'
-              }}
-            >
-              Ver Todas as Matérias
-            </button>
+      {/* ── Row 2: Heatmap + IA Insight ── */}
+      <div className="db-row db-row-2">
+
+        {/* Heatmap */}
+        <div className="db-card">
+          <div className="db-card-head">
+            <span className="db-card-title">Atividade</span>
+            <span style={{ fontFamily: 'var(--font-label)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '.1em' }}>
+              {heatLabel}
+            </span>
           </div>
-
-          <div style={{ borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-md)' }}>
-            {/* Table Header */}
-            <div className="perf-table-header">
-              <div>Matéria / Disciplina</div>
-              <div style={{ textAlign: 'right' }}>Cards Totais</div>
-              <div style={{ textAlign: 'right' }}>Revisados</div>
-              <div style={{ textAlign: 'right' }}>Taxa de Retenção</div>
-            </div>
-
-            {/* Rows */}
-            {metrics?.subjectsPerformance.map((s, i) => {
-              const retention = s.retentionRate ?? 0;
+          <div className="db-heatmap">
+            {heatData.map((count, i) => {
+              const opacity = count === 0 ? 0.2 : count < 3 ? 0.35 : count < 8 ? 0.65 : 1;
               return (
-                <div key={i} className="perf-table-row">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: 'var(--color-primary)' }}></div>
-                    <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{s.subjectName}</span>
-                  </div>
-                  <div style={{ textAlign: 'right', fontFamily: 'var(--font-label)', fontSize: 13 }}>{s.totalCards}</div>
-                  <div style={{ textAlign: 'right', fontFamily: 'var(--font-label)', fontSize: 13 }}>{s.reviewedCards}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
-                    <span style={{ fontFamily: 'var(--font-label)', fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                      {retention.toFixed(1)}%
-                    </span>
-                    <div style={{ width: 64, height: 4, backgroundColor: 'var(--border-subtle)', borderRadius: 2, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', backgroundColor: 'var(--color-primary)', width: `${Math.min(100, retention)}%` }}></div>
-                    </div>
-                  </div>
-                </div>
+                <i
+                  key={i}
+                  className="db-heat-cell"
+                  style={{
+                    backgroundColor: count === 0 ? 'var(--border-color)' : 'var(--color-primary)',
+                    opacity,
+                  }}
+                  title={`${count} revisões`}
+                />
               );
             })}
-
-            {(!metrics || !metrics.subjectsPerformance.length) && (
-              <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)', fontSize: 14 }}>
-                Nenhuma revisão registrada ainda.
-              </div>
-            )}
+          </div>
+          <div className="db-heat-legend">
+            <span>menos</span>
+            {[0.2, 0.35, 0.65, 1].map((op, i) => (
+              <i
+                key={i}
+                style={{
+                  width: 10, height: 10, borderRadius: 2, display: 'inline-block', flexShrink: 0,
+                  backgroundColor: op === 0.2 ? 'var(--border-color)' : 'var(--color-primary)',
+                  opacity: op,
+                }}
+              />
+            ))}
+            <span>mais</span>
           </div>
         </div>
 
-        {/* Upcoming Events Section (Span 4) */}
-        <div className="bento-col-4" style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 24, display: 'flex', flexDirection: 'column' }}>
-          <h3 className="academic-label" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)' }}>
-            <Calendar size={14} style={{ color: 'var(--color-primary)' }} /> Próximos Eventos
-          </h3>
+        {/* IA Insight */}
+        <div className="db-card db-card-dark">
+          <div className="db-card-label" style={{ marginBottom: 12, opacity: 0.75 }}>◐ IA · INSIGHT</div>
 
-          {!upcoming.length ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 12 }}>
-              <p style={{ fontSize: 13, margin: 0 }}>Nenhum evento agendado.</p>
-              <button className="btn-outline-custom" style={{ width: '100%' }} onClick={() => navigate('/calendario')}>
-                Abrir Calendário
-              </button>
+          {!planStatus?.isActive ? (
+            <p className="db-insight-text" style={{ opacity: 0.7 }}>
+              Insights personalizados disponíveis no Plano Estudante.
+            </p>
+          ) : insightsLoading && !insights.length ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: 0.7, fontSize: 13, fontFamily: 'var(--font-body)' }}>
+              <RotateCw size={14} className="animate-spin" /> Analisando seus estudos…
             </div>
+          ) : topInsight ? (
+            <>
+              <p className="db-insight-text">{topInsight.message}</p>
+              <button className="db-insight-btn" onClick={handleRefreshInsights} disabled={insightsLoading}>
+                {insightsLoading && <RefreshCw size={12} className="animate-spin" />}
+                Revisar agora →
+              </button>
+            </>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {upcoming.map(ev => {
+            <p className="db-insight-text" style={{ opacity: 0.7 }}>
+              Faça revisões regulares para receber insights personalizados.
+            </p>
+          )}
+
+          {insightsLastUpdated && !insightsLoading && (
+            <span style={{ fontFamily: 'var(--font-label)', fontSize: 10, opacity: 0.5, marginTop: 'auto', paddingTop: 12, display: 'block' }}>
+              atualizado às {insightsLastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* ── Row 3: Agenda + Desempenho ── */}
+      <div className="db-row db-row-2" style={{ marginBottom: 0 }}>
+
+        {/* Agenda de hoje */}
+        <div className="db-card">
+          <div className="db-card-head">
+            <span className="db-card-title">Agenda de hoje</span>
+            <button className="db-link" onClick={() => navigate('/calendario')}>ver tudo</button>
+          </div>
+          {todayEvents.length === 0 ? (
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0' }}>Nenhum evento para hoje.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {todayEvents.map(ev => {
                 const meta = getEventMeta(ev.type, eventTypes);
                 const d = new Date(ev.startAt);
+                const timeStr = ev.allDay
+                  ? 'dia todo'
+                  : d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                 return (
-                  <div key={ev.id}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 10, borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer' }}
+                  <div
+                    key={ev.id}
+                    className="db-agenda-item"
+                    style={{ borderLeftColor: meta.color || 'var(--color-primary)' }}
                     onClick={() => { navigate('/calendario'); openEditEvent(ev); }}
-                    onMouseOver={e => e.currentTarget.style.opacity = '0.8'}
-                    onMouseOut={e => e.currentTarget.style.opacity = '1'}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: meta.color, flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                        {d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                        {!ev.allDay && ` às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
-                      </div>
-                    </div>
-                    <EventIcon name={meta.icon} size={13} color={meta.color} />
+                  >
+                    <span className="db-agenda-time" style={{ color: meta.color || 'var(--color-primary)' }}>
+                      {timeStr}
+                    </span>
+                    <span className="db-agenda-title">{ev.title}</span>
                   </div>
                 );
               })}
-              <button className="btn-outline-custom" style={{ marginTop: 8, width: '100%' }}
-                onClick={() => navigate('/calendario')}>
-                Ver Calendário Completo
-              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Desempenho por matéria */}
+        <div className="db-card">
+          <div className="db-card-head">
+            <span className="db-card-title">Desempenho por matéria</span>
+            <button className="db-link" onClick={() => navigate('/materias')}>ver tudo</button>
+          </div>
+          {topSubjects.length === 0 ? (
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0' }}>Nenhuma revisão registrada.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {topSubjects.map((s, i) => {
+                const rate = Math.round(s.retentionRate ?? 0);
+                const isGood = rate >= 70;
+                return (
+                  <div
+                    key={s.subjectId}
+                    className="db-session-row"
+                    style={{
+                      borderBottom: i < topSubjects.length - 1
+                        ? '1px solid var(--border-subtle)'
+                        : 'none',
+                    }}
+                  >
+                    <span className="db-session-name">{s.subjectName}</span>
+                    <span
+                      className="db-session-badge"
+                      style={{
+                        color: isGood ? 'var(--color-tertiary)' : 'var(--color-primary)',
+                        background: isGood
+                          ? 'rgba(51,77,47,.12)'
+                          : 'rgba(163,59,58,.12)',
+                      }}
+                    >
+                      {rate}%
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -318,44 +296,53 @@ export default function Dashboard() {
   );
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// ─── Plan Banner ──────────────────────────────────────────────────────────────
 
-function PlanBanner({ planStatus, onUpgrade }: { planStatus: ReturnType<typeof useApp>['planStatus']; onUpgrade: () => void }) {
+function PlanBanner({
+  planStatus,
+}: {
+  planStatus: ReturnType<typeof useApp>['planStatus'];
+}) {
   if (!planStatus) return null;
+
   if (!planStatus.isActive) {
     return (
       <div style={{
-        marginBottom: 24, padding: '16px 24px', borderRadius: 'var(--radius-md)',
-        backgroundColor: 'rgba(186, 26, 26, 0.1)', border: '1px solid var(--color-danger)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16
+        marginBottom: 20, padding: '14px 20px', borderRadius: 'var(--radius-md)',
+        background: 'rgba(186,26,26,.08)', border: '1px solid var(--color-danger)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        flexWrap: 'wrap', gap: 12,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <ShieldAlert size={20} style={{ color: 'var(--color-danger)', flexShrink: 0 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ShieldAlert size={18} style={{ color: 'var(--color-danger)', flexShrink: 0 }} />
           <div>
-            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-danger)' }}>Período gratuito encerrado</div>
+            <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--color-danger)' }}>Período gratuito encerrado</div>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Assine o Plano Estudante para continuar usando a IA, insights e WhatsApp.</div>
           </div>
         </div>
-        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>🔒 Em breve</span>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>🔒 Em breve</span>
       </div>
     );
   }
+
   if (planStatus.plan === 'FREE_TRIAL' && planStatus.trialDaysLeft <= 3) {
     return (
       <div style={{
-        marginBottom: 24, padding: '16px 24px', borderRadius: 'var(--radius-md)',
-        backgroundColor: 'rgba(217, 119, 6, 0.1)', border: '1px solid var(--color-warning)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16
+        marginBottom: 20, padding: '14px 20px', borderRadius: 'var(--radius-md)',
+        background: 'rgba(217,119,6,.08)', border: '1px solid var(--color-warning)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        flexWrap: 'wrap', gap: 12,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Clock size={20} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Clock size={18} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />
           <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>
             Restam <strong>{planStatus.trialDaysLeft} dia{planStatus.trialDaysLeft !== 1 ? 's' : ''}</strong> de período gratuito.
           </span>
         </div>
-        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>🔒 Em breve</span>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>🔒 Em breve</span>
       </div>
     );
   }
+
   return null;
 }

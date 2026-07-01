@@ -14,11 +14,12 @@ export interface CreateCalendarEventInput {
   recurrenceDays?: number[];
   recurrenceEndsAt?: Date | null;
   reminders?: ReminderInput[];
+  userAreaId?: string | null;
 }
 
-export interface UpdateCalendarEventInput extends Partial<
+export type UpdateCalendarEventInput = Partial<
   Omit<CreateCalendarEventInput, 'userId'>
-> {}
+>;
 
 export interface ICalendarEventRepository {
   findByUserAndRange(

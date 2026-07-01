@@ -6,7 +6,9 @@ import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/infrastructure/database/prisma.service';
 import { JwtService } from '@nestjs/jwt';
-import { GeminiService } from '../src/infrastructure/ai/gemini.service';
+import { AppExceptionFilter } from '../src/infrastructure/http/filters/app-exception.filter';
+import * as fs from 'fs';
+import * as path from 'path';
 
 describe('SAAFO HUB API (e2e)', () => {
   let app: INestApplication<App>;
@@ -16,7 +18,6 @@ describe('SAAFO HUB API (e2e)', () => {
   let tokenUser1: string;
   let tokenUser2: string;
   let userId1: string;
-  let userId2: string;
 
   let subjectId: string;
   let topicId: string;
@@ -34,12 +35,13 @@ describe('SAAFO HUB API (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(GeminiService)
+      .overrideProvider('IAIService')
       .useValue(mockGeminiService)
       .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+    app.useGlobalFilters(new AppExceptionFilter());
     await app.init();
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);
@@ -49,9 +51,6 @@ describe('SAAFO HUB API (e2e)', () => {
     await prisma.$executeRawUnsafe(`TRUNCATE TABLE users CASCADE;`);
     await prisma.$executeRawUnsafe(`TRUNCATE TABLE institutions CASCADE;`);
 
-    // Seed institutions in E2E test
-    const fs = require('fs');
-    const path = require('path');
     const filePath = path.join(
       __dirname,
       '../src/infrastructure/database/seeds/institutions.json',
@@ -91,11 +90,15 @@ describe('SAAFO HUB API (e2e)', () => {
     }
 
     // Create 2 test users
+    const e2eTrialDate = new Date();
+    e2eTrialDate.setDate(e2eTrialDate.getDate() + 14);
+
     const user1 = await prisma.user.create({
       data: {
         email: 'user1@example.com',
         name: 'User One',
         nickname: 'user1',
+        trialEndsAt: e2eTrialDate,
       },
     });
     userId1 = user1.id;
@@ -105,9 +108,9 @@ describe('SAAFO HUB API (e2e)', () => {
         email: 'user2@example.com',
         name: 'User Two',
         nickname: 'user2',
+        trialEndsAt: e2eTrialDate,
       },
     });
-    userId2 = user2.id;
 
     // Generate JWT tokens
     tokenUser1 = jwtService.sign({ email: user1.email, sub: user1.id });
@@ -348,9 +351,22 @@ describe('SAAFO HUB API (e2e)', () => {
 
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body).toHaveLength(2);
-      expect(res.body[0]).toHaveProperty('id');
-      expect(res.body[0].front).toBe('Conceito IA 1');
-      expect(res.body[1].front).toBe('Conceito IA 2');
+
+      // Now save the generated cards
+      const saveRes = await request(app.getHttpServer())
+        .post('/ai/save')
+        .set('Authorization', `Bearer ${tokenUser1}`)
+        .send({
+          topicId,
+          cards: res.body,
+        })
+        .expect(201);
+
+      expect(Array.isArray(saveRes.body)).toBe(true);
+      expect(saveRes.body).toHaveLength(2);
+      expect(saveRes.body[0]).toHaveProperty('id');
+      expect(saveRes.body[0].front).toBe('Conceito IA 1');
+      expect(saveRes.body[1].front).toBe('Conceito IA 2');
 
       // Verificar no banco de dados se os cards foram criados sob o tópico
       const cardsInDb = await prisma.card.findMany({

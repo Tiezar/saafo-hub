@@ -2,6 +2,9 @@ import { ICardRepository } from '../../domain/repositories/card-repository.inter
 import { IStudySessionRepository } from '../../domain/repositories/study-session-repository.interface';
 import { SpacedRepetitionService } from '../../domain/services/spaced-repetition.service';
 import { Card } from '../../domain/entities/card';
+import { ResourceNotFoundException } from '../../domain/exceptions/resource-not-found.exception';
+import { UnauthorizedAccessException } from '../../domain/exceptions/unauthorized-access.exception';
+import { BusinessRuleException } from '../../domain/exceptions/business-rule.exception';
 
 export interface ReviewCardInput {
   cardId: string;
@@ -19,21 +22,23 @@ export class ReviewCardUseCase {
   async execute(input: ReviewCardInput): Promise<Card> {
     const card = await this.cardRepository.findById(input.cardId);
     if (!card) {
-      throw new Error('Card not found');
+      throw new ResourceNotFoundException('Card not found');
     }
     if (card.userId !== input.userId) {
-      throw new Error('Unauthorized access to card');
+      throw new UnauthorizedAccessException('Unauthorized access to card');
     }
 
     const session = await this.studySessionRepository.findById(input.sessionId);
     if (!session) {
-      throw new Error('Study session not found');
+      throw new ResourceNotFoundException('Study session not found');
     }
     if (session.userId !== input.userId) {
-      throw new Error('Unauthorized access to study session');
+      throw new UnauthorizedAccessException(
+        'Unauthorized access to study session',
+      );
     }
     if (session.endedAt !== null) {
-      throw new Error('Study session is already closed');
+      throw new BusinessRuleException('Study session is already closed');
     }
 
     const calculation = SpacedRepetitionService.calculate(

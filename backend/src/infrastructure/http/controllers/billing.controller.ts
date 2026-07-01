@@ -16,11 +16,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import {
-  AsaasService,
-  AsaasCardData,
-  AsaasHolderInfo,
-} from '../../payments/asaas.service';
+import { AsaasService, AsaasCardData } from '../../payments/asaas.service';
 import type { IUserRepository } from '../../../domain/repositories/user-repository.interface';
 import {
   IsString,

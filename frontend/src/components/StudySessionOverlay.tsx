@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, RotateCcw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import './StudySessionOverlay.css';
@@ -19,6 +19,16 @@ export default function StudySessionOverlay() {
     handleReviewCard, closeSession,
   } = useApp();
 
+  const [elapsedSecs, setElapsedSecs] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (sessionDone && sessionStats && elapsedSecs === null) {
+      setElapsedSecs(Math.round((Date.now() - sessionStats.startTime) / 1000));
+    } else if (!sessionDone) {
+      setElapsedSecs(null);
+    }
+  }, [sessionDone, sessionStats, elapsedSecs]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { closeSession(); return; }
@@ -37,10 +47,9 @@ export default function StudySessionOverlay() {
     return () => window.removeEventListener('keydown', onKey);
   }, [isCardFlipped, sessionDone, setIsCardFlipped, handleReviewCard, closeSession]);
 
-  if (sessionDone && sessionStats) {
-    const elapsed = Math.round((Date.now() - sessionStats.startTime) / 1000);
-    const mins = Math.floor(elapsed / 60);
-    const secs = elapsed % 60;
+  if (sessionDone && sessionStats && elapsedSecs !== null) {
+    const mins = Math.floor(elapsedSecs / 60);
+    const secs = elapsedSecs % 60;
     const total = sessionStats.ratings.length;
     const counts = RATINGS.map(r => ({
       ...r,

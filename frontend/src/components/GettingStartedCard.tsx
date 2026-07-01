@@ -17,11 +17,19 @@ export default function GettingStartedCard() {
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(STORAGE_KEY) === '1');
   const [autoHidden, setAutoHidden] = useState(false);
 
+  const diagSkipped = localStorage.getItem('saafo_skip_diag') === '1';
+  const diagDone    = localStorage.getItem('saafo_diag_done') === '1';
+  const schedSkipped = localStorage.getItem('saafo_skip_sched') === '1' || diagSkipped;
+  const schedDone    = localStorage.getItem('saafo_sched_done') === '1';
+
   const steps: Step[] = [
     { label: 'Conta criada',              done: true,                href: null },
     { label: 'Criar primeira matéria',    done: subjects.length > 0, href: '/materiais' },
     { label: 'Adicionar um tópico',       done: topics.length > 0,   href: '/materiais' },
     { label: 'Gerar flashcards com IA',   done: cards.length > 0,    href: '/ia' },
+    // Only show if skipped
+    ...(diagSkipped && !diagDone ? [{ label: 'Fazer nivelamento', done: false, href: '/onboarding?step=3' }] : []),
+    ...(schedSkipped && !schedDone ? [{ label: 'Confirmar cronograma', done: false, href: '/onboarding?step=4' }] : []),
   ];
 
   const completedCount = steps.filter(s => s.done).length;

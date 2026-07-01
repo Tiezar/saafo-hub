@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
-import { GeminiService } from '../../ai/gemini.service';
+import { AIModule } from '../../ai/ai.module';
 import { PlanGuard } from '../guards/plan.guard';
 import { SubjectController } from '../controllers/subject.controller';
 import { TopicController } from '../controllers/topic.controller';
@@ -11,7 +11,7 @@ import { MetricsController } from '../controllers/metrics.controller';
 import { ExamHistoryController } from '../controllers/exam-history.controller';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, AIModule],
   controllers: [
     SubjectController,
     TopicController,
@@ -21,6 +21,6 @@ import { ExamHistoryController } from '../controllers/exam-history.controller';
     MetricsController,
     ExamHistoryController,
   ],
-  providers: [GeminiService, PlanGuard],
+  providers: [PlanGuard],
 })
 export class MaterialsMemoryModule {}

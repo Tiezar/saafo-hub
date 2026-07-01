@@ -1,6 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { GeminiService, type Insight } from './gemini.service';
+import { Insight } from '../../domain/services/ai-service.interface';
+import type { IAIService } from '../../domain/services/ai-service.interface';
 import type { IMetricsRepository } from '../../domain/repositories/metrics-repository.interface';
 import type { ICardRepository } from '../../domain/repositories/card-repository.interface';
 import type { ICalendarEventRepository } from '../../domain/repositories/calendar-event-repository.interface';
@@ -25,7 +26,7 @@ export class InsightsService {
     @Inject('ICardRepository') private readonly cardRepo: ICardRepository,
     @Inject('ICalendarEventRepository')
     private readonly calendarRepo: ICalendarEventRepository,
-    private readonly geminiService: GeminiService,
+    @Inject('IAIService') private readonly aiService: IAIService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -100,7 +101,7 @@ export class InsightsService {
       totalSubjects: metrics.subjectsPerformance.length,
     };
 
-    const insights = await this.geminiService.generateInsights(rawData);
+    const insights = await this.aiService.generateInsights(rawData);
 
     // Salvar cache
     await this.prisma.insightCache.upsert({

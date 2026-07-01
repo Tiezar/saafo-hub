@@ -7,7 +7,7 @@ interface Props {
   onSubscribe: () => void;
 }
 
-export default function PlanSelectionModal({ open, onTrial, onSubscribe }: Props) {
+export default function PlanSelectionModal({ open, onTrial }: Props) {
   if (!open) return null;
 
   return (

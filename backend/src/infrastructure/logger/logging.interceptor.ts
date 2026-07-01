@@ -19,7 +19,14 @@ export class LoggingInterceptor implements NestInterceptor {
     const { method, url, body, ip } = request;
 
     const sanitizedBody = { ...body };
-    for (const f of ['password', 'token', 'number', 'ccv', 'cpfCnpj', 'postalCode']) {
+    for (const f of [
+      'password',
+      'token',
+      'number',
+      'ccv',
+      'cpfCnpj',
+      'postalCode',
+    ]) {
       if (sanitizedBody[f]) sanitizedBody[f] = '***';
     }
     if (sanitizedBody.card && typeof sanitizedBody.card === 'object') {
@@ -28,8 +35,12 @@ export class LoggingInterceptor implements NestInterceptor {
         if (sanitizedBody.card[f]) sanitizedBody.card[f] = '***';
       }
     }
-    if (typeof sanitizedBody.text === 'string' && sanitizedBody.text.length > 200)
-      sanitizedBody.text = sanitizedBody.text.slice(0, 200) + `…[${sanitizedBody.text.length}]`;
+    if (
+      typeof sanitizedBody.text === 'string' &&
+      sanitizedBody.text.length > 200
+    )
+      sanitizedBody.text =
+        sanitizedBody.text.slice(0, 200) + `…[${sanitizedBody.text.length}]`;
 
     const startTime = Date.now();
 

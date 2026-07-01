@@ -9,6 +9,7 @@ import { PrismaMetricsRepository } from './prisma-metrics.repository';
 import { PrismaStudySpaceRepository } from './prisma-study-space.repository';
 import { PrismaCalendarEventRepository } from './prisma-calendar-event.repository';
 import { PrismaEventReminderRepository } from './prisma-event-reminder.repository';
+import { PrismaWeeklyRoutineRepository } from './prisma-weekly-routine.repository';
 
 @Module({
   providers: [
@@ -31,6 +32,10 @@ import { PrismaEventReminderRepository } from './prisma-event-reminder.repositor
       provide: 'IEventReminderRepository',
       useClass: PrismaEventReminderRepository,
     },
+    {
+      provide: 'IWeeklyRoutineRepository',
+      useClass: PrismaWeeklyRoutineRepository,
+    },
   ],
   exports: [
     PrismaService,
@@ -43,6 +48,7 @@ import { PrismaEventReminderRepository } from './prisma-event-reminder.repositor
     'IStudySpaceRepository',
     'ICalendarEventRepository',
     'IEventReminderRepository',
+    'IWeeklyRoutineRepository',
   ],
 })
 export class DatabaseModule {}

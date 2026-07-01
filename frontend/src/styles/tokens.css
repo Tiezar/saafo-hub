@@ -66,6 +66,138 @@
   --grad-primary: #a33b3a;
 }
 
+/* ── COBALT PALETTE — Light ──────────────────────────────────────────────── */
+.palette-cobalt {
+  --bg-base:     #f0f4ff;
+  --bg-deep:     #f0f4ff;
+  --bg-surface:  #e6ecfa;
+  --bg-card:     #f0f4ff;
+  --bg-card-high:#dce5f7;
+  --bg-overlay:  #c8d5f2;
+
+  --text-primary:   #0d1530;
+  --text-secondary: #2d3d6b;
+  --text-muted:     #6070a0;
+
+  --color-primary:        #1a56db;
+  --color-primary-text:   #1a56db;
+  --color-primary-light:  #1a56db;
+  --color-primary-dim:    #1345ba;
+  --color-secondary:      #1a56db;
+  --color-secondary-dim:  #0e3799;
+  --color-tertiary:       #0e7a5b;
+  --color-success:        #0e7a5b;
+  --color-danger:         #c41c1c;
+  --color-warning:        #d97706;
+
+  --border-color:  #c0cde8;
+  --border-subtle: #dce5f7;
+  --border-active: #1a56db;
+
+  --glow-primary: 0 0 0 1px #c0cde8;
+  --glow-active:  0 0 0 2px #1a56db;
+  --grad-primary: #1a56db;
+}
+
+/* ── COBALT PALETTE — Dark ───────────────────────────────────────────────── */
+.palette-cobalt.dark-theme {
+  --bg-base:     #0e1525;
+  --bg-deep:     #090d1a;
+  --bg-surface:  #16213b;
+  --bg-card:     #1c2a47;
+  --bg-card-high:#24365c;
+  --bg-overlay:  #2d4270;
+
+  --text-primary:   #e8eeff;
+  --text-secondary: #b8c5e8;
+  --text-muted:     #7a90c0;
+
+  --color-primary:        #4d82f0;
+  --color-primary-text:   #4d82f0;
+  --color-primary-light:  #4d82f0;
+  --color-primary-dim:    #3368d6;
+  --color-secondary:      #4d82f0;
+  --color-secondary-dim:  #3368d6;
+  --color-tertiary:       #34c987;
+  --color-success:        #34c987;
+  --color-danger:         #f05252;
+  --color-warning:        #ffd166;
+
+  --border-color:  #2d4270;
+  --border-subtle: #1c2a47;
+  --border-active: #4d82f0;
+
+  --glow-primary: 0 0 0 1px #2d4270;
+  --glow-active:  0 0 0 2px #4d82f0;
+  --grad-primary: #4d82f0;
+}
+
+/* ── MUSGO PALETTE — Light ───────────────────────────────────────────────── */
+.palette-musgo {
+  --bg-base:     #f2f5ee;
+  --bg-deep:     #f2f5ee;
+  --bg-surface:  #e8ede2;
+  --bg-card:     #f2f5ee;
+  --bg-card-high:#dde5d5;
+  --bg-overlay:  #ccd8c2;
+
+  --text-primary:   #1a2214;
+  --text-secondary: #3a4e30;
+  --text-muted:     #6b7d61;
+
+  --color-primary:        #4a7c3f;
+  --color-primary-text:   #4a7c3f;
+  --color-primary-light:  #4a7c3f;
+  --color-primary-dim:    #38612f;
+  --color-secondary:      #4a7c3f;
+  --color-secondary-dim:  #2c4d24;
+  --color-tertiary:       #7a5c2e;
+  --color-success:        #4a7c3f;
+  --color-danger:         #b83232;
+  --color-warning:        #c87b1a;
+
+  --border-color:  #bfcdb8;
+  --border-subtle: #dde5d5;
+  --border-active: #4a7c3f;
+
+  --glow-primary: 0 0 0 1px #bfcdb8;
+  --glow-active:  0 0 0 2px #4a7c3f;
+  --grad-primary: #4a7c3f;
+}
+
+/* ── MUSGO PALETTE — Dark ────────────────────────────────────────────────── */
+.palette-musgo.dark-theme {
+  --bg-base:     #111a0e;
+  --bg-deep:     #0b1008;
+  --bg-surface:  #1a2716;
+  --bg-card:     #213320;
+  --bg-card-high:#2b4228;
+  --bg-overlay:  #355230;
+
+  --text-primary:   #e4eede;
+  --text-secondary: #b8ccb0;
+  --text-muted:     #7d9876;
+
+  --color-primary:        #72b562;
+  --color-primary-text:   #72b562;
+  --color-primary-light:  #72b562;
+  --color-primary-dim:    #5a964c;
+  --color-secondary:      #72b562;
+  --color-secondary-dim:  #5a964c;
+  --color-tertiary:       #c4a05a;
+  --color-success:        #72b562;
+  --color-danger:         #f06060;
+  --color-warning:        #ffc94d;
+
+  --border-color:  #2b4228;
+  --border-subtle: #1a2716;
+  --border-active: #72b562;
+
+  --glow-primary: 0 0 0 1px #2b4228;
+  --glow-active:  0 0 0 2px #72b562;
+  --grad-primary: #72b562;
+}
+
 /* DARK THEME — Charcoal (Warm Charcoal & Ink) */
 .dark-theme, [data-theme='dark'] {
   --bg-base:     #1a1714;

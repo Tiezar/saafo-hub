@@ -3,44 +3,14 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-
-export interface GeneratedCard {
-  front: string;
-  back: string;
-}
-
-export interface QuizQuestion {
-  textBase?: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-  explanation: string;
-}
-
-export interface Insight {
-  type: string;
-  title: string;
-  message: string;
-  priority: 'high' | 'medium' | 'low';
-}
-
-export interface EssayEvaluation {
-  score: number;
-  feedback: string;
-  correct: string[];
-  missing: string[];
-}
-
-export interface GeminiGenerateOptions {
-  text?: string;
-  fileBuffer?: Buffer;
-  mimeType?: string;
-  theme?: string;
-  count?: number;
-  existingCards?: { front: string }[];
-  subjectName?: string;
-  topicName?: string;
-}
+import {
+  IAIService,
+  GeneratedCard,
+  QuizQuestion,
+  Insight,
+  EssayEvaluation,
+  AIGenerateFlashcardsOptions,
+} from '../../domain/services/ai-service.interface';
 
 const INLINE_SIZE_LIMIT = 5 * 1024 * 1024; // 5 MB — use Files API above this
 
@@ -67,7 +37,7 @@ REGRAS GERAIS:
 - Distribua os cards para cobrir o conteúdo de forma abrangente, não repetitiva`;
 
 @Injectable()
-export class GeminiService {
+export class GeminiService implements IAIService {
   private readonly logger = new Logger(GeminiService.name);
   private readonly apiKey: string;
   private readonly baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
@@ -78,7 +48,7 @@ export class GeminiService {
   }
 
   async generateFlashcards(
-    options: GeminiGenerateOptions,
+    options: AIGenerateFlashcardsOptions,
   ): Promise<GeneratedCard[]> {
     if (!this.apiKey) {
       throw new InternalServerErrorException('Serviço de IA não disponível.');
@@ -94,10 +64,18 @@ export class GeminiService {
       ? `\n\nCARDS JÁ EXISTENTES NO TÓPICO (NÃO repita perguntas iguais ou muito similares a estas):\n${options.existingCards.map((c, i) => `${i + 1}. ${c.front}`).join('\n')}`
       : '';
 
-    const subjectContext = options.subjectName ? `Matéria: "${options.subjectName}"` : '';
-    const topicContext = options.topicName ? `Tópico de Estudo: "${options.topicName}"` : '';
-    const contextHeader = [subjectContext, topicContext].filter(Boolean).join(' | ');
-    const contextStr = contextHeader ? `CONTEXTO DE ESTUDO: ${contextHeader}\n\n` : '';
+    const subjectContext = options.subjectName
+      ? `Matéria: "${options.subjectName}"`
+      : '';
+    const topicContext = options.topicName
+      ? `Tópico de Estudo: "${options.topicName}"`
+      : '';
+    const contextHeader = [subjectContext, topicContext]
+      .filter(Boolean)
+      .join(' | ');
+    const contextStr = contextHeader
+      ? `CONTEXTO DE ESTUDO: ${contextHeader}\n\n`
+      : '';
 
     const userTextPart = {
       text: options.text
@@ -461,7 +439,9 @@ Escreva em português brasileiro.`,
 
   // ── File API ──────────────────────────────────────────────────────────────
 
-  private async buildParts(options: GeminiGenerateOptions): Promise<object[]> {
+  private async buildParts(
+    options: AIGenerateFlashcardsOptions,
+  ): Promise<object[]> {
     if (!options.fileBuffer || !options.mimeType) return [];
 
     if (options.fileBuffer.length <= INLINE_SIZE_LIMIT) {
@@ -534,5 +514,196 @@ Escreva em português brasileiro.`,
         throw new Error('Processamento do arquivo falhou.');
     }
     throw new Error('Timeout no processamento do arquivo.');
+  }
+
+  async generateCustomAreaSubjects(objective: string): Promise<{
+    name: string;
+    subjects: { name: string; color: string; topics: string[] }[];
+  }> {
+    if (!this.apiKey) {
+      throw new InternalServerErrorException('Serviço de IA não disponível.');
+    }
+
+    const payload = {
+      contents: [
+        {
+          parts: [
+            {
+              text: `Estruture o edital e conteúdo para o objetivo de estudos: "${objective}"`,
+            },
+          ],
+        },
+      ],
+      systemInstruction: {
+        parts: [
+          {
+            text: `Você é um especialista em editais de concursos públicos e exames acadêmicos no Brasil.
+Mapeie as principais disciplinas cobradas e seus tópicos mais importantes.
+Gere cores hexadecimais harmoniosas e adequadas para cada disciplina.
+Limite a no máximo 5 a 6 matérias fundamentais, com 5 a 8 tópicos chave por matéria para manter o cronograma realista.`,
+          },
+        ],
+      },
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'OBJECT',
+          properties: {
+            name: { type: 'STRING' },
+            subjects: {
+              type: 'ARRAY',
+              items: {
+                type: 'OBJECT',
+                properties: {
+                  name: { type: 'STRING' },
+                  color: { type: 'STRING' },
+                  topics: { type: 'ARRAY', items: { type: 'STRING' } },
+                },
+                required: ['name', 'color', 'topics'],
+              },
+            },
+          },
+          required: ['name', 'subjects'],
+        },
+      },
+    };
+
+    try {
+      const res = await fetch(
+        `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      if (!res.ok) {
+        throw new Error(`IA HTTP ${res.status}: ${await res.text()}`);
+      }
+
+      const data = await res.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawText) throw new Error('Resposta vazia da IA.');
+
+      return JSON.parse(rawText);
+    } catch (err) {
+      this.logger.error(
+        `Gemini custom area subjects failed: ${(err as Error).message}`,
+      );
+      throw new InternalServerErrorException(
+        'Falha ao mapear matérias por IA. Tente novamente.',
+      );
+    }
+  }
+
+  async generateDiagnosticQuestions(
+    areaName: string,
+    subjects: { name: string; topics: string[] }[],
+    banca?: string,
+  ): Promise<
+    {
+      subjectName: string;
+      topicName: string;
+      statement: string;
+      options: string[];
+      correctOptionIdx: number;
+      explanation: string;
+    }[]
+  > {
+    if (!this.apiKey) {
+      throw new InternalServerErrorException('Serviço de IA não disponível.');
+    }
+
+    const payload = {
+      contents: [
+        {
+          parts: [
+            {
+              text: `Gere um teste de nivelamento com exatamente 10 questões de múltipla escolha para a área de estudos: "${areaName}".
+As questões devem cobrir de forma equilibrada as seguintes disciplinas e tópicos:
+${JSON.stringify(subjects, null, 2)}
+Banca Examinadora Alvo: ${banca ?? 'Geral / ENEM'}`,
+            },
+          ],
+        },
+      ],
+      systemInstruction: {
+        parts: [
+          {
+            text: `Você é um professor elaborando questões de nivelamento diagnóstico.
+Crie exatamente 10 questões, variando as matérias informadas.
+Estilo das questões:
+- Cebraspe: Afirmações curtas para julgar (opções: ["Certo", "Errado"], index correto 0 ou 1).
+- FGV: Situações hipotéticas ou enunciados desafiadores, com 5 opções (A a E).
+- ENEM/Outras: Questões contextuais práticas, com 4 ou 5 opções.
+Garantias obrigatórias:
+- O campo "subjectName" deve ser idêntico a um dos nomes de matéria informados.
+- O campo "topicName" deve ser idêntico a um dos tópicos dessa matéria.
+- Forneça uma explicação clara sobre o porquê da alternativa estar correta.`,
+          },
+        ],
+      },
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'OBJECT',
+          properties: {
+            questions: {
+              type: 'ARRAY',
+              items: {
+                type: 'OBJECT',
+                properties: {
+                  subjectName: { type: 'STRING' },
+                  topicName: { type: 'STRING' },
+                  statement: { type: 'STRING' },
+                  options: { type: 'ARRAY', items: { type: 'STRING' } },
+                  correctOptionIdx: { type: 'INTEGER' },
+                  explanation: { type: 'STRING' },
+                },
+                required: [
+                  'subjectName',
+                  'topicName',
+                  'statement',
+                  'options',
+                  'correctOptionIdx',
+                  'explanation',
+                ],
+              },
+            },
+          },
+          required: ['questions'],
+        },
+      },
+    };
+
+    try {
+      const res = await fetch(
+        `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      if (!res.ok) {
+        throw new Error(`IA HTTP ${res.status}: ${await res.text()}`);
+      }
+
+      const data = await res.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawText) throw new Error('Resposta vazia da IA.');
+
+      const parsed = JSON.parse(rawText);
+      return parsed.questions;
+    } catch (err) {
+      this.logger.error(
+        `Gemini diagnostic questions failed: ${(err as Error).message}`,
+      );
+      throw new InternalServerErrorException(
+        'Falha ao gerar avaliação diagnóstica por IA.',
+      );
+    }
   }
 }

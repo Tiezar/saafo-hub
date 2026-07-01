@@ -1,9 +1,9 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useRef, useEffect } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, BookOpen, Layers, Sparkles, Calendar,
   Timer, Trophy, LogOut, Sun, Moon,
-  ChevronDown, Plus, Trash2, History, Shield,
+  History, Shield, ChevronUp, User, Clock,
 } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 
@@ -12,261 +12,263 @@ interface Props {
   onClose?: () => void;
 }
 
-const ESTUDOS_ITEMS = [
-  { to: '/materiais', icon: BookOpen,        label: 'Matérias' },
-  { to: '/cards',     icon: Layers,          label: 'Meus Cards' },
-  { to: '/ia',        icon: Sparkles,        label: 'Gerador de Cards' },
-  { to: '/provas',    icon: Trophy,          label: 'Provas' },
+const APRENDER_ITEMS = [
+  { to: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard'        },
+  { to: '/materiais',  icon: BookOpen,        label: 'Matérias'         },
+  { to: '/cards',      icon: Layers,          label: 'Meus Cards'       },
+  { to: '/ia',         icon: Sparkles,        label: 'Gerador de Cards' },
 ];
 
-const PROD_ITEMS = [
-  { to: '/calendario',icon: Calendar,        label: 'Calendário'  },
-  { to: '/pomodoro',  icon: Timer,           label: 'Pomodoro'    },
+const AVALIAR_ITEMS = [
+  { to: '/provas',     icon: Trophy,          label: 'Provas'           },
+];
+
+const ORGANIZAR_ITEMS = [
+  { to: '/cronograma', icon: Clock,           label: 'Cronograma'       },
+  { to: '/calendario', icon: Calendar,        label: 'Calendário'       },
+  { to: '/pomodoro',   icon: Timer,           label: 'Pomodoro'         },
 ];
 
 const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS ?? '')
   .split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
 
+const PALETTES = [
+  { id: 'marginalia' as const, label: 'Marginália', light: '#a33b3a', dark: '#e24a46' },
+  { id: 'cobalt'     as const, label: 'Cobalto',    light: '#1a56db', dark: '#4d82f0' },
+  { id: 'musgo'      as const, label: 'Musgo',      light: '#4a7c3f', dark: '#72b562' },
+];
+
 export default function Sidebar({ mobileOpen = false, onClose }: Props) {
+  const navigate = useNavigate();
   const {
-    currentUser, handleLogout, theme, toggleTheme,
-    spaces, activeSpaceId, setActiveSpaceId,
-    handleCreateSpace, handleDeleteSpace,
-    cards, subjects, startStudySession,
+    currentUser, handleLogout, theme, toggleTheme, palette, setPalette,
+    cards, subjects, startStudySession, updateAvailable,
+    activeArea, myAreas, handleSwitchArea,
   } = useApp();
 
-  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email?.toLowerCase() ?? '');
+  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email?.toLowerCase() ?? '') || currentUser?.role === 'ADMIN';
 
   const dueCount = cards.filter(c => new Date(c.nextReview) <= new Date()).length;
   const showOnboardingDot = subjects.length === 0 && localStorage.getItem('onboarding_dismissed') !== '1';
 
-  const [spacesOpen,   setSpacesOpen]   = React.useState(false);
-  const [estudosOpen,  setEstudosOpen]  = React.useState(true);
-  const [prodOpen,     setProdOpen]     = React.useState(true);
-  const [spaceForm,    setSpaceForm]    = React.useState(false);
-  const [newName,      setNewName]      = React.useState('');
-  const [newColor,     setNewColor]     = React.useState('var(--color-primary)');
-  const [newIcon,      setNewIcon]      = React.useState('📚');
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, to: string) => {
+    if (updateAvailable) {
+      e.preventDefault();
+      window.location.assign(to);
+    } else {
+      onClose?.();
+    }
+  };
 
-  async function submitSpace(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newName.trim()) return;
-    await handleCreateSpace(newName.trim(), newColor, newIcon);
-    setNewName(''); setSpaceForm(false);
-  }
+  // Popup menu
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
+
+  const userName  = currentUser?.nickname ?? currentUser?.name ?? '?';
+  const userEmail = currentUser?.email ?? '';
+  const userAvatar = userName[0].toUpperCase();
 
   return (
     <aside className={`sidebar${mobileOpen ? ' sidebar-open' : ''}`}>
-      {/* Brand Header */}
-      <div className="sidebar-brand" style={{ justifyContent: 'center' }}>
-        <img 
-          src={theme === 'dark' ? '/saafo-hub-logo-dark.png' : '/saafo-hub-logo.png'} 
-          alt="SAAFO HUB" 
-          style={{ height: '28px', display: 'block', objectFit: 'contain' }} 
+
+      {/* ── Brand ── */}
+      <div className="sb-brand" style={{ justifyContent: 'center' }}>
+        <img
+          src={theme === 'dark' ? '/saafo-hub-logo-dark.png' : '/saafo-hub-logo.png'}
+          alt="SAAFO HUB"
+          style={{ height: 28, display: 'block', objectFit: 'contain' }}
         />
       </div>
+ 
+      {/* ── Area Switcher ── */}
+      {myAreas.length > 0 && (
+        <div style={{ padding: '0 8px', marginBottom: 12 }}>
+          <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600, paddingLeft: '8px' }}>
+            Área de Foco
+          </div>
+          <select
+            value={activeArea?.id || ''}
+            onChange={(e) => {
+              if (e.target.value === 'new') {
+                navigate('/onboarding');
+              } else {
+                handleSwitchArea(e.target.value);
+              }
+            }}
+            style={{
+              width: '100%',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+          >
+            {myAreas.map((ma) => (
+              <option key={ma.id} value={ma.id}>
+                {ma.area.name}
+              </option>
+            ))}
+            <option value="new">+ Adicionar foco</option>
+          </select>
+        </div>
+      )}
 
-      {/* CTA Button */}
-      <div style={{ padding: '0 8px', marginBottom: 24 }}>
+      {/* ── Study CTA ── */}
+      <div style={{ padding: '0 8px', marginBottom: 20 }}>
         <button
+          className="sb-cta"
           onClick={() => { startStudySession(undefined, true); onClose?.(); }}
-          style={{
-            width: '100%',
-            padding: '10px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'var(--color-primary)',
-            color: 'white',
-            fontFamily: 'var(--font-label)',
-            fontSize: 11,
-            textTransform: 'uppercase',
-            letterSpacing: '0.1em',
-            borderRadius: '6px',
-            border: 'none',
-            cursor: 'pointer',
-            transition: 'opacity var(--transition)',
-          }}
-          onMouseOver={e => e.currentTarget.style.opacity = '0.9'}
-          onMouseOut={e => e.currentTarget.style.opacity = '1'}
         >
-          <History size={14} style={{ marginRight: 8 }} />
+          <History size={13} />
           Revisão Diária
         </button>
       </div>
 
-      {/* Main Tabs */}
-      <div className="sidebar-nav">
-        {/* Dashboard Link (Always Top Level) */}
-        <NavLink
-          to="/dashboard"
-          end
-          className="sidebar-nav-item"
-          onClick={onClose}
-        >
-          <LayoutDashboard size={18} />
-          <span>Dashboard</span>
-        </NavLink>
+      {/* ── Nav ── */}
+      <nav className="sb-nav">
 
-        {/* Estudos Section */}
-        <div className="sidebar-section">
-          <button className="sidebar-section-header" onClick={() => setEstudosOpen(o => !o)} style={{ marginBottom: estudosOpen ? 6 : 0 }}>
-            <span>Estudos</span>
-            <ChevronDown
-              size={12}
-              style={{ transform: estudosOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
-            />
-          </button>
-
-          {estudosOpen && (
-            <div className="sidebar-submenu-content">
-              {ESTUDOS_ITEMS.map(({ to, icon: Icon, label }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  className="sidebar-nav-item"
-                  onClick={onClose}
-                >
-                  <Icon size={16} />
-                  <span>{label}</span>
-                  {dueCount > 0 && (to === '/cards' || to === '/materiais') && (
-                    <span style={{ marginLeft: 'auto', backgroundColor: 'var(--color-primary)', color: 'white', fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
-                      {dueCount}
-                    </span>
-                  )}
-                  {showOnboardingDot && to === '/materiais' && (
-                    <span style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-primary)' }} />
-                  )}
-                </NavLink>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Organização Section */}
-        <div className="sidebar-section">
-          <button className="sidebar-section-header" onClick={() => setProdOpen(o => !o)} style={{ marginBottom: prodOpen ? 6 : 0 }}>
-            <span>Organização</span>
-            <ChevronDown
-              size={12}
-              style={{ transform: prodOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
-            />
-          </button>
-
-          {prodOpen && (
-            <div className="sidebar-submenu-content">
-              {PROD_ITEMS.map(({ to, icon: Icon, label }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  className="sidebar-nav-item"
-                  onClick={onClose}
-                >
-                  <Icon size={16} />
-                  <span>{label}</span>
-                </NavLink>
-              ))}
-            </div>
-          )}
-        </div>
-
-
-        {/* Admin link — only visible to admins */}
-        {isAdmin && (
-          <NavLink to="/admin" className="sidebar-nav-item" onClick={onClose} style={{ marginTop: 8, borderTop: '1px solid var(--border-color)', paddingTop: 12 }}>
-            <Shield size={18} />
-            <span>Admin</span>
+        {/* APRENDER */}
+        <p className="sb-group-label">Aprender</p>
+        {APRENDER_ITEMS.map(({ to, icon: Icon, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === '/dashboard'}
+            className="sb-item"
+            onClick={(e) => handleNavClick(e, to)}
+          >
+            <Icon size={16} />
+            <span>{label}</span>
+            {dueCount > 0 && (to === '/cards' || to === '/materiais') && (
+              <span className="sb-badge">{dueCount}</span>
+            )}
+            {showOnboardingDot && to === '/materiais' && (
+              <span className="sb-dot" />
+            )}
           </NavLink>
+        ))}
+
+        {/* AVALIAR */}
+        <p className="sb-group-label" style={{ marginTop: 16 }}>Avaliar</p>
+        {AVALIAR_ITEMS.map(({ to, icon: Icon, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className="sb-item"
+            onClick={(e) => handleNavClick(e, to)}
+          >
+            <Icon size={16} />
+            <span>{label}</span>
+          </NavLink>
+        ))}
+
+        {/* ORGANIZAR */}
+        <p className="sb-group-label" style={{ marginTop: 16 }}>Organizar</p>
+        {ORGANIZAR_ITEMS.map(({ to, icon: Icon, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className="sb-item"
+            onClick={(e) => handleNavClick(e, to)}
+          >
+            <Icon size={16} />
+            <span>{label}</span>
+          </NavLink>
+        ))}
+
+        {/* Admin */}
+        {isAdmin && (
+          <>
+            <p className="sb-group-label" style={{ marginTop: 16 }}>Admin</p>
+            <NavLink to="/admin" className="sb-item" onClick={(e) => handleNavClick(e, '/admin')}>
+              <Shield size={16} />
+              <span>Admin</span>
+            </NavLink>
+          </>
         )}
 
-        {/* Collapsible Areas Section */}
-        <div className="sidebar-section">
-          <button className="sidebar-section-header" onClick={() => setSpacesOpen(o => !o)}>
-            <span>Áreas</span>
-            <ChevronDown
-              size={12}
-              style={{ transform: spacesOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
-            />
-          </button>
+      </nav>
 
-          {spacesOpen && (
-            <div className="sidebar-space-list">
-              <button
-                onClick={() => { setActiveSpaceId(null); onClose?.(); }}
-                className={`sidebar-space-item ${!activeSpaceId ? 'active' : ''}`}
-              >
-                <span className="sidebar-space-dot" style={{ background: 'var(--text-muted)' }} />
-                <span>Todas</span>
-              </button>
-
-              {spaces.map(s => (
-                <div key={s.id} className="sidebar-space-row">
+      {/* ── Footer user button + popup ── */}
+      <div className="sb-footer" ref={menuRef}>
+        {menuOpen && (
+          <div className="sb-popup">
+            {/* Palettes */}
+            <p className="sb-popup-label">Paleta de cores</p>
+            <div className="sb-palette-row">
+              {PALETTES.map(p => {
+                const color = theme === 'dark' ? p.dark : p.light;
+                const active = palette === p.id;
+                return (
                   <button
-                    onClick={() => { setActiveSpaceId(s.id); onClose?.(); }}
-                    className={`sidebar-space-item ${activeSpaceId === s.id ? 'active' : ''}`}
+                    key={p.id}
+                    className={`sb-palette-btn${active ? ' active' : ''}`}
+                    onClick={() => setPalette(p.id)}
+                    title={p.label}
                   >
-                    <span className="sidebar-space-dot" style={{ background: s.color ?? 'var(--color-primary)' }} />
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.icon} {s.name}</span>
+                    <span className="sb-palette-swatch" style={{ background: color }} />
+                    <span>{p.label}</span>
                   </button>
-                  <button
-                    onClick={() => { if (window.confirm(`Excluir a área "${s.name}"?`)) handleDeleteSpace(s.id); }}
-                    className="sidebar-space-delete"
-                    title="Excluir"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
+            </div>
 
-              {spaceForm ? (
-                <form onSubmit={submitSpace} className="sidebar-space-form">
-                  <input
-                    value={newName} onChange={e => setNewName(e.target.value)}
-                    placeholder="Nome da área"
-                    className="input-sm"
-                    autoFocus
-                  />
-                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                    <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)}
-                      style={{ width: 24, height: 24, padding: 0, border: 'none', cursor: 'pointer' }} />
-                    <input value={newIcon} onChange={e => setNewIcon(e.target.value)}
-                      placeholder="Emoji" className="input-sm" style={{ width: 40, padding: '4px' }} />
-                    <button type="submit" style={{ padding: '4px 8px', fontSize: 10, background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>OK</button>
-                    <button type="button" style={{ padding: '4px', fontSize: 11, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setSpaceForm(false)}>✕</button>
-                  </div>
-                </form>
-              ) : (
-                <button onClick={() => setSpaceForm(true)} className="sidebar-space-add">
-                  <Plus size={12} /> Nova área
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+            <div className="sb-popup-divider" />
 
-      {/* Footer */}
-      <div className="sidebar-footer">
-        <NavLink to="/perfil" onClick={onClose} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-          <div className="sidebar-user">
-            <div className="sidebar-user-avatar">
-              {(currentUser?.nickname ?? currentUser?.name ?? '?')[0].toUpperCase()}
-            </div>
-            <div className="sidebar-user-info">
-              <span className="sidebar-user-name">{currentUser?.nickname ?? currentUser?.name}</span>
-              <span className="sidebar-user-email">{currentUser?.email}</span>
-            </div>
+            {/* Theme toggle */}
+            <button className="sb-popup-item" onClick={toggleTheme}>
+              {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+              <span>{theme === 'dark' ? 'Modo claro' : 'Modo escuro'}</span>
+            </button>
+
+            {/* Profile */}
+            <button className="sb-popup-item" onClick={() => { navigate('/perfil'); setMenuOpen(false); onClose?.(); }}>
+              <User size={14} />
+              <span>Meu perfil</span>
+            </button>
+
+            <div className="sb-popup-divider" />
+
+            {/* Logout */}
+            <button className="sb-popup-item sb-popup-danger" onClick={handleLogout}>
+              <LogOut size={14} />
+              <span>Sair</span>
+            </button>
           </div>
-        </NavLink>
+        )}
 
-        <div className="sidebar-actions">
-          <button className="sidebar-icon-btn" onClick={toggleTheme} title="Alternar tema">
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
-          <button className="sidebar-icon-btn" onClick={handleLogout} title="Sair">
-            <LogOut size={16} />
-          </button>
-        </div>
+        <button
+          className="sb-user-btn"
+          onClick={() => setMenuOpen(o => !o)}
+          aria-expanded={menuOpen}
+        >
+          <div className="sb-avatar">{userAvatar}</div>
+          <div className="sb-user-info">
+            <span className="sb-user-name">{userName}</span>
+            <span className="sb-user-email">{userEmail}</span>
+          </div>
+          <ChevronUp
+            size={14}
+            className="sb-chevron"
+            style={{ transform: menuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+          />
+        </button>
       </div>
     </aside>
   );

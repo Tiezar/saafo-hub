@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, HelpCircle, RotateCw, Pencil, Check, X } from 'lucide-react';
+import { Plus, Trash2, HelpCircle, Pencil, Check, X } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import './Materials.css';
 
 
 export default function Materials() {
   const {
-    visibleSubjects, visibleTopics, topics, cards, subjects, spaces, activeSpaceId,
+    visibleSubjects, visibleTopics, topics, cards, spaces, activeSpaceId,
     selectedSubject, setSelectedSubject, selectedTopic, setSelectedTopic,
     handleCreateSubject, handleDeleteSubject,
     handleCreateTopic, handleDeleteTopic,

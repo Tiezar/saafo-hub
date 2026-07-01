@@ -56,3 +56,6 @@ preview_verification_email.html
 # Local Dev helper scripts
 backend/prisma/create-test-user.ts
 backend/prisma/seed-test-data.ts
+
+# Mobile client untracked development folder
+mobile/

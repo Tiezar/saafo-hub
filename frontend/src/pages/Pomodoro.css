@@ -11,84 +11,85 @@
   transition: stroke-dashoffset 1s linear, stroke var(--transition);
 }
 
-/* Marginalia side note — hidden below 768px */
-.pomo-sidenote {
-  position: absolute;
-  top: 0;
-  left: 0;
-  max-width: 140px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-@media (max-width: 768px) {
-  .pomo-sidenote { display: none !important; }
-}
-
-/* Responsive Grid and Stacking */
-.pomodoro-grid {
+/* ── Bento grid ─────────────────────────────────────────── */
+.pomo-bento-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 48px;
-  align-items: start;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
-.pomodoro-left-column {
-  position: relative;
+/* Left card — spans both rows */
+.pomo-timer-card {
+  grid-row: span 2;
+  background: var(--color-primary);
+  border-radius: 14px;
+  padding: 34px;
+  color: var(--bg-base);
   display: flex;
   flex-direction: column;
   align-items: center;
-  border-right: 1px solid var(--border-color);
-  padding-right: 32px;
+  justify-content: center;
 }
 
-.pomodoro-segmented-control {
+/* Segmented control inside timer card */
+.pomo-seg {
   display: flex;
-  align-items: center;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-surface);
-  padding: 2px;
-  margin-bottom: 48px;
-  margin-top: 8px;
-  border-radius: 6px;
+  gap: 8px;
+  margin-bottom: 26px;
 }
 
-.pomodoro-segmented-control button {
-  padding: 8px 20px;
+.pomo-seg button {
+  background: transparent;
   border: none;
+  border-radius: 18px;
+  padding: 6px 14px;
+  font: 600 11px var(--font-label);
+  color: var(--bg-base);
   cursor: pointer;
-  font-size: 10px;
-  font-family: var(--font-label);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  border-radius: 6px;
-  transition: all 0.2s;
+  opacity: 0.7;
+  transition: var(--transition);
 }
 
+.pomo-seg button.active {
+  background: rgba(255, 255, 255, .22);
+  opacity: 1;
+}
+
+/* Top-right card — Meta do dia */
+.pomo-meta-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+/* Bottom-right card — Som ambiente */
+.pomo-sound-card {
+  background: var(--color-tertiary);
+  border-radius: 14px;
+  padding: 22px;
+  color: #f5ede3;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .pomodoro-grid {
+  .pomo-bento-grid {
     grid-template-columns: 1fr;
-    gap: 32px;
   }
-  .pomodoro-left-column {
-    border-right: none;
-    padding-right: 0;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 32px;
+  .pomo-timer-card {
+    grid-row: span 1;
+    padding: 24px 20px;
   }
 }
 
 @media (max-width: 480px) {
-  .pomodoro-segmented-control {
-    width: 100%;
-    justify-content: space-between;
-    margin-bottom: 24px;
+  .pomo-seg {
+    flex-wrap: wrap;
+    justify-content: center;
   }
-  .pomodoro-segmented-control button {
-    padding: 6px 8px;
-    font-size: 9px;
-    letter-spacing: 0.05em;
-    flex: 1;
-    text-align: center;
+  .pomo-seg button {
+    padding: 5px 10px;
+    font-size: 10px;
   }
 }

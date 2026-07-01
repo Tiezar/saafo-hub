@@ -13,22 +13,26 @@ enum ReminderMethod {
 }
 
 model User {
-  id                  String          @id @default(uuid())
-  email               String          @unique
+  id                  String              @id @default(uuid())
+  email               String              @unique
   name                String
   nickname            String?
-  googleId            String?         @unique
+  googleId            String?             @unique
   passwordHash        String?
-  emailVerified       Boolean         @default(false)
+  emailVerified       Boolean             @default(false)
   phone               String?
   institutionId       String?
-  institution         Institution?    @relation(fields: [institutionId], references: [id], onDelete: SetNull)
-  plan                String          @default("FREE_TRIAL")
+  institution         Institution?        @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  plan                String              @default("FREE_TRIAL")
+  role                UserRole            @default(USER)
   trialEndsAt         DateTime?
-  asaasCustomerId     String?         @unique
+  asaasCustomerId     String?             @unique
   asaasSubscriptionId String?
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  profile             UserProfile?
+  userAreas           UserArea[]
+  customAreas         Area[]
   subjects            Subject[]
   cards               Card[]
   studySessions       StudySession[]
@@ -88,12 +92,20 @@ model Subject {
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   spaceId        String?
   space          StudySpace?     @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+  userAreaId     String?
+  userArea       UserArea?       @relation(fields: [userAreaId], references: [id], onDelete: Cascade)
+  parentId       String?
+  parent         Subject?        @relation("SubjectToSubSubject", fields: [parentId], references: [id], onDelete: Cascade)
+  subSubjects    Subject[]       @relation("SubjectToSubSubject")
   topics         Topic[]
   calendarEvents CalendarEvent[]
+  scheduleItems  ScheduleItem[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
   @@index([userId])
+  @@index([parentId])
+  @@index([userAreaId])
   @@map("subjects")
 }
 
@@ -119,6 +131,8 @@ model CalendarEvent {
   space            StudySpace?     @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   subjectId        String?
   subject          Subject?        @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  userAreaId       String?
+  userArea         UserArea?       @relation(fields: [userAreaId], references: [id], onDelete: Cascade)
   title            String
   type             String
   startAt          DateTime
@@ -133,6 +147,7 @@ model CalendarEvent {
   updatedAt        DateTime        @updatedAt
 
   @@index([userId, startAt])
+  @@index([userAreaId])
   @@map("calendar_events")
 }
 
@@ -152,13 +167,14 @@ model EventReminder {
 }
 
 model Topic {
-  id        String   @id @default(uuid())
-  name      String
-  subjectId String
-  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  cards     Card[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String         @id @default(uuid())
+  name          String
+  subjectId     String
+  subject       Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  cards         Card[]
+  scheduleItems ScheduleItem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@index([subjectId])
   @@map("topics")
@@ -218,18 +234,21 @@ model CardReview {
 }
 
 model ExamRecord {
-  id         String        @id @default(uuid())
-  userId     String
-  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topicId    String?
-  topicIds   String[]      @default([])
-  topicName  String
-  scopeLabel String?
-  profileId  String?
-  mode       String
-  questions  Json
-  createdAt  DateTime      @default(now())
-  attempts   ExamAttempt[]
+  id                   String        @id @default(uuid())
+  userId               String
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicId              String?
+  topicIds             String[]      @default([])
+  topicName            String
+  scopeLabel           String?
+  profileId            String?
+  mode                 String
+  questions            Json
+  isOfficialSimulation Boolean       @default(false)
+  pdfPath              String?
+  hasPrintedBubble     Boolean       @default(false)
+  createdAt            DateTime      @default(now())
+  attempts             ExamAttempt[]
 
   @@index([userId])
   @@map("exam_records")
@@ -283,4 +302,169 @@ model UserWeeklyRoutine {
   updatedAt DateTime @updatedAt
 
   @@map("user_weekly_routines")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model UserProfile {
+  id               String      @id @default(uuid())
+  userId           String      @unique
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeUserAreaId String?
+  onboardingStatus String      @default("PENDING")
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@map("user_profiles")
+}
+
+model UserArea {
+  id             String                 @id @default(uuid())
+  userId         String
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  areaId         String
+  area           Area                   @relation(fields: [areaId], references: [id])
+  isActive       Boolean                @default(false)
+  subjects       Subject[]
+  schedules      UserStudySchedule?
+  diagnostics    UserDiagnosticResult[]
+  calendarEvents CalendarEvent[]
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  @@unique([userId, areaId])
+  @@map("user_areas")
+}
+
+model Area {
+  id           String        @id @default(uuid())
+  name         String
+  type         String
+  bancaId      String?
+  banca        Banca?        @relation(fields: [bancaId], references: [id])
+  isTemplate   Boolean       @default(false)
+  createdById  String?
+  createdBy    User?         @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  subjects     AreaSubject[]
+  userAreas    UserArea[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("areas")
+}
+
+model Banca {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  areas       Area[]
+  createdAt   DateTime @default(now())
+
+  @@map("bancas")
+}
+
+model AreaSubject {
+  id          String         @id @default(uuid())
+  areaId      String
+  area        Area           @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  name        String
+  color       String         @default("#4F46E5")
+  parentId    String?
+  parent      AreaSubject?   @relation("AreaSubjectToSubSubject", fields: [parentId], references: [id], onDelete: Cascade)
+  subSubjects AreaSubject[]  @relation("AreaSubjectToSubSubject")
+  topics      AreaTopic[]
+  createdAt   DateTime       @default(now())
+
+  @@map("area_subjects")
+}
+
+model AreaTopic {
+  id            String      @id @default(uuid())
+  areaSubjectId String
+  areaSubject   AreaSubject @relation(fields: [areaSubjectId], references: [id], onDelete: Cascade)
+  name          String
+  priority      Int         @default(3)
+  createdAt     DateTime    @default(now())
+
+  @@map("area_topics")
+}
+
+model DiagnosticTest {
+  id          String               @id @default(uuid())
+  areaId      String               @unique
+  name        String
+  questions   DiagnosticQuestion[]
+  createdAt   DateTime             @default(now())
+
+  @@map("diagnostic_tests")
+}
+
+model DiagnosticQuestion {
+  id               String                 @id @default(uuid())
+  testId           String
+  test             DiagnosticTest         @relation(fields: [testId], references: [id], onDelete: Cascade)
+  subjectName      String
+  topicName        String
+  statement        String                 @db.Text
+  options          Json
+  correctOptionIdx Int
+  explanation      String?                @db.Text
+  answers          UserDiagnosticAnswer[]
+
+  @@map("diagnostic_questions")
+}
+
+model UserDiagnosticResult {
+  id          String                 @id @default(uuid())
+  userAreaId  String
+  userArea    UserArea               @relation(fields: [userAreaId], references: [id], onDelete: Cascade)
+  score       Float
+  completedAt DateTime               @default(now())
+  answers     UserDiagnosticAnswer[]
+
+  @@map("user_diagnostic_results")
+}
+
+model UserDiagnosticAnswer {
+  id          String             @id @default(uuid())
+  resultId    String
+  result      UserDiagnosticResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  questionId  String
+  question    DiagnosticQuestion @relation(fields: [questionId], references: [id])
+  selectedIdx Int
+  isCorrect   Boolean
+
+  @@map("user_diagnostic_answers")
+}
+
+model UserStudySchedule {
+  id         String         @id @default(uuid())
+  userAreaId String         @unique
+  userArea   UserArea       @relation(fields: [userAreaId], references: [id], onDelete: Cascade)
+  items      ScheduleItem[]
+  examDate   DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@map("user_study_schedules")
+}
+
+model ScheduleItem {
+  id           String            @id @default(uuid())
+  scheduleId   String
+  schedule     UserStudySchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  dayOfWeek    Int
+  subjectId    String?
+  subject      Subject?          @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  topicId      String?
+  topic        Topic?            @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  duration     Int               @default(50)
+  priority     Float
+  startTime    String?           // Horário de início no formato "HH:MM"
+  activityType String            @default("STUDY") // "STUDY", "REDACO", "SIMULADO"
+
+  @@map("schedule_items")
 }
