@@ -1,6 +1,13 @@
+try {
+  require('dotenv').config();
+} catch (e) {
+  // Ignore if dotenv is not available
+}
+
 const { Pool } = require('pg');
 
-const pool = new Pool({ connectionString: 'postgresql://postgres@localhost:5432/saafo_db?schema=public' });
+const connectionString = process.env.DATABASE_URL || 'postgresql://postgres@localhost:5432/saafo_db?schema=public';
+const pool = new Pool({ connectionString });
 
 const ENEM_COMPLETO_DATA = {
   banca: { name: 'INEP', description: 'Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira' },
