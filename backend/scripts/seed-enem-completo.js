@@ -1,13 +1,5 @@
-try {
-  require('dotenv').config();
-} catch (e) {
-  // Ignore if dotenv is not available
-}
-
-const { Pool } = require('pg');
-
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres@localhost:5432/saafo_db?schema=public';
-const pool = new Pool({ connectionString });
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 const ENEM_COMPLETO_DATA = {
   banca: { name: 'INEP', description: 'Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira' },
@@ -281,33 +273,42 @@ const ENEM_COMPLETO_DATA = {
 };
 
 async function main() {
-  console.log('\n🌱 Iniciando carga do template ENEM completo...\n');
+  console.log('\n🌱 Iniciando carga do template ENEM completo via Prisma...\n');
 
   // 1. Banca INEP
-  const bancaRes = await pool.query(`
-    INSERT INTO bancas (id, name, description, "createdAt")
-    VALUES (gen_random_uuid(), $1, $2, NOW())
-    ON CONFLICT (name) DO UPDATE SET description = EXCLUDED.description
-    RETURNING id
-  `, [ENEM_COMPLETO_DATA.banca.name, ENEM_COMPLETO_DATA.banca.description]);
-  const bancaId = bancaRes.rows[0].id;
-  console.log(`Banca: ${ENEM_COMPLETO_DATA.banca.name} (${bancaId})`);
+  const banca = await prisma.banca.upsert({
+    where: { name: ENEM_COMPLETO_DATA.banca.name },
+    update: { description: ENEM_COMPLETO_DATA.banca.description },
+    create: {
+      name: ENEM_COMPLETO_DATA.banca.name,
+      description: ENEM_COMPLETO_DATA.banca.description
+    }
+  });
+  console.log(`Banca obtida/criada: ${banca.name} (${banca.id})`);
 
   // 2. Limpar qualquer ENEM anterior para evitar duplicados
-  const deleteRes = await pool.query(`
-    DELETE FROM areas 
-    WHERE name IN ('ENEM — Completo', 'ENEM — Ensino Médio') AND "isTemplate" = true
-  `);
-  console.log(`Limpados ${deleteRes.rowCount} templates antigos do ENEM.`);
+  const existingAreas = await prisma.area.findMany({
+    where: {
+      name: { in: ['ENEM — Completo', 'ENEM — Ensino Médio'] },
+      isTemplate: true
+    }
+  });
+
+  for (const area of existingAreas) {
+    await prisma.area.delete({ where: { id: area.id } });
+  }
+  console.log(`Limpados ${existingAreas.length} templates antigos do ENEM.`);
 
   // 3. Criar a nova área do ENEM Completo
-  const areaRes = await pool.query(`
-    INSERT INTO areas (id, name, type, "bancaId", "isTemplate", "createdAt", "updatedAt")
-    VALUES (gen_random_uuid(), $1, $2, $3, true, NOW(), NOW())
-    RETURNING id
-  `, [ENEM_COMPLETO_DATA.area.name, ENEM_COMPLETO_DATA.area.type, bancaId]);
-  const areaId = areaRes.rows[0].id;
-  console.log(`Área cadastrada: ${ENEM_COMPLETO_DATA.area.name} (${areaId})`);
+  const area = await prisma.area.create({
+    data: {
+      name: ENEM_COMPLETO_DATA.area.name,
+      type: ENEM_COMPLETO_DATA.area.type,
+      isTemplate: true,
+      bancaId: banca.id
+    }
+  });
+  console.log(`Área cadastrada: ${area.name} (${area.id})`);
 
   // 4. Inserir hierarquia de disciplinas
   let countSubjects = 0;
@@ -315,40 +316,41 @@ async function main() {
 
   for (const cat of ENEM_COMPLETO_DATA.categories) {
     // A. Criar disciplina pai (Tecnologia/Área de Conhecimento)
-    const parentRes = await pool.query(`
-      INSERT INTO area_subjects (id, "areaId", name, color, "createdAt")
-      VALUES (gen_random_uuid(), $1, $2, $3, NOW())
-      RETURNING id
-    `, [areaId, cat.parent.name, cat.parent.color]);
-    const parentId = parentRes.rows[0].id;
+    const parentSub = await prisma.areaSubject.create({
+      data: {
+        areaId: area.id,
+        name: cat.parent.name,
+        color: cat.parent.color
+      }
+    });
     countSubjects++;
 
     // B. Criar disciplinas filhas (Matérias específicas)
     for (const child of cat.children) {
-      const childRes = await pool.query(`
-        INSERT INTO area_subjects (id, "areaId", name, color, "parentId", "createdAt")
-        VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW())
-        RETURNING id
-      `, [areaId, child.name, child.color, parentId]);
-      const childId = childRes.rows[0].id;
+      const childSub = await prisma.areaSubject.create({
+        data: {
+          areaId: area.id,
+          name: child.name,
+          color: child.color,
+          parentId: parentSub.id,
+          topics: {
+            create: child.topics.map(tName => ({ name: tName, priority: 3 }))
+          }
+        }
+      });
       countSubjects++;
-
-      // C. Criar tópicos na disciplina filha
-      for (const topicName of child.topics) {
-        await pool.query(`
-          INSERT INTO area_topics (id, "areaSubjectId", name, priority, "createdAt")
-          VALUES (gen_random_uuid(), $1, $2, 3, NOW())
-        `, [childId, topicName]);
-        countTopics++;
-      }
+      countTopics += child.topics.length;
     }
   }
 
   console.log(`\n✅ Sucesso! Semeado: ${countSubjects} matérias/grandes áreas, ${countTopics} tópicos do ENEM.`);
-  await pool.end();
 }
 
-main().catch(e => {
-  console.error('Erro no seed do ENEM:', e);
-  process.exit(1);
-});
+main()
+  .catch(e => {
+    console.error('Erro no seed do ENEM:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
