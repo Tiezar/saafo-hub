@@ -1,5 +1,17 @@
+try {
+  require('dotenv').config();
+} catch (e) {
+  // Ignore if dotenv is not available
+}
+
+const { Pool } = require('pg');
+const { PrismaPg } = require('@prisma/adapter-pg');
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
+const connectionString = process.env.DATABASE_URL || 'postgresql://postgres@localhost:5432/saafo_db?schema=public';
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 const ENEM_COMPLETO_DATA = {
   banca: { name: 'INEP', description: 'Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira' },
@@ -353,4 +365,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });
